@@ -1,36 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.dashboard', ['headerView' => 'order-admin.components.header', 'menuView' => 'order-admin.components.menu'])
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Admin | Profile</title>
-    <link rel="icon" href="{{ asset('assets/images/logo.png') }}">
+@section('title', 'Order Admin | Profile')
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/circular-std/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/libs/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/fontawesome/css/fontawesome-all.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/charts/chartist-bundle/chartist.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/charts/morris-bundle/morris.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/material-design-iconic-font/css/materialdesignicons.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/charts/c3charts/c3.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/flag-icon-css/flag-icon.min.css') }}">
-
-</head>
-
-<body>
-
-    <!-- header  -->
-    @include('order-admin.components.header')
-    <!-- /header  -->
-
-    <!-- menu -->
-    @include('order-admin.components.menu')
-    <!-- /menu -->
-
-    <!-- content -->
+@section('content')
     <div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
@@ -122,32 +94,11 @@
             <!-- ============================================================== -->
         </div>
 
-        <!-- jQuery 3.3.1 -->
-        <script src="{{ asset('assets/vendor/jquery/jquery-3.3.1.min.js') }}"></script>
-        <!-- Bootstrap bundle JS -->
-        <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.js') }}"></script>
-        <!-- SlimScroll JS -->
-        <script src="{{ asset('assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
-        <!-- Main JS -->
-        <script src="{{ asset('assets/libs/js/main-js.js') }}"></script>
-        <!-- Chartist JS -->
-        <script src="{{ asset('assets/vendor/charts/chartist-bundle/chartist.min.js') }}"></script>
-        <!-- Sparkline JS -->
-        <script src="{{ asset('assets/vendor/charts/sparkline/jquery.sparkline.js') }}"></script>
-        <!-- Morris JS -->
-        <script src="{{ asset('assets/vendor/charts/morris-bundle/raphael.min.js') }}"></script>
-        <script src="{{ asset('assets/vendor/charts/morris-bundle/morris.js') }}"></script>
-        <!-- C3 Charts JS -->
-        <script src="{{ asset('assets/vendor/charts/c3charts/c3.min.js') }}"></script>
-        <script src="{{ asset('assets/vendor/charts/c3charts/d3-5.4.0.min.js') }}"></script>
-        <script src="{{ asset('assets/vendor/charts/c3charts/C3chartjs.js') }}"></script>
-        <!-- Dashboard E-commerce JS -->
-        <script src="{{ asset('assets/libs/js/dashboard-ecommerce.js') }}"></script>
-        <!-- Chart Bundle JS -->
-        <script src="{{ asset('assets/vendor/charts/charts-bundle/Chart.bundle.js') }}"></script>
-        <script src="{{ asset('assets/vendor/charts/charts-bundle/chartjs.js') }}"></script>
+        
+@endsection
 
-        <script>
+@push('scripts')
+<script>
             document.getElementById('refresh').addEventListener('click', function() {
                 // Disable the button
                 this.disabled = true;
@@ -156,6 +107,4 @@
                 // For example, refreshing the content or triggering an API call
             });
         </script>
-</body>
-
-</html>
+@endpush
