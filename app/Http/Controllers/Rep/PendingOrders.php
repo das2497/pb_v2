@@ -9,12 +9,16 @@ use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Rep;
 use App\Models\Shops;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PendingOrders extends Controller
 {
+    public function __construct(private OrderService $orderService)
+    {
+    }
     public function index(Request $request)
     {
 
@@ -171,8 +175,7 @@ class PendingOrders extends Controller
             return back()->with('error', 'You do not have access to create orders.');
         }
 
-        Orders::where('unique_id', '=', $request->order_number)
-            ->update(['status' => 'Processing']);
+        $this->orderService->transitionToProcessing($request->order_number);
 
         Logs::create([
             'type' => 'Accept Pending Order',

@@ -121,17 +121,16 @@ class OrderServiceTest extends TestCase
     {
         $order = Orders::create(['unique_id' => 'ORD-ACCEPT', 'shop' => 'BC-1', 'total_price' => 10, 'time_period' => 'Morning', 'status' => 'Pending']);
 
-        $this->service->acceptPending('ORD-ACCEPT', 'Admin');
+        $this->service->transitionToProcessing('ORD-ACCEPT');
 
         $this->assertSame('Processing', $order->refresh()->status);
-        $this->assertDatabaseHas('logs', ['type' => 'Accept Pending Order']);
     }
 
     public function test_cancelling_an_order_sets_status_and_time_period_to_cancelled(): void
     {
         $order = Orders::create(['unique_id' => 'ORD-CANCEL', 'shop' => 'BC-1', 'total_price' => 10, 'time_period' => 'Morning', 'status' => 'Pending']);
 
-        $this->service->cancelOrder('ORD-CANCEL', 'Admin');
+        $this->service->transitionToCancelled('ORD-CANCEL');
 
         $order->refresh();
         $this->assertSame('Cancelled', $order->status);

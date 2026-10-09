@@ -168,26 +168,21 @@ class OrderService
         return $order;
     }
 
-    public function acceptPending(string $uniqueId, string $actorName): void
+    /**
+     * Guard-free: just the status transition. Every role logs this
+     * differently (OrderAdmin: "Order admin accept pending order X", Rep:
+     * "Rep accept pending order X", plus Rep's own access-off gate before
+     * it even gets here) — so, like persistPendingOrder(), this doesn't
+     * log; each caller logs its own exact message afterward.
+     */
+    public function transitionToProcessing(string $uniqueId): void
     {
         Orders::where('unique_id', $uniqueId)->update(['status' => 'Processing']);
-
-        Logs::create([
-            'type' => 'Accept Pending Order',
-            'message' => "Accepted pending order {$uniqueId}",
-            'user' => $actorName,
-        ]);
     }
 
-    public function cancelOrder(string $uniqueId, string $actorName): void
+    public function transitionToCancelled(string $uniqueId): void
     {
         Orders::where('unique_id', $uniqueId)->update(['time_period' => 'Cancelled', 'status' => 'Cancelled']);
-
-        Logs::create([
-            'type' => 'Order update',
-            'message' => "Cancelled order {$uniqueId}",
-            'user' => $actorName,
-        ]);
     }
 
     /**

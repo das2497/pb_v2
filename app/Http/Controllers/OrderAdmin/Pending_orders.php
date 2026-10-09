@@ -9,6 +9,7 @@ use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,9 @@ use Illuminate\Support\Facades\DB;
 
 class Pending_orders extends Controller
 {
+    public function __construct(private OrderService $orderService)
+    {
+    }
 
     public function index(Request $request)
     {
@@ -255,8 +259,7 @@ class Pending_orders extends Controller
 
     public function accept(Request $request)
     {
-        Orders::where('unique_id', '=', $request->order_number)
-            ->update(['status' => 'Processing']);
+        $this->orderService->transitionToProcessing($request->order_number);
 
         Logs::create([
             'type' => 'Accept Pending Order',
