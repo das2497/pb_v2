@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\PricingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Products extends Model
 {
@@ -23,6 +26,30 @@ class Products extends Model
         'direct_sale_price',
         'img',
     ];
+
+    /**
+     * Matched on the `category` string, not a numeric FK — see
+     * Product_category::products() for why. Named categoryRecord() (not
+     * category()) since `category` is already a real string column here.
+     */
+    public function categoryRecord(): BelongsTo
+    {
+        return $this->belongsTo(Product_category::class, 'category', 'category');
+    }
+
+    /**
+     * Matched on `item_number`, not a numeric FK — carts has no product_id
+     * column.
+     */
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(Cart::class, 'item_number', 'item_number');
+    }
+
+    public function priceFor(Shops $shop): float
+    {
+        return PricingService::priceFor($this, $shop);
+    }
 
     public static function availableForOrder($itemNumber, $orderNumber): bool
     {
