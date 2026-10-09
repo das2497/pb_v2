@@ -143,14 +143,7 @@ class Processing_orders extends Controller
         $shop = Shops::where('branch_code', '=', $request->shop)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();
 
-        $price = '';
-        if ($shop->price_range == 'Unit Price') {
-            $price = $product->unit_price;
-        } elseif ($shop->price_range == 'PB MRP') {
-            $price = $product->mrp;
-        } elseif ($shop->price_range == 'PB Direct Sale Price') {
-            $price = $product->direct_sale_price;
-        }
+        $price = $product->priceFor($shop);
 
         $qtyCart = Cart::where('order_number', '=', $request->order_number)
             ->where('item_number', '=', $request->item_number)
@@ -175,14 +168,7 @@ class Processing_orders extends Controller
         $shop = Shops::where('branch_code', '=', $request->shop)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();
 
-        $price = '';
-        if ($shop->price_range == 'Unit Price') {
-            $price = $product->unit_price;
-        } elseif ($shop->price_range == 'PB MRP') {
-            $price = $product->mrp;
-        } elseif ($shop->price_range == 'PB Direct Sale Price') {
-            $price = $product->direct_sale_price;
-        }
+        $price = $product->priceFor($shop);
 
         Orders::where('unique_id', '=', $request->order_number)
             ->decrement('total_price', $price * $request->qty);

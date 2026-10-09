@@ -92,15 +92,7 @@ class UnderReviewOrdersAddItems extends Controller
 
         $product = Products::where('item_number', '=', $request->item_number)->first();
 
-        $price = '';
-
-        if ($shop->price_range == 'Unit Price') {
-            $price = $product->unit_price;
-        } elseif ($shop->price_range == 'PB MRP') {
-            $price = $product->mrp;
-        } elseif ($shop->price_range == 'PB Direct Sale Price') {
-            $price = $product->direct_sale_price;
-        }
+        $price = $product->priceFor($shop);
 
         Cart::create([
             'item_number' => $request->item_number,
