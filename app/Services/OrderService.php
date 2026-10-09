@@ -186,6 +186,17 @@ class OrderService
     }
 
     /**
+     * Deletes an Under Review order and its cart rows outright. Shared,
+     * byte-identical between OrderAdmin and Rep's Under_review_orders /
+     * UnderReviewOrders controllers.
+     */
+    public function deleteOrder(string $uniqueId): void
+    {
+        Cart::where('order_number', $uniqueId)->delete();
+        Orders::where('unique_id', $uniqueId)->delete();
+    }
+
+    /**
      * The bulk Processing -> Complete transfer. Returns the number of
      * orders moved, system-wide (matches current behavior — not scoped by
      * date/route, which the audit flagged but wasn't asked to change).

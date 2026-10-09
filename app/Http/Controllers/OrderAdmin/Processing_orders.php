@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
 use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\CartService;
 use App\Services\OrderService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class Processing_orders extends Controller
 {
-    public function __construct(private OrderService $orderService)
+    public function __construct(private OrderService $orderService, private CartService $cartService)
     {
     }
 
@@ -140,19 +140,7 @@ class Processing_orders extends Controller
 
         $price = $product->priceFor($shop);
 
-        $qtyCart = Cart::where('order_number', '=', $request->order_number)
-            ->where('item_number', '=', $request->item_number)
-            ->first()->qty;
-
-        Orders::where('unique_id', '=', $request->order_number)
-            ->increment('total_price', $price * ($request->qty - $qtyCart));
-
-        Cart::where('order_number', '=', $request->order_number)
-            ->where('item_number', '=', $request->item_number)
-            ->update([
-                'qty' => $request->qty,
-                'remarke' => $request->remarke
-            ]);
+        $this->cartService->applyOrderItemQtyChange($request->order_number, $request->item_number, $price, $request->qty, $request->remarke);
 
         return back()
             ->with('success', 'Quantity Updated Successfully');
@@ -165,12 +153,7 @@ class Processing_orders extends Controller
 
         $price = $product->priceFor($shop);
 
-        Orders::where('unique_id', '=', $request->order_number)
-            ->decrement('total_price', $price * $request->qty);
-
-        Cart::where('order_number', '=', $request->order_number)
-            ->where('item_number', '=', $request->item_number)
-            ->delete();
+        $this->cartService->removeOrderItem($request->order_number, $request->item_number, $price, $request->qty);
 
         return back()
             ->with('success', 'Successfully deleted!');

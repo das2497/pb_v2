@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\Logs;
+use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
 use App\Services\Support\PreventsDuplicateSubmission;
@@ -102,6 +103,37 @@ class CartService
             ->where('shop_bc_number', $branchCode)
             ->whereNull('order_number')
             ->delete();
+    }
+
+    /**
+     * Adjusts an already-placed order's total_price by the price delta
+     * and updates the matching cart row's qty/remark. Shared, byte-for-
+     * byte identical core of update() on every OrderAdmin/Rep/Shop
+     * Pending/Processing/Under-Review listing controller — only the
+     * access gate and logging differ by role/controller, so callers
+     * keep doing those themselves.
+     */
+    public function applyOrderItemQtyChange(string $orderNumber, string $itemNumber, float $price, int $qty, ?string $remark): void
+    {
+        $qtyCart = Cart::where('order_number', $orderNumber)->where('item_number', $itemNumber)->first()->qty;
+
+        Orders::where('unique_id', $orderNumber)->increment('total_price', $price * ($qty - $qtyCart));
+
+        Cart::where('order_number', $orderNumber)
+            ->where('item_number', $itemNumber)
+            ->update(['qty' => $qty, 'remarke' => $remark]);
+    }
+
+    /**
+     * The shared core of delete() on the same set of controllers:
+     * reverses the item's contribution to total_price, then removes
+     * the cart row.
+     */
+    public function removeOrderItem(string $orderNumber, string $itemNumber, float $price, int $qty): void
+    {
+        Orders::where('unique_id', $orderNumber)->decrement('total_price', $price * $qty);
+
+        Cart::where('order_number', $orderNumber)->where('item_number', $itemNumber)->delete();
     }
 
     // ---- Shop's exact guarded + logged flow ----

@@ -3,17 +3,21 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
 use App\Models\Logs;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PendingOrders extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     public function index()
     {
         $Orders = DB::table('orders')
@@ -56,19 +60,7 @@ class PendingOrders extends Controller
 
         $price = $product->priceFor($shop);
 
-        $qtyCart = Cart::where('order_number', '=', $request->order_number)
-            ->where('item_number', '=', $request->item_number)
-            ->first()->qty;
-
-        Orders::where('unique_id', '=', $request->order_number)
-            ->increment('total_price', $price * ($request->qty - $qtyCart));
-
-        Cart::where('order_number', '=', $request->order_number)
-            ->where('item_number', '=', $request->item_number)
-            ->update([
-                'qty' => $request->qty,
-                'remarke' => $request->remarke
-            ]);
+        $this->cartService->applyOrderItemQtyChange($request->order_number, $request->item_number, $price, $request->qty, $request->remarke);
 
         Logs::create([
             'type' => 'Update item pending Order',
@@ -87,12 +79,7 @@ class PendingOrders extends Controller
 
         $price = $product->priceFor($shop);
 
-        Orders::where('unique_id', '=', $request->order_number)
-            ->decrement('total_price', $price * $request->qty);
-
-        Cart::where('order_number', '=', $request->order_number)
-            ->where('item_number', '=', $request->item_number)
-            ->delete();
+        $this->cartService->removeOrderItem($request->order_number, $request->item_number, $price, $request->qty);
 
         Logs::create([
             'type' => 'Delete item pending Order',
