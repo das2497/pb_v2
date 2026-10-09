@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
 use App\Models\Logs;
-use App\Models\Orders;
-use App\Models\Products;
 use App\Models\Shops;
-use Carbon\Carbon;
+use App\Services\CartService;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CartProcess extends Controller
 {
+    public function __construct(
+        private CartService $cartService,
+        private OrderService $orderService,
+    ) {
+    }
+
     public function index(Request $request)
     {
         $branch_code = $request->query('shop');
@@ -45,18 +49,11 @@ class CartProcess extends Controller
 
     public function update_qty(Request $request)
     {
-
         $request->validate([
             'qty' => 'required',
         ]);
 
-        Cart::where('item_number', '=', $request->item_number)
-            ->where('shop_bc_number', '=', $request->branch_code)
-            ->whereNull('order_number')
-            ->update([
-                'qty' => $request->qty,
-                'remarke' => $request->remarke
-            ]);
+        $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke);
 
         return back()
             ->with('success', 'Quantity updated successfully')
@@ -65,10 +62,7 @@ class CartProcess extends Controller
 
     public function delete_item(Request $request)
     {
-        Cart::where('item_number', '=', $request->item_number)
-            ->where('shop_bc_number', '=', $request->branch_code)
-            ->whereNull('order_number')
-            ->delete();
+        $this->cartService->deleteCartItem($request->item_number, $request->branch_code);
 
         return back()
             ->with('success', 'Successfully Deleted!')
@@ -81,50 +75,21 @@ class CartProcess extends Controller
             'order_time' => 'required',
         ]);
 
-        $orderShop = Shops::where('branch_code', $request->shop)->firstOrFail();
-        if (!in_array($request->order_time, $orderShop->allowedOrderTimes(), true)) {
-            return back()->with('error', 'Invalid order time for this shop.');
+        $shop = Shops::where('branch_code', $request->shop)->firstOrFail();
+
+        try {
+            $this->orderService->assertPeriodAllowed($shop, $request->order_time);
+            $this->orderService->assertNoMismatchedItems($shop, $request->order_time);
+            $this->orderService->assertNoDuplicateForToday($shop, $request->order_time);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $mismatched = Cart::join('products', 'products.item_number', '=', 'carts.item_number')
-            ->where('carts.shop_bc_number', $request->shop)
-            ->whereNull('carts.order_number')
-            ->whereNotIn('products.order_time', [$request->order_time, 'All'])
-            ->pluck('products.name_english');
-        if ($mismatched->isNotEmpty()) {
-            return back()->with('error', 'These items are not available for ' . $request->order_time . ' orders, please remove them from the cart: ' . $mismatched->implode(', '));
-        }
-
-        $today = Carbon::today();
-        $datetime = Carbon::parse($today);
-        $date = $datetime->format('Y-m-d'); // Result: "2024-08-27"
-        $excistingorder = Orders::whereDate('created_at', $date)
-            ->where('time_period', $request->order_time)
-            ->where('shop', $request->shop)
-            ->get();
-        if ($excistingorder->count() > 0) { // order repeat -----------------------------------------------------------------------------------------
-            return back()
-                ->with('error', 'Order already created for this time period in this shop.');
-        }
-
-        $uniq_id = uniqid();
-
-        Orders::create([
-            'unique_id' => $uniq_id,
-            'shop' => $request->shop,
-            'total_price' => $request->total,
-            'note' => $request->note,
-            'time_period' => $request->order_time,
-            'status' => 'Pending'
-        ]);
-
-        Cart::where('shop_bc_number', '=', $request->shop)
-            ->whereNull('order_number')
-            ->update(['order_number' => $uniq_id]);
+        $order = $this->orderService->persistPendingOrder($shop, $request->order_time, (float) $request->total, $request->note);
 
         Logs::create([
             'type' => 'Create Order',
-            'message' => 'Shop created ' . $request->order_time . ' Order. Order unique id : ' . $uniq_id,
+            'message' => 'Shop created ' . $request->order_time . ' Order. Order unique id : ' . $order->unique_id,
             'user' => Auth::user()->name,
         ]);
 

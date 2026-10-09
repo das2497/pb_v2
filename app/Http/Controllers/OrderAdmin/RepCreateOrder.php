@@ -9,19 +9,19 @@ use App\Models\OrderTime;
 use App\Models\Product_category;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 
 class RepCreateOrder extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
 
     public function index(Request $request)
     {
-
-        // dd('shop : ', $request->shop, ' category : ', $request->category);
-
         $Shops = Shops::all()->sortBy('name ASC');
         $categories = Product_category::all();
 
@@ -167,22 +167,11 @@ class RepCreateOrder extends Controller
         $shop = Shops::where('branch_code', '=', $request->branch_code)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();
 
-        $cart_item = Cart::where('shop_bc_number', '=', $request->shop)
-            ->whereNull('order_number')
-            ->get();
-
-        Session::put([
-            'cart_item' => $cart_item,
-        ]);
-
-        $price = $product->priceFor($shop);
-
-        Cart::create([
-            'item_number' => $request->item_number,
-            'qty' => $request->qty,
-            'price' => $price,
-            'shop_bc_number' => $request->branch_code,
-        ]);
+        try {
+            $this->cartService->addItemToCart($shop, $product, (int) $request->qty);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()
             ->with('success', 'Product added to cart successfully!');
@@ -190,60 +179,20 @@ class RepCreateOrder extends Controller
 
     public function addAllToCart(Request $request)
     {
-
         $selectedItems = $request->input('selected_items', []);
         $quantities = $request->input('qty', []);
         $branchCode = $request->input('branch_code');
-
-
-        // dd('Selected Items:', $selectedItems, 'Quantities:', $quantities, 'Branch Code:', $branchCode);
-
-
-        // Get the shop details based on the branch code
         $shop = Shops::where('branch_code', '=', $branchCode)->first();
 
-        // Loop through each selected item
-        foreach ($selectedItems as $itemNumber) {
+        $items = array_map(
+            fn ($itemNumber) => ['item_number' => $itemNumber, 'qty' => (int) ($quantities[$itemNumber] ?? 0)],
+            $selectedItems
+        );
 
-            $cartHas = DB::table('carts')
-                ->where('item_number', $itemNumber)
-                ->where('shop_bc_number', $branchCode)
-                ->whereNull('order_number')
-                ->whereNull('default_name')
-                ->exists();
-
-            if ($cartHas) {
-                return back()->with('error', 'Cart already have this item');
-            }
-
-            // Get the quantity for the current item
-            $qty = $quantities[$itemNumber];
-
-            if ($qty > 0) {
-                // Get the product details based on the item number
-                $product = Products::where('item_number', $itemNumber)->first();
-
-                // Get the current cart items for the shop, where the order number is null
-                $cart_item = Cart::where('shop_bc_number', $branchCode)
-                    ->whereNull('order_number')
-                    ->get();
-
-                // Store the current cart items in the session
-                Session::put([
-                    'cart_item' => $cart_item,
-                ]);
-
-                // Determine the price based on the shop's price range
-                $price = $product->priceFor($shop);
-
-                // Add the item to the cart
-                Cart::create([
-                    'item_number' => $itemNumber,
-                    'qty' => $qty,
-                    'price' => $price,
-                    'shop_bc_number' => $branchCode,
-                ]);
-            }
+        try {
+            $this->cartService->addAllItemsToCart($shop, $items);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
         Logs::create([
