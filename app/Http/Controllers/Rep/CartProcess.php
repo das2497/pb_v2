@@ -3,25 +3,26 @@
 namespace App\Http\Controllers\Rep;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
 use App\Models\Logs;
-use App\Models\Orders;
 use App\Models\Rep;
 use App\Models\Shops;
-use Carbon\Carbon;
-use DateTime;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use App\Services\CartService;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CartProcess extends Controller
 {
+    public function __construct(
+        private CartService $cartService,
+        private OrderService $orderService,
+    ) {
+    }
+
     public function index(Request $request)
     {
         $branch_code = $request->query('shop');
-
-        // dd($branch_code);
 
         $cart = DB::table('carts')
             ->join('products', 'products.item_number', '=', 'carts.item_number')
@@ -55,13 +56,7 @@ class CartProcess extends Controller
             'qty' => 'required',
         ]);
 
-        Cart::where('item_number', '=', $request->item_number)
-            ->where('shop_bc_number', '=', $request->branch_code)
-            ->whereNull('order_number')
-            ->update([
-                'qty' => $request->qty,
-                'remarke' => $request->remarke
-            ]);
+        $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke);
 
         $shop_name = Shops::where('branch_code', '=', $request->branch_code)->first()->name;
 
@@ -78,10 +73,7 @@ class CartProcess extends Controller
 
     public function delete_item(Request $request)
     {
-        Cart::where('item_number', '=', $request->item_number)
-            ->where('shop_bc_number', '=', $request->branch_code)
-            ->whereNull('order_number')
-            ->delete();
+        $this->cartService->deleteCartItem($request->item_number, $request->branch_code);
 
         $shop_name = Shops::where('branch_code', '=', $request->branch_code)->first()->name;
 
@@ -98,12 +90,10 @@ class CartProcess extends Controller
 
     public function create_order(Request $request)
     {
+        $shop = Shops::where('branch_code', '=', $request->shop)->firstOrFail();
 
-        $cart = Cart::where('shop_bc_number', '=', $request->shop)
-            ->whereNull('order_number')
-            ->get();
-
-        if ($cart->count() == 0) {
+        $cartIsEmpty = !DB::table('carts')->where('shop_bc_number', '=', $request->shop)->whereNull('order_number')->exists();
+        if ($cartIsEmpty) {
             return back()->with('error', 'Cart is empty');
         }
 
@@ -111,68 +101,28 @@ class CartProcess extends Controller
             'order_time' => 'required',
         ]);
 
-        $currentTime = Carbon::now();
-
-        $startTime = Carbon::createFromTime(8, 0, 0); // 8:00 AM
-        $endTime = Carbon::createFromTime(16, 0, 0); // 4:00 PM
-
-        // if ($currentTime->lt($startTime) || $currentTime->gt($endTime)) {
-        //     return back()
-        //         ->with('error', 'You can create orders between 8.00 a.m. to 4.00 p.m.');
-        // }
+        // Rep's time-window check is intentionally disabled (commented out
+        // in the pre-Phase-3 version) — reps can create orders any time,
+        // unlike shops. Not a gap to "fix"; this is the real current rule.
 
         $rep = Rep::where('email', '=', Auth::user()->email)->first();
-
         if ($rep->access == 'off') {
             return back()->with('error', 'You do not have access to create orders.');
         }
 
-        $orderShop = Shops::where('branch_code', $request->shop)->firstOrFail();
-        if (!in_array($request->order_time, $orderShop->allowedOrderTimes(), true)) {
-            return back()->with('error', 'Invalid order time for this shop.');
+        try {
+            $this->orderService->assertPeriodAllowed($shop, $request->order_time);
+            $this->orderService->assertNoMismatchedItems($shop, $request->order_time);
+            $this->orderService->assertNoDuplicateForToday($shop, $request->order_time);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $mismatched = Cart::join('products', 'products.item_number', '=', 'carts.item_number')
-            ->where('carts.shop_bc_number', $request->shop)
-            ->whereNull('carts.order_number')
-            ->whereNotIn('products.order_time', [$request->order_time, 'All'])
-            ->pluck('products.name_english');
-        if ($mismatched->isNotEmpty()) {
-            return back()->with('error', 'These items are not available for ' . $request->order_time . ' orders, please remove them from the cart: ' . $mismatched->implode(', '));
-        }
-
-        $today = Carbon::today();
-        $datetime = Carbon::parse($today);
-        $date = $datetime->format('Y-m-d'); // Result: "2024-08-27"
-        $excistingorder = Orders::whereDate('created_at', $date)
-            ->where('time_period', $request->order_time)
-            ->where('shop', $request->shop)
-            ->get();
-        if ($excistingorder->count() > 0) { // order repeat -----------------------------------------------------------------------------------------
-            return back()
-                ->with('error', 'Order already created for this time period in this shop.');
-        }
-
-        $uniq_id = uniqid();
-
-        Orders::create([
-            'unique_id' => $uniq_id,
-            'shop' => $request->shop,
-            'total_price' => $request->total,
-            'note' => $request->note,
-            'time_period' => $request->order_time,
-            'status' => 'Pending'
-        ]);
-
-        Cart::where('shop_bc_number', '=', $request->shop)
-            ->whereNull('order_number')
-            ->update(['order_number' => $uniq_id]);
-
-        $shop_name = Shops::where('branch_code', '=', $request->shop)->first()->name;
+        $order = $this->orderService->persistPendingOrder($shop, $request->order_time, (float) $request->total, $request->note);
 
         Logs::create([
             'type' => 'Create Order',
-            'message' => 'Rep created [' . $request->shop . ']' . $shop_name . '\'s ' . $request->order_time . ' Order. Order unique id : ' . $uniq_id,
+            'message' => 'Rep created [' . $request->shop . ']' . $shop->name . '\'s ' . $request->order_time . ' Order. Order unique id : ' . $order->unique_id,
             'user' => Auth::user()->name,
         ]);
 

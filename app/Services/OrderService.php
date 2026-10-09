@@ -10,12 +10,23 @@ use App\Services\Support\PreventsDuplicateSubmission;
 use Carbon\Carbon;
 
 /**
- * Centralizes order creation and status transitions
- * (Pending -> Processing -> Complete, Cancelled, and the Default/
- * standing-order flow), which were previously reimplemented with small,
- * inconsistent variations across OrderAdmin/Rep/Shop controllers (e.g.
- * some transitions log via Logs::create() and their near-identical
- * sibling doesn't).
+ * Centralizes order creation and status transitions, which were
+ * previously reimplemented with small, inconsistent variations across
+ * OrderAdmin/Rep/Shop controllers.
+ *
+ * IMPORTANT: order creation's validation rules genuinely differ by role
+ * today — this isn't just "the same logic with renamed variables":
+ *   - Shop enforces the 8am-4pm window, a zero-total check, and a
+ *     duplicate-submission guard, and supports a Default (standing
+ *     order) path.
+ *   - Rep's time-window check is commented out (disabled); it has its
+ *     own cart-empty and rep.access=='off' checks instead, no zero-total
+ *     check, no duplicate-submission guard, and no Default path.
+ *   - OrderAdmin has none of the above except the shared core below.
+ * createOrder()/createDefaultOrder() below are Shop's exact composed
+ * flow — Rep and OrderAdmin controllers compose the public assert*()
+ * primitives directly, in their own order, matching their own real
+ * rules, rather than being forced through Shop's.
  *
  * Throws \RuntimeException with the exact same user-facing message the
  * original controllers returned via back()->with('error', ...), so
@@ -28,35 +39,25 @@ class OrderService
     private const ORDER_WINDOW_START = [8, 0];
     private const ORDER_WINDOW_END = [16, 15];
 
-    public function createOrder(Shops $shop, string $period, float $total, ?string $note, string $actorName): Orders
+    public function assertPeriodAllowed(Shops $shop, string $period): void
     {
-        $this->guardAgainstDuplicateSubmission(
-            'order-create',
-            'Order Proceed button එක, එක වතාවක් පමණක් click කර නැවත උත්සහ කරන්න.'
-        );
-
-        if ($total <= 0.0) {
-            throw new \RuntimeException('Order total price value must not be 0.00/=');
-        }
-
         if (!in_array($period, $shop->allowedOrderTimes(), true)) {
             throw new \RuntimeException('Invalid order time for this shop.');
         }
+    }
 
+    public function assertNoMismatchedItems(Shops $shop, string $period): void
+    {
         $mismatched = $this->mismatchedCartItemNames($shop, $period);
         if ($mismatched->isNotEmpty()) {
             throw new \RuntimeException(
                 'These items are not available for ' . $period . ' orders, please remove them from the cart: ' . $mismatched->implode(', ')
             );
         }
+    }
 
-        $now = Carbon::now();
-        [$startHour, $startMinute] = self::ORDER_WINDOW_START;
-        [$endHour, $endMinute] = self::ORDER_WINDOW_END;
-        if ($now->lt(Carbon::createFromTime($startHour, $startMinute)) || $now->gt(Carbon::createFromTime($endHour, $endMinute))) {
-            throw new \RuntimeException('You can create orders between 8.00 a.m. to 4.00 p.m.');
-        }
-
+    public function assertNoDuplicateForToday(Shops $shop, string $period): void
+    {
         $alreadyOrderedToday = Orders::whereDate('created_at', Carbon::today())
             ->where('time_period', $period)
             ->where('shop', $shop->branch_code)
@@ -64,7 +65,24 @@ class OrderService
         if ($alreadyOrderedToday) {
             throw new \RuntimeException('Order already created for this time period in this shop.');
         }
+    }
 
+    public function assertWithinOrderWindow(): void
+    {
+        $now = Carbon::now();
+        [$startHour, $startMinute] = self::ORDER_WINDOW_START;
+        [$endHour, $endMinute] = self::ORDER_WINDOW_END;
+        if ($now->lt(Carbon::createFromTime($startHour, $startMinute)) || $now->gt(Carbon::createFromTime($endHour, $endMinute))) {
+            throw new \RuntimeException('You can create orders between 8.00 a.m. to 4.00 p.m.');
+        }
+    }
+
+    /**
+     * Orders::create() + attaching the open cart to it. Does not log —
+     * each caller logs its own exact (role-specific) message afterward.
+     */
+    public function persistPendingOrder(Shops $shop, string $period, float $total, ?string $note): Orders
+    {
         $uniqueId = uniqid();
 
         $order = Orders::create([
@@ -81,9 +99,35 @@ class OrderService
             ->whereNull('order_number')
             ->update(['order_number' => $uniqueId]);
 
+        return $order;
+    }
+
+    /**
+     * Shop's exact composed flow (duplicate-submission guard, zero-total
+     * check, window check, plus the shared core). Only Shop\CartProcess
+     * calls this — Rep/OrderAdmin compose the primitives above directly.
+     */
+    public function createOrder(Shops $shop, string $period, float $total, ?string $note, string $actorName): Orders
+    {
+        $this->guardAgainstDuplicateSubmission(
+            'order-create',
+            'Order Proceed button එක, එක වතාවක් පමණක් click කර නැවත උත්සහ කරන්න.'
+        );
+
+        if ($total <= 0.0) {
+            throw new \RuntimeException('Order total price value must not be 0.00/=');
+        }
+
+        $this->assertPeriodAllowed($shop, $period);
+        $this->assertNoMismatchedItems($shop, $period);
+        $this->assertWithinOrderWindow();
+        $this->assertNoDuplicateForToday($shop, $period);
+
+        $order = $this->persistPendingOrder($shop, $period, $total, $note);
+
         Logs::create([
             'type' => 'Create Order',
-            'message' => "Created {$period} order. Order unique id : {$uniqueId}",
+            'message' => "Created {$period} order. Order unique id : {$order->unique_id}",
             'user' => $actorName,
         ]);
 
