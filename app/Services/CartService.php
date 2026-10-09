@@ -106,6 +106,30 @@ class CartService
     }
 
     /**
+     * Adds a new item to an order that already exists (after creation,
+     * from the "add item" screens), bumping the order's total_price by
+     * the item's contribution. Distinct from addItemToCart() above,
+     * which targets the pre-order cart and enforces the default-item
+     * duplicate guard — none of the 8 "add item to an existing order"
+     * controllers (OrderAdmin/Rep/Shop x Pending/Processing/Under-Review/
+     * Default) check for that, so this primitive doesn't either.
+     */
+    public function addItemToExistingOrder(string $orderNumber, string $itemNumber, string $branchCode, float $price, int $qty): Cart
+    {
+        $cart = Cart::create([
+            'item_number' => $itemNumber,
+            'qty' => $qty,
+            'price' => $price,
+            'shop_bc_number' => $branchCode,
+            'order_number' => $orderNumber,
+        ]);
+
+        Orders::where('unique_id', $orderNumber)->increment('total_price', $price * $qty);
+
+        return $cart;
+    }
+
+    /**
      * Adjusts an already-placed order's total_price by the price delta
      * and updates the matching cart row's qty/remark. Shared, byte-for-
      * byte identical core of update() on every OrderAdmin/Rep/Shop

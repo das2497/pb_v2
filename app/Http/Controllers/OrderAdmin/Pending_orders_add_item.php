@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
 use App\Models\Logs;
 use App\Models\Orders;
 use App\Models\Product_category;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Pending_orders_add_item extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     public function index(Request $request)
     {
 
@@ -115,16 +119,7 @@ class Pending_orders_add_item extends Controller
 
         $price = $product->priceFor($shop);
 
-        Cart::create([
-            'item_number' => $request->item_number,
-            'qty' => $request->qty,
-            'price' => $price,
-            'shop_bc_number' => $request->shop,
-            'order_number' => $request->order_number,
-        ]);
-
-        Orders::where('unique_id', '=', $request->order_number)
-            ->increment('total_price', $price * $request->qty);
+        $this->cartService->addItemToExistingOrder($request->order_number, $request->item_number, $request->shop, $price, $request->qty);
 
         $shop_name = Shops::where('branch_code', '=', $request->shop)->first()->name;
         Logs::create([

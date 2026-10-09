@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart;
 use App\Models\Orders;
 use App\Models\Product_category;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DefaultOrdersAddItems extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     public function index(Request $request)
     {
 
@@ -117,16 +121,7 @@ class DefaultOrdersAddItems extends Controller
 
         $price = $product->priceFor($shop);
 
-        Cart::create([
-            'item_number' => $request->item_number,
-            'qty' => $request->qty,
-            'price' => $price,
-            'shop_bc_number' => $request->shop,
-            'order_number' => $request->order_number,
-        ]);
-
-        Orders::where('unique_id', '=', $request->order_number)
-            ->increment('total_price', $price * $request->qty);
+        $this->cartService->addItemToExistingOrder($request->order_number, $request->item_number, $request->shop, $price, $request->qty);
 
         return back()
             ->with('success', 'Product added to pending order successfully!');
