@@ -1,10 +1,6 @@
 <?php
 
 use App\Http\Controllers\AIChatController;
-use App\Http\Controllers\GoogleSheetController;
-use App\Http\Controllers\GoogleSheetController2;
-use App\Http\Controllers\GoogleSheetController3;
-use App\Http\Controllers\GoogleSheetController4;
 use App\Http\Controllers\OrderAdmin\Dashboard;
 use App\Http\Controllers\OrderAdmin\FinalReport;
 use App\Http\Controllers\OrderAdmin\CartProcess;
@@ -189,6 +185,9 @@ Route::middleware('order-admin')->group(function () {
     Route::get('/order-admin/profile', [OrderAdminProfile::class, 'index'])->name('order-admin.profile');
     Route::post('/order-admin/profile-update', [OrderAdminProfile::class, 'updateDetails'])->name('order-admin.profile-update');
     Route::post('/order-admin/profile-update-password', [OrderAdminProfile::class, 'updatePassword'])->name('order-admin.profile-update-password');
+
+    Route::get('/chat', [AIChatController::class, 'index'])->name('order-admin.ai-chat');
+    Route::post('/ai-chat', [AIChatController::class, 'chat'])->middleware('throttle:10,1')->name('order-admin.ai-chat.query');
 });
 
 Route::middleware('rep')->group(function () {
@@ -297,25 +296,6 @@ Route::middleware('shop')->group(function () {
 Route::get('/404', function () {
     return view('404');
 });
-
-Route::get('/sheet/read', [GoogleSheetController2::class, 'read']);
-Route::get('/sheet/insert', [GoogleSheetController2::class, 'insert']);
-Route::get('/sheet/update', [GoogleSheetController::class, 'update']);
-Route::delete('/sheet/delete', [GoogleSheetController::class, 'delete']);
-
-Route::get('/order-admin/update-google-sheet', [GoogleSheetController::class, 'updateGoogleSheet']);
-Route::get('/order-admin/update-google-sheet2', [GoogleSheetController2::class, 'updateGoogleSheet']);
-Route::get('/order-admin/update-google-sheet3', [GoogleSheetController3::class, 'updateGoogleSheet']);
-Route::get('/order-admin/update-google-sheet4', [GoogleSheetController4::class, 'updateGoogleSheet']);
-
-Route::get('/processing-transfer', [Processing_to_complete::class, 'index']);
-
-//------------------------------------------------------------------------------------------------------------------
-
-Route::get('/chat', [AIChatController::class, 'index']);
-Route::post('/ai-chat', [AIChatController::class, 'chat']);
-Route::get('/ai-search', [AIChatController::class, 'search']);
-
 
 
 

@@ -44,7 +44,7 @@ class RepProcess extends Controller
             'contact' => $request->contact,
             'type' => $request->type,
             'access' => 'off',
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
         ]);
 
         return redirect('/order-admin/add-rep')->with('success', 'Successfully Added!');

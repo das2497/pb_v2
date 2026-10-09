@@ -40,6 +40,56 @@ private const PREDICTION_LIMIT = 1000;
 private const DEFAULT_LIMIT     = 100;
 private const MAX_JSON_CHARS    = 60000; // safe token budget (~15k tokens)
 
+private const ALLOWED_TABLES = [
+    'password_reset_tokens', 'products', 'users', 'product_categories',
+    'shops', 'reps', 'routes', 'orders', 'carts', 'rep_assign_shops', 'logs',
+];
+
+private const FORBIDDEN_KEYWORDS = [
+    'insert', 'update', 'delete', 'drop', 'truncate', 'alter', 'create',
+    'grant', 'revoke', 'replace', 'call', 'exec', 'execute', 'merge',
+    'into outfile', 'into dumpfile', 'load_file', 'information_schema',
+];
+
+/**
+ * The prompt already tells the model to produce only a single SELECT and
+ * never touch `password`, but that's an instruction, not an enforcement —
+ * a model can be steered into ignoring it. This re-checks the actual SQL
+ * before it reaches DB::select().
+ */
+private function isSafeSelectQuery(string $sql): ?string
+{
+    $trimmed = trim($sql);
+
+    if (!preg_match('/^select\b/i', $trimmed)) {
+        return 'Only SELECT queries are allowed.';
+    }
+
+    if (substr_count(rtrim($trimmed, "; \t\n\r"), ';') > 0) {
+        return 'Only a single statement is allowed.';
+    }
+
+    foreach (self::FORBIDDEN_KEYWORDS as $keyword) {
+        if (preg_match('/\b' . preg_quote($keyword, '/') . '\b/i', $trimmed)) {
+            return 'Query contains a disallowed keyword.';
+        }
+    }
+
+    if (preg_match('/\bpassword\b/i', $trimmed)) {
+        return 'Query must not reference the password column.';
+    }
+
+    if (preg_match_all('/\b(?:from|join)\s+`?(\w+)`?/i', $trimmed, $matches)) {
+        foreach ($matches[1] as $table) {
+            if (!in_array(strtolower($table), self::ALLOWED_TABLES, true)) {
+                return "Query references an unknown table: {$table}.";
+            }
+        }
+    }
+
+    return null;
+}
+
 private function isPredictionQuery(string $question): bool
 {
     $lower = strtolower($question);
@@ -172,6 +222,10 @@ User question: " . $userQuestion;
     }
 
     // ── Step 2: Execute the generated SQL query ───────────────────────────────
+    if ($rejectionReason = $this->isSafeSelectQuery($generatedQuery)) {
+        return response()->json(['reply' => 'Sorry, that question cannot be answered safely: ' . $rejectionReason], 400);
+    }
+
     try {
         $queryResults = DB::select($generatedQuery);
     } catch (\Exception $e) {

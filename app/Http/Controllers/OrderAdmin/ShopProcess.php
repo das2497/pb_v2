@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ShopProcess extends Controller
 {
@@ -116,12 +117,15 @@ class ShopProcess extends Controller
                     'email' => $request->email
                 ]);
         } else {
-            // Create a new user with role 'shop'
+            // Create a new user with role 'shop'. Password is random and
+            // never communicated — the shop uses "Forgot password" to set
+            // their own (previously every auto-created account shared one
+            // hardcoded password hash committed in source).
             User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'role' => 'shop',
-                'password' => '$2y$12$Qc6Afab4uU1lxPaYaBvfUOSVtne88c0Xi2DS4vrUSLonwVIE/Ukm.'
+                'password' => Hash::make(Str::random(40)),
             ]);
         }
 
