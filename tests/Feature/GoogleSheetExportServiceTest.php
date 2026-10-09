@@ -37,4 +37,22 @@ class GoogleSheetExportServiceTest extends TestCase
 
         new GoogleSheetExportService('not_a_real_report');
     }
+
+    /**
+     * Phase 4 moved the spreadsheet IDs and credentials path from
+     * hardcoded constants into config/services.php (env-overridable).
+     * Locks in that with no env vars set, the defaults still resolve to
+     * the exact same 4 spreadsheet IDs as before.
+     */
+    public function test_config_defaults_match_the_original_hardcoded_spreadsheet_ids(): void
+    {
+        $this->assertSame([
+            'morning_summary' => '1NOxV5sU1yAD0AH94Co4snnNam79KHxPAP2sXgmD6Sso',
+            'evening_summary' => '1g9ESoKgqdPfs5yr0SnlQ7YLa31CiraDFaYxfGPv4lBg',
+            'morning_shop_report' => '18Kco3OHVB3hwciOiEs7a4gAmcRq9slgFWZdOo0wSSCU',
+            'evening_shop_report' => '1iVIHkI8PXjRnChGexPw2dagdDcmLB064z7D7LvPMJ8A',
+        ], config('services.google_sheets.spreadsheets'));
+
+        $this->assertSame(storage_path('credentials.json'), config('services.google_sheets.credentials_path'));
+    }
 }

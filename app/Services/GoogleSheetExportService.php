@@ -14,9 +14,9 @@ use Google_Service_Sheets_ValueRange;
  * app exports (morning/evening order summary, morning/evening shop
  * report) are now one parameterized class.
  *
- * The spreadsheet IDs and credentials path stay hardcoded here for now —
- * moving them into config/services.php + .env is Phase 4 (Integrations
- * Hardening), not this phase.
+ * The spreadsheet IDs and credentials path are config-driven
+ * (config/services.php, env-overridable) as of Phase 4 — the config
+ * defaults reproduce the exact values that used to be hardcoded here.
  */
 class GoogleSheetExportService
 {
@@ -25,28 +25,23 @@ class GoogleSheetExportService
     public const MORNING_SHOP_REPORT = 'morning_shop_report';
     public const EVENING_SHOP_REPORT = 'evening_shop_report';
 
-    private const SPREADSHEETS = [
-        self::MORNING_SUMMARY => '1NOxV5sU1yAD0AH94Co4snnNam79KHxPAP2sXgmD6Sso',
-        self::EVENING_SUMMARY => '1g9ESoKgqdPfs5yr0SnlQ7YLa31CiraDFaYxfGPv4lBg',
-        self::MORNING_SHOP_REPORT => '18Kco3OHVB3hwciOiEs7a4gAmcRq9slgFWZdOo0wSSCU',
-        self::EVENING_SHOP_REPORT => '1iVIHkI8PXjRnChGexPw2dagdDcmLB064z7D7LvPMJ8A',
-    ];
-
     protected Google_Service_Sheets $service;
     protected string $spreadsheetId;
 
     public function __construct(string $reportType)
     {
-        if (!isset(self::SPREADSHEETS[$reportType])) {
+        $spreadsheets = config('services.google_sheets.spreadsheets');
+
+        if (!isset($spreadsheets[$reportType])) {
             throw new \InvalidArgumentException("Unknown Google Sheet report type: {$reportType}");
         }
 
         $client = new Google_Client();
-        $client->setAuthConfig(storage_path('credentials.json'));
+        $client->setAuthConfig(config('services.google_sheets.credentials_path'));
         $client->addScope(Google_Service_Sheets::SPREADSHEETS);
 
         $this->service = new Google_Service_Sheets($client);
-        $this->spreadsheetId = self::SPREADSHEETS[$reportType];
+        $this->spreadsheetId = $spreadsheets[$reportType];
     }
 
     public function readSheet($range)

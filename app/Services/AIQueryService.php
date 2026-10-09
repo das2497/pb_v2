@@ -197,7 +197,7 @@ Schema:
 User question: " . $question;
 
         $response = Http::timeout(30)
-            ->withHeaders(['Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY')])
+            ->withHeaders(['Authorization' => 'Bearer ' . config('services.openrouter.key')])
             ->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => $model,
                 'messages' => [['role' => 'user', 'content' => $prompt]],
@@ -236,7 +236,7 @@ Instructions:
 " . ($isPrediction ? "- Highlight trends, peaks, and patterns clearly\n- Provide a prediction or forecast with reasoning\n- Mention any data limitations if the dataset was aggregated or truncated\n" : "") . "- Do not mention SQL, databases, or technical details in your response";
 
         $response = Http::timeout(60)
-            ->withHeaders(['Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY')])
+            ->withHeaders(['Authorization' => 'Bearer ' . config('services.openrouter.key')])
             ->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => $model,
                 'messages' => [['role' => 'user', 'content' => $prompt]],
