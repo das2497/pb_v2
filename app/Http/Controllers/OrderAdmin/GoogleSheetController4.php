@@ -9,7 +9,7 @@ use App\Models\Logs;
 use App\Models\Products;
 use App\Models\Routes;
 use App\Models\Shops;
-use App\Services\GoogleSheetService4;
+use App\Services\GoogleSheetExportService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,40 +19,9 @@ class GoogleSheetController4 extends Controller
 {
     protected $googleSheetService;
 
-    public function __construct(GoogleSheetService4 $googleSheetService)
+    public function __construct()
     {
-        $this->googleSheetService = $googleSheetService;
-    }
-
-    public function read()
-    {
-        $range = 'Sheet1!A1:D10'; // Example range
-        $data = $this->googleSheetService->readSheet($range);
-        return response()->json($data);
-    }
-
-    public function insert()
-    {
-        $range = 'Sheet1!A1:D1'; // Example range
-        $values = ['John Doe', 'johndoe@example.com', 'Developer', 'Company']; // Example values
-        $this->googleSheetService->insertRow($range, $values);
-        return response('Row inserted successfully');
-    }
-
-    public function update()
-    {
-        $range = 'Sheet1!A1:D1'; // Example range
-        $values = ['Jane Doo Little', 'janedoe@example.com', 'Designer', 'Company']; // Example updated values
-        $this->googleSheetService->updateRow($range, $values);
-        return response('Row updated successfully');
-    }
-
-    public function delete()
-    {
-        $sheetId = 0; // Replace with your sheet ID
-        $rowIndex = 1; // Index of the row to delete (0-based)
-        $this->googleSheetService->deleteRow($sheetId, $rowIndex);
-        return response('Row deleted successfully');
+        $this->googleSheetService = new GoogleSheetExportService(GoogleSheetExportService::EVENING_SHOP_REPORT);
     }
 
 public function updateGoogleSheet()
