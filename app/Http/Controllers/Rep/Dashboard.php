@@ -126,7 +126,8 @@ class Dashboard extends Controller
         // --------------------------------------------------------------------------------------------------
 
 
-        $last12monthsRevenue = Orders::join('rep_assign_shops', 'orders.shop', '=', 'rep_assign_shops.shop_id')
+        $last12monthsRevenue = Orders::join('shops', 'orders.shop', '=', 'shops.branch_code')
+            ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
             ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
             ->select(
                 DB::raw('DATE_FORMAT(orders.created_at, "%Y-%m") as month'),
@@ -134,6 +135,7 @@ class Dashboard extends Controller
             )
             ->where('orders.created_at', '>=', Carbon::now()->subMonths(12))
             ->whereNot('orders.status', 'Pending')
+            ->where('reps.email', '=', Auth::user()->email)
             ->groupBy('month')
             ->orderBy('month', 'ASC')
             ->get();
@@ -148,10 +150,12 @@ class Dashboard extends Controller
 
         // Fetch revenue data for the past 30 days
         $last30DaysRevenue = DB::table('orders')
-            ->join('rep_assign_shops', 'orders.shop', '=', 'rep_assign_shops.shop_id')
+            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
+            ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
             ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
             ->select(DB::raw('DATE(orders.created_at) as date'), DB::raw('SUM(orders.total_price) as amount'))
             ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->where('reps.email', '=', Auth::user()->email)
             ->groupBy('date')
             ->orderBy('date')
             ->get();

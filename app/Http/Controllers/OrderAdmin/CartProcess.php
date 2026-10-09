@@ -9,9 +9,6 @@ use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
 use Carbon\Carbon;
-
-use function Laravel\Prompts\confirm;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

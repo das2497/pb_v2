@@ -3,11 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Products;
-use App\Models\Shops;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ShopReport extends Controller
@@ -60,74 +56,7 @@ class ShopReport extends Controller
             'header_pbd' => $shops['PBD'] ?? collect(),
             'orderMap' => $orderMap
         ]);
-    }
-
-
-
-    // public function index()
-    // {
-    //     // Cache headers if they don't change frequently (e.g., 1 hour TTL)
-    //     $header_normal = Cache::remember('header_normal_morning', 3600, function () {
-    //         return Shops::join('routes', 'routes.name', '=', 'shops.morning_route')
-    //             ->where('routes.type', 'Normal')
-    //             ->select('shops.*', 'shops.name as shop_name')
-    //             ->get();
-    //     });
-
-    //     $header_special = Cache::remember('header_special_morning', 3600, function () {
-    //         return Shops::join('routes', 'routes.name', '=', 'shops.morning_route')
-    //             ->where('routes.type', 'Special')
-    //             ->select('shops.*', 'shops.name as shop_name')
-    //             ->get();
-    //     });
-
-    //     $header_pbd = Cache::remember('header_pbd_morning', 3600, function () {
-    //         return Shops::join('routes', 'routes.name', '=', 'shops.morning_route')
-    //             ->where('routes.type', 'PBD')
-    //             ->select('shops.*', 'shops.name as shop_name')
-    //             ->get();
-    //     });
-
-    //     // Products pagination (unchanged, but could cache if static)
-    //     $products = Products::orderBy('item_number', 'asc')->paginate(20);
-
-    //     return view('order-admin.shop-report-morning', compact('products', 'header_normal', 'header_special', 'header_pbd'));
-    // }
-
-    // public function index()
-    // {
-
-    //     $header_normal = DB::table('shops')
-    //         ->join('routes', 'routes.name', '=', 'shops.morning_route')
-    //         ->where('routes.type', '=', 'Normal')
-    //         ->select('shops.*', 'shops.name as shop_name')
-    //         ->get();
-
-    //     $header_special = DB::table('shops')
-    //         ->join('routes', 'routes.name', '=', 'shops.morning_route')
-    //         ->where('routes.type', '=', 'Special')
-    //         ->select('shops.*', 'shops.name as shop_name')
-    //         ->get();
-
-    //     $header_pbd = DB::table('shops')
-    //         ->join('routes', 'routes.name', '=', 'shops.morning_route')
-    //         ->where('routes.type', '=', 'PBD')
-    //         ->select('shops.*', 'shops.name as shop_name')
-    //         ->get();
-
-    //     $products = DB::table('products')
-    //         ->orderBy('item_number', 'asc')
-    //         ->paginate(20);
-
-    //     return view('order-admin.shop-report-morning', [
-    //         'products' => $products,
-    //         'header_normal' => $header_normal,
-    //         'header_special' => $header_special,
-    //         'header_pbd' => $header_pbd
-    //     ]);
-    // }
-
-    public function index_normal()
+    }    public function index_normal()
     {
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
