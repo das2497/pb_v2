@@ -8,12 +8,17 @@ use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class Under_review_orders extends Controller
 {
+    public function __construct(private OrderService $orderService)
+    {
+    }
+
     public function index()
     {
         $Orders = DB::table('orders')
@@ -73,11 +78,7 @@ class Under_review_orders extends Controller
             ->first();
 
         if ($excistingorder && $excistingorder->time_period == $request->period && $request->order_cancel == 'on') {
-            Orders::where('unique_id', '=', $request->order_id)
-                ->update([
-                    'time_period' => 'Cancelled',
-                    'status' => 'Cancelled'
-                ]);
+            $this->orderService->transitionToCancelled($request->order_id);
             return back()->with('success', 'Success!');
         }
 
@@ -89,13 +90,7 @@ class Under_review_orders extends Controller
         $status = $request->state;
 
         if ($request->order_cancel == 'on') {
-            $status = 'Cancelled';
-
-            Orders::where('unique_id', '=', $request->order_id)
-                ->update([
-                    'time_period' => $status,
-                    'status' => $status
-                ]);
+            $this->orderService->transitionToCancelled($request->order_id);
 
             return back()
                 ->with('success', 'Order successfully cancelled');

@@ -8,12 +8,17 @@ use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class Processing_orders extends Controller
 {
+    public function __construct(private OrderService $orderService)
+    {
+    }
+
     public function index(Request $request)
     {
         $Orders = null;
@@ -81,12 +86,8 @@ class Processing_orders extends Controller
             ->first();
 
         if ($excistingorder && $excistingorder->time_period == $request->period && $request->order_cancel == 'on') {
-            Orders::where('unique_id', '=', $request->order_id)
-                ->update([
-                    'time_period' => 'Cancelled',
-                    'status' => 'Cancelled',
-                    'note' => $request->note
-                ]);
+            $this->orderService->transitionToCancelled($request->order_id);
+            Orders::where('unique_id', '=', $request->order_id)->update(['note' => $request->note]);
             return back()->with('success', 'Success!');
         }
 
@@ -98,14 +99,8 @@ class Processing_orders extends Controller
         $status = $request->state;
 
         if ($request->order_cancel == 'on') {
-            $status = 'Cancelled';
-
-            Orders::where('unique_id', '=', $request->order_id)
-                ->update([
-                    'time_period' => $status,
-                    'status' => $status,
-                    'note' => $request->note
-                ]);
+            $this->orderService->transitionToCancelled($request->order_id);
+            Orders::where('unique_id', '=', $request->order_id)->update(['note' => $request->note]);
 
             return back()
                 ->with('success', 'Order successfully cancelled');

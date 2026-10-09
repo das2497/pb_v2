@@ -85,58 +85,6 @@ class Pending_orders extends Controller
         ]);
     }
 
-    public function update_order2(Request $request)
-    {
-        $today = Carbon::today();
-        $datetime = Carbon::parse($today);
-        $date = $datetime->format('Y-m-d'); // Result: "2024-08-27"
-
-        // dd($request->shop, ' ', $request->period, ' ', $date);
-
-        $excistingorder = Orders::where('shop', '=', $request->shop)
-            ->where('time_period', '=', $request->period)
-            ->whereDate('created_at', $date)
-            ->first();
-
-        if ($excistingorder && $excistingorder->time_period == $request->period && $request->order_cancel == 'on') {
-            Orders::where('unique_id', '=', $request->order_id)
-                ->update([
-                    'time_period' => 'Cancelled',
-                    'status' => 'Cancelled'
-                ]);
-            return back()->with('success', 'Successfully cancelled order!');
-        }
-
-        if ($excistingorder && $excistingorder->count() > 0) {
-            return back()
-                ->with('error', 'Order already created for this time period in this shop.');
-        }
-
-        $status = $request->state;
-
-        if ($request->order_cancel == 'on') {
-            $status = 'Cancelled';
-
-            Orders::where('unique_id', '=', $request->order_id)
-                ->update([
-                    'time_period' => $status,
-                    'status' => $status
-                ]);
-
-            return back()
-                ->with('success', 'Order successfully cancelled');
-        }
-
-        Orders::where('unique_id', '=', $request->order_id)
-            ->update([
-                'time_period' => $request->period,
-                'status' => $status,
-            ]);
-
-        return back()
-            ->with('success', 'Updated successfully');
-    }
-
     public function update_order(Request $request)
     {
         $date = Carbon::today()->format('Y-m-d');
@@ -149,12 +97,8 @@ class Pending_orders extends Controller
 
         // If order exists and it's a cancellation
         if ($existingOrder && $request->order_cancel == 'on') {
-            Orders::where('unique_id', $request->order_id)
-                ->update(
-                    ['time_period' => 'Cancelled',
-                    'status' => 'Cancelled',
-                    'note' => $request->note
-                ]);
+            $this->orderService->transitionToCancelled($request->order_id);
+            Orders::where('unique_id', $request->order_id)->update(['note' => $request->note]);
 
             Logs::create([
                 'type' => 'Order update',
