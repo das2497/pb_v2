@@ -15,5 +15,6 @@ class Logs extends Model
         'type',
         'message',
         'user',
+        'user_id',
     ];
 }

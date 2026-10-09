@@ -19,7 +19,9 @@ class Shops extends Model
         'price_range',
         'order_time',
         'morning_route',
+        'morning_route_id',
         'evening_route',
+        'evening_route_id',
         'type',
     ];
 

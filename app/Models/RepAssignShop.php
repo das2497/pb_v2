@@ -13,6 +13,8 @@ class RepAssignShop extends Model
 
     protected $fillable = [
         'rep_id',
+        'rep_id_int',
         'shop_id',
-    ];    
+        'shop_id_int',
+    ];
 }

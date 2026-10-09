@@ -14,6 +14,7 @@ class Orders extends Model
     protected $fillable = [
         'unique_id',
         'shop',
+        'shop_id',
         'total_price',
         'note',
         'time_period',
