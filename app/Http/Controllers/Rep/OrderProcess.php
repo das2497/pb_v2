@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Rep;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddToCartRequest;
+use App\Http\Requests\VerifyFormTokenRequest;
 use App\Models\Cart;
 use App\Models\Logs;
 use App\Models\OrderTime;
@@ -145,10 +147,7 @@ class OrderProcess extends Controller
 
     public function add_to_cart(Request $request)
     {
-        $request->validate([
-            'qty' => 'required',
-            'branch_code' => 'required'
-        ]);
+        $request->validate((new AddToCartRequest())->rules());
 
         $shop = Shops::where('branch_code', '=', $request->branch_code)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();
@@ -165,9 +164,7 @@ class OrderProcess extends Controller
 
     public function addAllToCart(Request $request)
     {
-        $request->validate([
-            'form_token' => 'required',
-        ]);
+        $request->validate((new VerifyFormTokenRequest())->rules());
 
         if ($request->form_token !== session('form_token')) {
             return redirect()->back()->withErrors(['error' => 'Duplicate submission detected.']);

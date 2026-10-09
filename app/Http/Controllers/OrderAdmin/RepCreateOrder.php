@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddToCartRequest;
 use App\Models\Cart;
 use App\Models\Logs;
 use App\Models\OrderTime;
@@ -159,10 +160,7 @@ class RepCreateOrder extends Controller
 
     public function add_to_cart(Request $request)
     {
-        $request->validate([
-            'qty' => 'required',
-            'branch_code' => 'required'
-        ]);
+        $request->validate((new AddToCartRequest())->rules());
 
         $shop = Shops::where('branch_code', '=', $request->branch_code)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();

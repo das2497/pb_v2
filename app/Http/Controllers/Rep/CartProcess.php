@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Rep;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\UpdateOrderItemQuantityRequest;
 use App\Models\Logs;
 use App\Models\Rep;
 use App\Models\Shops;
@@ -52,9 +54,7 @@ class CartProcess extends Controller
 
     public function update_qty(Request $request)
     {
-        $request->validate([
-            'qty' => 'required',
-        ]);
+        $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
         $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke);
 
@@ -97,9 +97,7 @@ class CartProcess extends Controller
             return back()->with('error', 'Cart is empty');
         }
 
-        $request->validate([
-            'order_time' => 'required',
-        ]);
+        $request->validate((new CreateOrderRequest())->rules());
 
         // Rep's time-window check is intentionally disabled (commented out
         // in the pre-Phase-3 version) — reps can create orders any time,

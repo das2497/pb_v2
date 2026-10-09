@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateOrderItemQuantityRequest;
 use App\Models\Logs;
 use App\Models\Orders;
 use App\Models\Product_category;
@@ -87,9 +88,7 @@ class PendingOrdersAddItems extends Controller
 
         // dd('shop',$request->shop,'item number ',$request->item_number,'order number ',$request->order_number,'qty',$request->qty);
 
-        $request->validate([
-            'qty' => 'required',
-        ]);
+        $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
         if (!Products::availableForOrder($request->item_number, $request->order_number)) {
             return back()->with('error', 'This product is not available for this order\'s time period.');

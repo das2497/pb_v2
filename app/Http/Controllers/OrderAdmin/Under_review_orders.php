@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateOrderItemQuantityRequest;
 use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
@@ -114,9 +115,7 @@ class Under_review_orders extends Controller
 
     public function update(Request $request)
     {
-        $request->validate([
-            'qty' => 'required',
-        ]);
+        $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
         $shop = Shops::where('branch_code', '=', $request->shop)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();

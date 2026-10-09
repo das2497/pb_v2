@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateOrderItemQuantityRequest;
 use App\Models\Orders;
 use App\Models\Product_category;
 use App\Models\Products;
@@ -107,9 +108,7 @@ class DefaultOrdersAddItems extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'qty' => 'required',
-        ]);
+        $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
         if (!Products::availableForOrder($request->item_number, $request->order_number)) {
             return back()->with('error', 'This product is not available for this default order\'s time period.');

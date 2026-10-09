@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Rep;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateOrderItemQuantityRequest;
 use App\Models\Logs;
 use App\Models\Orders;
 use App\Models\Products;
@@ -107,9 +108,7 @@ class ProcessingOrders extends Controller
                 ->with('error', 'You do not have access to create orders.');
         }
 
-        $request->validate([
-            'qty' => 'required',
-        ]);
+        $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
         $shop = Shops::where('branch_code', '=', $request->shop)->first();
         $product = Products::where('item_number', '=', $request->item_number)->first();

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\UpdateOrderItemQuantityRequest;
 use App\Models\Logs;
 use App\Models\Shops;
 use App\Services\CartService;
@@ -49,9 +51,7 @@ class CartProcess extends Controller
 
     public function update_qty(Request $request)
     {
-        $request->validate([
-            'qty' => 'required',
-        ]);
+        $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
         $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke);
 
@@ -71,9 +71,7 @@ class CartProcess extends Controller
 
     public function create_order(Request $request)
     {
-        $request->validate([
-            'order_time' => 'required',
-        ]);
+        $request->validate((new CreateOrderRequest())->rules());
 
         $shop = Shops::where('branch_code', $request->shop)->firstOrFail();
 
