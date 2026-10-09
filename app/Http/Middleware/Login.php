@@ -7,28 +7,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Guest-only gate for the login page: lets guests through, bounces an
+ * already-authenticated user to their own dashboard (shares the mapping
+ * with EnsureUserHasRole instead of keeping its own separate copy).
+ */
 class Login
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-
         if (!Auth::check()) {
             return $next($request);
-        } elseif (Auth::user()->role === 's_admin') {
-            return redirect('/super-admin/dashboard');
-        } elseif (Auth::user()->role === 'o_admin' || Auth::user()->role === 'admin' || Auth::user()->role === 'view' || Auth::user()->role === 'sales_admin') {
-            return redirect('/order-admin/dashboard');
-        } elseif (Auth::user()->role === 'rep') {
-            return redirect('/rep/dashboard');
-        } elseif (Auth::user()->role === 'shop') {
-            return redirect('/shop/dashboard');
-        } else {
-            return redirect('/404');
         }
+
+        return redirect(EnsureUserHasRole::dashboardFor(Auth::user()->role));
     }
 }

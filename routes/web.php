@@ -77,13 +77,13 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__ . '/auth.php';
 
-Route::middleware('super-admin')->group(function () {
+Route::middleware('role:s_admin')->group(function () {
     Route::get('/super-admin/dashboard', function () {
         return view('super-admin.dashboard');
     })->name('super-admin');
 });
 
-Route::middleware('order-admin')->group(function () {
+Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::get('/order-admin/dashboard', [Dashboard::class, 'index'])->name('order-admin.dashboard');
     Route::get('/order-admin/first-load-data', [Dashboard::class, 'firstLoading'])->name('order-admin.first-load-data');
     Route::get('/api/order-admin/dashboard-data', [Dashboard::class, 'getDashboardData'])->name('api.order-admin.dashboard-data');
@@ -190,7 +190,7 @@ Route::middleware('order-admin')->group(function () {
     Route::post('/ai-chat', [AIChatController::class, 'chat'])->middleware('throttle:10,1')->name('order-admin.ai-chat.query');
 });
 
-Route::middleware('rep')->group(function () {
+Route::middleware('role:rep')->group(function () {
     Route::get('/rep/dashboard', [RepDashboard::class, 'index'])->name('rep.dashboard');
     Route::get('/rep/my-shops', [Shops::class, 'index'])->name('rep.my-shops');
     Route::get('/rep/create-order', [OrderProcess::class, 'index'])->name('rep.create-order');
@@ -249,7 +249,7 @@ Route::middleware('rep')->group(function () {
     Route::post('/rep/profile-update', [RepProfile::class, 'update'])->name('rep.profile-update');
 });
 
-Route::middleware('shop')->group(function () {
+Route::middleware('role:shop')->group(function () {
     Route::get('/shop/dashboard', [ShopDashboard::class, 'index'])->name('shop.dashboard');
 
     Route::get('/shop/profile', [Profile::class, 'index'])->name('shop.profile');
