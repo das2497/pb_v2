@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRepRequest;
 use App\Models\Rep;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -23,13 +24,7 @@ class RepProcess extends Controller
     public function store(Request $request)
     {
 
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required',
-            'contact' => 'required',
-            'type' => 'required',
-            'password' => 'required',
-        ]);
+        $request->validate((new StoreRepRequest())->rules());
 
         User::create([
             'name' => $request->name,

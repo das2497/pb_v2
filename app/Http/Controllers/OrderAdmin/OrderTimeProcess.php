@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreOrderTimeRequest;
 use App\Models\OrderTime;
 use App\Models\Products;
 use Illuminate\Http\Request;
@@ -11,9 +12,7 @@ class OrderTimeProcess extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:50|not_in:All,all,Both,both|unique:order_times,name',
-        ]);
+        $request->validate((new StoreOrderTimeRequest())->rules());
 
         OrderTime::create(['name' => trim($request->name)]);
 

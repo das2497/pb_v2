@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductCategoryRequest;
 use App\Models\Product_category;
 use Illuminate\Http\Request;
 
@@ -10,10 +11,7 @@ class ProductCategory extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
-            'main_category' => 'required',
-            'category' => 'required',
-        ]);
+        $request->validate((new ProductCategoryRequest())->rules());
 
         Product_category::create([
             'category' => $request->category,
@@ -25,10 +23,7 @@ class ProductCategory extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'main_category' => 'required',
-            'category' => 'required',
-        ]);
+        $request->validate((new ProductCategoryRequest())->rules());
 
         $product_category = Product_category::findOrFail($id);
         $product_category->category = $request->category;

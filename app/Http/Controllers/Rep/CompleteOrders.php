@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Rep;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CompleteOrdersDateFilterRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,9 +15,7 @@ class CompleteOrders extends Controller
         $Orders = null;
 
         if ($request->has('search') && $request->search != '') {
-            $request->validate([
-                'date' => 'required'
-            ]);
+            $request->validate((new CompleteOrdersDateFilterRequest())->rules());
 
             if ($request->has('date') && $request->date == null) {
                 $Orders = DB::table('orders')
@@ -68,9 +67,7 @@ class CompleteOrders extends Controller
                     ->orderBy('orders.created_at', 'desc')
                     ->paginate(20);
             } else {
-                $request->validate([
-                    'date' => 'required'
-                ]);
+                $request->validate((new CompleteOrdersDateFilterRequest())->rules());
                 $Orders = DB::table('orders')
                     ->join('shops', 'shops.branch_code', '=', 'orders.shop')
                     ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')

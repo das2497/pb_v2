@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreShopRequest;
+use App\Http\Requests\UpdateShopRequest;
 use App\Models\Routes;
 use App\Models\Shops;
 use App\Models\User;
@@ -48,19 +50,7 @@ class ShopProcess extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'name_sinhala' => 'required',
-            'branch_code' => 'required',
-            'email' => 'required',
-            'contact' => 'required',
-            'price_range' => 'required',
-            'morning_route' => 'required',
-            'evening_route' => 'required',
-            'type' => 'required',
-            'order_time' => 'required',
-            'password' => 'required'
-        ]);
+        $request->validate((new StoreShopRequest())->rules());
 
         User::create([
             'name' => $request->name,
@@ -87,15 +77,7 @@ class ShopProcess extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'branch_code' => 'required|string|max:255',
-            'email' => 'required|email',
-            'price_range' => 'required|string|max:255',
-            'morning_route' => 'required|string|max:255',
-            'evening_route' => 'required|string|max:255',
-            'order_time' => 'required|string|max:255',
-            'type' => 'required|string|max:255',
-        ]);
+        $request->validate((new UpdateShopRequest())->rules());
 
         $shop = Shops::findOrFail($id);
         $shop->branch_code = $request->branch_code;

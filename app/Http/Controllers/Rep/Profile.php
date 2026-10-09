@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Rep;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateRoleProfileRequest;
 use App\Models\Rep;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -20,12 +21,7 @@ class Profile extends Controller
     public function update(Request $request)
     {
 
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required',
-            'password' => 'required|min:8',
-            'confirm' => 'required',
-        ]);
+        $request->validate((new UpdateRoleProfileRequest())->rules());
 
         if ($request->password != $request->confirm) {
             return back()->with('error', 'Password and confirm password should be same.');

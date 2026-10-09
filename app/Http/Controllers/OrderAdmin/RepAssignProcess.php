@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RepAssignShopRequest;
 use App\Models\Rep;
 use App\Models\RepAssignShop;
 use App\Models\Shops;
@@ -52,10 +53,7 @@ class RepAssignProcess extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'rep_id' => 'required',
-            'shop_id' => 'required'
-        ]);
+        $request->validate((new RepAssignShopRequest())->rules());
 
         $result = RepAssignShop::where('rep_id', '=', $request->rep_id)
             ->where('shop_id', '=', $request->shop_id)

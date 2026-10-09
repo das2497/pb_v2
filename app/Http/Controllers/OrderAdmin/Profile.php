@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\UpdateProfileDetailsRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -16,9 +18,7 @@ class Profile extends Controller
 
     public function updateDetails(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $request->validate((new UpdateProfileDetailsRequest())->rules());
 
         $request->user()->update($validated);
 
@@ -27,13 +27,7 @@ class Profile extends Controller
 
     public function updatePassword(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'new_password' => [
-                'required', 
-                'confirmed', 
-            ],
-        ]);
+        $validated = $request->validate((new UpdatePasswordRequest())->rules());
 
         $request->user()->update([
             'password' => Hash::make($validated['new_password']),

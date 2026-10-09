@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\AIServiceUnavailableException;
+use App\Http\Requests\AIChatMessageRequest;
 use App\Services\AIQueryService;
 use Illuminate\Http\Request;
 
@@ -19,10 +20,7 @@ class AIChatController extends Controller
 
     public function chat(Request $request)
     {
-        $validated = $request->validate([
-            'message' => 'required|string|max:500',
-            'model' => 'required|string',
-        ]);
+        $validated = $request->validate((new AIChatMessageRequest())->rules());
 
         $userQuestion = trim($validated['message']);
         $model = $validated['model'];

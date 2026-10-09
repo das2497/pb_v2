@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RouteRequest;
 use App\Models\Routes;
 use Illuminate\Http\Request;
 
@@ -30,12 +31,7 @@ class RouteProcess extends Controller
     public function store(Request $request)
     {
 
-        $request->validate([
-            'index' => 'required',
-            'name' => 'required',
-            'type' => 'required',
-            'time' => 'required',
-        ]);
+        $request->validate((new RouteRequest())->rules());
 
         Routes::create([
             'index' => $request->index,
@@ -49,12 +45,7 @@ class RouteProcess extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'index' => 'required',
-            'name' => 'required',
-            'type' => 'required',
-            'time' => 'required',
-        ]);
+        $request->validate((new RouteRequest())->rules());
 
         $route = Routes::findOrFail($id);
         $route->index = $request->index;

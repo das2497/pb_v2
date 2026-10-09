@@ -3,19 +3,15 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\OrderTime;
 use App\Models\Product_category;
 use App\Models\Products;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ProductsProcess extends Controller
 {
-    private function allowedOrderTimes(): array
-    {
-        return array_merge(OrderTime::pluck('name')->all(), ['All']);
-    }
-
     public function add_products_view(Request $request)
     {
         if ($request->has('search')) {
@@ -47,18 +43,7 @@ class ProductsProcess extends Controller
 
     public function add_product_process(Request $request)
     {
-        $request->validate([
-            'file' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'item_number' => 'required',
-            'item_name_e' => 'required',
-            'item_name_s' => 'required',
-            'category' => 'required',
-            'visibility' => 'required',
-            'order_time' => ['required', Rule::in($this->allowedOrderTimes())],
-            'pb_unit_price' => 'required',
-            'pb_mrp' => 'required',
-            'pb_direct_sale_price' => 'required',
-        ]);
+        $request->validate((new StoreProductRequest())->rules());
 
         $imageName = time() . '.' . $request->file->extension();
         $request->file->move(public_path('assets/images/item-images'), $imageName);
@@ -81,18 +66,7 @@ class ProductsProcess extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'item_number' => 'required|string|max:255',
-            'name_english' => 'required|string|max:255',
-            'name_sinhala' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
-            'visibility' => 'required|string|max:255',
-            'order_time' => ['required', Rule::in($this->allowedOrderTimes())],
-            'unit_price' => 'required|numeric',
-            'mrp' => 'required|numeric',
-            'direct_sale_price' => 'required|numeric',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        $request->validate((new UpdateProductRequest())->rules());
 
         $product = Products::findOrFail($id);
         $product->item_number = $request->item_number;
