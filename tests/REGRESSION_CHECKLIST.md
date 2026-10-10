@@ -44,9 +44,9 @@ visual report layout).
 | Products: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ |
 | Order times: add/delete (incl. reserved-name rejection) | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ |
 | Product categories: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ |
-| Shops: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add/update covered by tests; delete manually verified 2026-10-10 in a live browser (both the shop row and its linked login account are removed, matching `ShopProcess::delete()`) |
+| Shops: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add/update covered by tests; delete manually verified 2026-10-10 in a live browser (shop row, linked login account, and its `rep_assign_shops` row are all removed - the last part fixed 2026-10-10, see below) |
 | Routes: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add/update covered by tests; delete manually verified 2026-10-10 in a live browser |
-| Reps: add, assign/update shop assignments, update access, delete | `OrderAdmin/AdminCrudFormRequestTest.php` | 🟡 add + assign + delete manually verified 2026-10-10 (delete removes the `reps` row only - see bug note below); **access-update is broken** - confirmed via live browser + DOM inspection, not a test gap. See "Manual QA pass, 2026-10-10" below |
+| Reps: add, assign/update shop assignments, update access, delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add + assign + access-update + delete all manually verified 2026-10-10 in a live browser. Delete now also removes the linked login account and `rep_assign_shops` row (fixed 2026-10-10, see below) |
 | Create order on a shop's behalf (cart, add items, submit) | `OrderAdmin/CartAndOrderTest.php` | ✅ |
 | Export report (Excel download) | — | 🟡 manually verified 2026-10-10 the route/category selection form renders correctly; actually generating and downloading the Excel file wasn't exercised |
 | Shop report: morning/evening, normal/full-screen | — | 🟡 manually verified 2026-10-10 the morning/normal variant renders correctly with real shop data; evening and full-screen variants not separately checked |
@@ -149,34 +149,50 @@ introduced here - preserved as-is, not fixed, per this project's mandate:
 
 Tested Shop/Route/Rep delete and Rep access-update with throwaway rows
 (created and removed via the real UI, never touching real shops/routes/reps)
-in a live browser. Found 3 more pre-existing bugs this way, each confirmed
-against baseline `15546ca` and left as-is per the preservation mandate:
+in a live browser.
 
-- **Rep access-update is completely non-functional.** The "Update Access"
-  button does nothing at all - confirmed via `closest('form')` returning
-  `null` for every one of these buttons in the live DOM. Cause:
-  `add-rep.blade.php` wraps the checkbox + hidden `rep_email` + submit
-  button in a `<form>` that is itself a direct child of a `<tr>`, which is
-  invalid HTML - no browser allows `<form>` there, so the parser's table
-  foster-parenting rules strip the form out from around its own fields,
-  leaving the button entirely disconnected from any form. A backend
-  (`RepAssignProcess::update_access()`) and Form Request test can never
-  catch this class of bug - it only exists once a real browser parses the
-  actual HTML, which is exactly why this stayed invisible until now.
-- **Deleting a Shop doesn't clean up its `rep_assign_shops` row.**
-  `ShopProcess::delete()` removes the shop and its linked login (`users`)
-  row, but leaves the shop's row in `rep_assign_shops` pointing at a
-  `shop_id` that no longer exists.
-- **Deleting a Rep doesn't clean up its `rep_assign_shops` row either, nor
-  its linked `users` login.** `RepProcess::delete()` only removes the
-  `reps` row. The dangling `rep_assign_shops` row has a real, visible
-  knock-on effect: any shop still assigned to that now-deleted rep
-  disappears from the Shops admin list *and* from the "unassigned shops"
+**False alarm, corrected:** Rep access-update was first reported here as
+"completely non-functional", based on `closest('form')` returning `null`
+for the "Update Access" button in the live DOM -
+`add-rep.blade.php` wraps the checkbox + hidden `rep_email` + submit
+button in a `<form>` that is itself a direct child of a `<tr>`, which is
+invalid HTML. That diagnosis was wrong: a direct click-through test (toggle
+a real rep's switch, click Update Access, check the DB) showed the update
+*does* save correctly. The browser's HTML parser keeps a "current form"
+pointer while parsing that survives the foster-parenting fix-up, so
+form-associated elements submit correctly even though they're not DOM
+descendants of the form - `closest('form')` doesn't see this, only an
+actual submit does. The earlier failed attempts to reproduce this
+(2026-10-10, see git history) were most likely a one-off interaction slip,
+not a real bug. Left as-is - it works, even though the underlying HTML is
+still invalid and relies on parser fallback behavior rather than a
+guaranteed-correct structure.
+
+Found 2 real pre-existing bugs, both confirmed against baseline `15546ca`
+and **fixed 2026-10-10** (not left as-is - explicitly requested):
+
+- **Deleting a Shop didn't clean up its `rep_assign_shops` row.**
+  `ShopProcess::delete()` removed the shop and its linked login (`users`)
+  row, but left the shop's row in `rep_assign_shops` pointing at a
+  `shop_id` that no longer exists. Fixed by deleting that row alongside
+  the shop and its user.
+- **Deleting a Rep didn't clean up its `rep_assign_shops` row or its
+  linked `users` login at all.** `RepProcess::delete()` only removed the
+  `reps` row. The dangling `rep_assign_shops` row had a real, visible
+  knock-on effect: any shop still assigned to that now-deleted rep would
+  disappear from the Shops admin list *and* from the "unassigned shops"
   dropdown on the Rep-Assign page (both queries inner-join through
   `rep_assign_shops` → `reps`), making that shop's own Delete action
-  unreachable through the UI until it's re-assigned to a rep that still
-  exists.
-- These aren't isolated to test data - `rep_assign_shops` currently has
-  **190 rows** pointing at a `shop_id`/`rep_id` that no longer exists in
-  the real dev dataset, meaning this has been happening across the app's
-  real history, not just introduced by this session's testing.
+  unreachable through the UI until it was re-assigned to a rep that still
+  exists. Fixed by deleting the linked user and the `rep_assign_shops` row
+  alongside the rep, matching the pattern `ShopProcess::delete()` already
+  used for its own linked user.
+- Both fixes re-verified end to end with fresh throwaway rows: create shop
+  + rep, assign, delete rep → user/assignment both gone; create shop + rep,
+  assign, delete shop → assignment gone. 189 tests still passing.
+- These weren't isolated to test data - `rep_assign_shops` had **190 rows**
+  pointing at a `shop_id`/`rep_id` that no longer exists in the real dev
+  dataset at the time this was found, meaning this had been happening
+  across the app's real history. Those 190 pre-existing orphaned rows
+  were **not** retroactively cleaned up - the fix only stops new ones from
+  being created going forward.

@@ -11,6 +11,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -123,6 +124,12 @@ class ShopProcess extends Controller
         if ($user) {
             $user->delete();
         }
+
+        // Without this, the shop's rep_assign_shops row dangles on a
+        // shop_id that no longer exists (found via manual QA, 2026-10-10 -
+        // the real dev dataset already had 190 such orphaned rows from
+        // shop/rep deletes never cleaning this table up).
+        DB::table('rep_assign_shops')->where('shop_id', $shop->id)->delete();
 
         $shop->delete();
 
