@@ -145,6 +145,135 @@ class OrderLifecycleTest extends TestCase
         $this->assertSame(1, Orders::where('status', 'Pending')->count());
     }
 
+    public function test_order_admin_cancels_a_pending_order(): void
+    {
+        // Pending_orders::update_order() only takes the cancel branch when a
+        // matching order is found for the submitted shop+period+today - unlike
+        // Processing/Under-Review's equivalent endpoints below, which also
+        // have a fallback cancel path when no match is found. Genuinely
+        // different behavior across the 3 endpoints, not a test setup quirk.
+        $admin = User::factory()->create(['role' => 'o_admin']);
+        $order = Orders::create([
+            'unique_id' => uniqid(),
+            'shop' => 'BC-0001',
+            'total_price' => 300,
+            'note' => '',
+            'time_period' => 'Morning',
+            'status' => 'Pending',
+        ]);
+
+        $this->actingAs($admin)->post('/order-admin/pending-orders-update-order', [
+            'order_id' => $order->unique_id,
+            'order_number' => $order->unique_id,
+            'shop' => 'BC-0001',
+            'period' => 'Morning',
+            'order_cancel' => 'on',
+            'note' => 'cancelled by admin',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('orders', [
+            'unique_id' => $order->unique_id,
+            'status' => 'Cancelled',
+            'time_period' => 'Cancelled',
+        ]);
+    }
+
+    public function test_order_admin_cancels_a_processing_order(): void
+    {
+        $admin = User::factory()->create(['role' => 'o_admin']);
+        $order = Orders::create([
+            'unique_id' => uniqid(),
+            'shop' => 'BC-0001',
+            'total_price' => 300,
+            'note' => '',
+            'time_period' => 'Morning',
+            'status' => 'Processing',
+        ]);
+
+        $this->actingAs($admin)->post('/order-admin/processing-orders-update-order', [
+            'order_id' => $order->unique_id,
+            'shop' => 'some-other-shop',
+            'period' => 'Evening',
+            'order_cancel' => 'on',
+            'note' => 'cancelled by admin',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('orders', [
+            'unique_id' => $order->unique_id,
+            'status' => 'Cancelled',
+        ]);
+    }
+
+    public function test_order_admin_cancels_an_under_review_order(): void
+    {
+        $admin = User::factory()->create(['role' => 'o_admin']);
+        $order = Orders::create([
+            'unique_id' => uniqid(),
+            'shop' => 'BC-0001',
+            'total_price' => 300,
+            'note' => '',
+            'time_period' => 'Morning',
+            'status' => 'Under Review',
+        ]);
+
+        $this->actingAs($admin)->post('/order-admin/under-review-orders-update-order', [
+            'order_id' => $order->unique_id,
+            'shop' => 'some-other-shop',
+            'period' => 'Evening',
+            'order_cancel' => 'on',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('orders', [
+            'unique_id' => $order->unique_id,
+            'status' => 'Cancelled',
+        ]);
+    }
+
+    public function test_rep_accepting_a_pending_order_moves_it_to_processing(): void
+    {
+        $rep = \App\Models\Rep::factory()->create(['access' => 'on']);
+        $user = User::factory()->create(['role' => 'rep', 'email' => $rep->email]);
+        $order = Orders::create([
+            'unique_id' => uniqid(),
+            'shop' => 'BC-0001',
+            'total_price' => 300,
+            'time_period' => 'Morning',
+            'status' => 'Pending',
+        ]);
+
+        $this->actingAs($user)->post('/rep/pending-orders-accept', [
+            'order_number' => $order->unique_id,
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('orders', [
+            'unique_id' => $order->unique_id,
+            'status' => 'Processing',
+        ]);
+        $this->assertDatabaseHas('logs', ['type' => 'Accept Pending Order']);
+    }
+
+    public function test_rep_accepting_a_pending_order_is_blocked_when_access_is_off(): void
+    {
+        $rep = \App\Models\Rep::factory()->create(['access' => 'off']);
+        $user = User::factory()->create(['role' => 'rep', 'email' => $rep->email]);
+        $order = Orders::create([
+            'unique_id' => uniqid(),
+            'shop' => 'BC-0001',
+            'total_price' => 300,
+            'time_period' => 'Morning',
+            'status' => 'Pending',
+        ]);
+
+        $this->actingAs($user)->post('/rep/pending-orders-accept', [
+            'order_number' => $order->unique_id,
+        ])->assertSessionHas('error');
+
+        $this->assertDatabaseHas('orders', [
+            'unique_id' => $order->unique_id,
+            'status' => 'Pending',
+        ]);
+    }
+
     public function test_shop_can_save_their_cart_as_a_default_standing_order(): void
     {
         Carbon::setTestNow(Carbon::today()->setTime(10, 0));
