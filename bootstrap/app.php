@@ -17,5 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Merged into every exception's log entry (file + Slack) so a
+        // regression can be traced back to who/what triggered it without
+        // reproducing it - there was no request/user context on any log
+        // line before this.
+        $exceptions->context(fn () => [
+            'url' => request()?->fullUrl(),
+            'user_id' => auth()->id(),
+            'role' => auth()->user()?->role,
+        ]);
     })->create();

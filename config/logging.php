@@ -54,7 +54,15 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
+            // 'slack' is dropped from the stack until LOG_SLACK_WEBHOOK_URL
+            // is actually set - Monolog's Slack handler throws a cURL error
+            // on every single log call if the webhook URL is empty, which
+            // would otherwise break logging app-wide the moment LOG_STACK
+            // lists 'slack' but no webhook has been configured yet.
+            'channels' => array_filter(
+                explode(',', env('LOG_STACK', 'single')),
+                fn ($channel) => $channel !== 'slack' || filled(env('LOG_SLACK_WEBHOOK_URL')),
+            ),
             'ignore_exceptions' => false,
         ],
 
@@ -78,7 +86,10 @@ return [
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => env('LOG_SLACK_USERNAME', 'Laravel Log'),
             'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
-            'level' => env('LOG_LEVEL', 'critical'),
+            // Deliberately its own env var, not LOG_LEVEL - LOG_LEVEL controls
+            // the verbosity of the file log (debug in dev), which would flood
+            // Slack with every notice/info line if reused here.
+            'level' => env('LOG_SLACK_LEVEL', 'error'),
             'replace_placeholders' => true,
         ],
 
