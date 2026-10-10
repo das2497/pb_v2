@@ -7,6 +7,7 @@ use App\Models\Orders;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Controller
@@ -149,15 +150,23 @@ class Dashboard extends Controller
             ];
         });
 
-        $topSellingShops = DB::table('orders')
+        // These aggregate the entire orders/carts history with no date bound
+        // at all - at real data volume (Phase 6 load testing: ~74k orders,
+        // ~1.9M cart rows) that's seconds to minutes of query time on every
+        // dashboard load, regardless of indexing (see tests/PERFORMANCE_NOTES.md).
+        // Cached for 5 minutes: "top sellers of all time" doesn't need
+        // millisecond freshness, and this is the standard fix for an
+        // unbounded leaderboard aggregate that can't be date-windowed
+        // without changing what it means.
+        $topSellingShops = Cache::remember('order-admin.dashboard.top-selling-shops', 300, fn () => DB::table('orders')
             ->join('shops', 'orders.shop', '=', 'shops.branch_code')
             ->select('shops.name', DB::raw('SUM(orders.total_price) as total_sales'))
             ->groupBy('shops.name', 'shops.branch_code') // include branch_code to be safe
             ->orderByDesc('total_sales')
             ->limit(10)
-            ->get();
+            ->get());
 
-        $topItems = DB::table('carts')
+        $topItems = Cache::remember('order-admin.dashboard.top-items', 300, fn () => DB::table('carts')
             ->join('products', 'carts.item_number', '=', 'products.item_number')
             ->select(
                 'products.name_english',
@@ -167,7 +176,7 @@ class Dashboard extends Controller
             ->groupBy('products.item_number', 'products.name_english')
             ->orderByDesc('total_qty_sold')
             ->limit(10)
-            ->get();
+            ->get());
 
         $revenueData = DB::table('orders')
             ->select(
@@ -191,7 +200,7 @@ class Dashboard extends Controller
 
         //-------------------------------------------------------------------------------------------------
 
-        $topSellingRepsAllTime = DB::table('orders')
+        $topSellingRepsAllTime = Cache::remember('order-admin.dashboard.top-reps-all-time', 300, fn () => DB::table('orders')
             ->join('shops', 'orders.shop', '=', 'shops.branch_code')
             ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
             ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
@@ -209,7 +218,7 @@ class Dashboard extends Controller
                     'total_sales' => (float) $rep->total_sales,
                     'formatted' => 'Rs ' . number_format($rep->total_sales, 2),
                 ];
-            });
+            }));
 
         //-------------------------------------------------------------------------------------------------
 
@@ -217,7 +226,11 @@ class Dashboard extends Controller
             ->join('shops', 'orders.shop', '=', 'shops.branch_code')
             ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
             ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-            ->whereDate('orders.created_at', $today) // cleaner than >= $date
+            // whereDate() wraps created_at in DATE(...), which MySQL can't use
+            // orders_created_at_index for (confirmed via EXPLAIN - full scan,
+            // 13s at real data volume); whereBetween on the same calendar day
+            // is index-friendly and selects the exact same rows.
+            ->whereBetween('orders.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->select(
                 'reps.name',
                 DB::raw('SUM(orders.total_price) as total_sales')
@@ -266,7 +279,7 @@ class Dashboard extends Controller
             ->limit(10)
             ->get();
 
-        $top_orders = DB::table('orders')
+        $top_orders = Cache::remember('order-admin.dashboard.top-orders-by-value', 300, fn () => DB::table('orders')
             ->join('shops', 'orders.shop', '=', 'shops.branch_code')
             ->select(
                 'orders.unique_id',
@@ -278,7 +291,7 @@ class Dashboard extends Controller
             ->whereNot('orders.status', 'Cancelled')
             ->orderByDesc('orders.total_price')
             ->limit(10)
-            ->get();
+            ->get());
 
         return response()->json([
             'stats' => [

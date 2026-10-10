@@ -78,18 +78,67 @@ window (matching the "last 30 days"/"last 12 months" pattern already used
 elsewhere on the same dashboard), a cached/materialized summary refreshed
 periodically instead of computed live, or both.
 
+**4. `topSellingRepsToday` uses `whereDate('orders.created_at', $today)`,**
+found while verifying the fixes below (not in the original benchmark run -
+this query wasn't one of the 8 originally timed). `whereDate()` compiles to
+`DATE(orders.created_at) = '...'`, and wrapping an indexed column in a
+function makes `orders_created_at_index` unusable - confirmed via `EXPLAIN`
+(full join-driven scan instead of an index seek). 13 seconds at real data
+volume, next to `topSellingRepsLast30Days` right below it in the same
+controller, which uses a plain `whereBetween` range on the same column and
+runs in under 5ms.
+
+## Fixes applied
+
+All behavior-preserving (verified below) - same query results, different
+execution path:
+
+- **Added indexes** on `shops.branch_code`, `products.item_number`,
+  `rep_assign_shops.rep_id`, `rep_assign_shops.shop_id` (migration
+  `2026_10_10_101026_...`) - the actual columns the dashboard's queries join
+  on today. Deliberately *not* switching the queries to the Phase 1 FK
+  columns (`orders.shop_id`, `rep_assign_shops.rep_id_int`/`shop_id_int`)
+  instead, because that backfill isn't 100% complete (3,261 of 74,362 orders
+  have a null `shop_id`; over half of `rep_assign_shops` rows have null
+  `rep_id_int`/`shop_id_int`) - switching the join would silently drop those
+  rows from every result. Indexing the columns actually in use avoids that
+  risk entirely while fixing the same bottleneck.
+- **Rewrote `topSellingRepsToday`'s `whereDate()` to a `whereBetween()`**
+  range over the same calendar day (`OrderAdmin\Dashboard.php`) - confirmed
+  identical results before/after on real data (one float-formatting
+  difference, `156.86200000000002` vs `156.862` - same value, a FP
+  summation-order artifact, not a behavior change).
+- **Cached the 4 genuinely unbounded aggregates** (top-selling shops/items/
+  reps-all-time, top-10-orders-by-value) for 5 minutes via `Cache::remember`
+  - verified identical results between a cold and a warm read. This is the
+  one deliberate behavior change: these widgets are now "as of up to 5
+  minutes ago" instead of always perfectly live, which is the standard,
+  expected trade-off for a leaderboard-style aggregate at this data volume
+  and doesn't change what any individual number means, only how fresh it is
+  between page loads.
+
+### Before / after (same dev DB, same data)
+
+| Query | Before | After |
+|---|---|---|
+| Latest 10 orders | 16,468 ms | **4.7 ms** (index fix alone - no caching needed) |
+| Top 10 selling shops | 12,872 ms | **1,083 ms** uncached / ~1-5 ms cached |
+| Top 10 orders by total_price | 11,278 ms | **372 ms** uncached / ~2 ms cached |
+| `topSellingRepsToday` (`whereDate` → `whereBetween`) | 13,068 ms | **37.7 ms** |
+| Top-selling reps all time | 11,710 ms | 11,343 ms uncached (index didn't help much here - `rep_assign_shops` is only 341 rows, not the bottleneck) / **~1 ms cached** |
+| Top 10 selling items | 192,381 ms | 198,416 ms uncached (genuinely needs to read all ~1.9M cart rows - no index changes that) / **~1 ms cached** |
+
+The index fix alone (no caching) already resolved 3 of the original 4
+"nothing can help" queries. Only the two that must read the full `carts`/
+`rep_assign_shops`-driven history every time still need the cache to be
+fast - and now are.
+
 ## What this does and doesn't mean
 
-Phase 1's indexes are real and help exactly where they were designed to -
-the status/date-filtered queries show clear, measured wins (11x, 159x).
-They just don't cover every query on the dashboard, because several
-dashboard queries either join on columns Phase 1 didn't index (because the
-app code doesn't use the new FK columns it added) or don't filter by
-anything at all.
-
-**Not fixed here** - this phase's job was to measure and report, not change
-behavior out of scope. These are strong candidates for a dedicated
-follow-up (rewriting the affected queries to join on the already-indexed FK
-columns, adding the one missing `products.item_number` index, and either
-date-bounding or caching the unbounded leaderboard widgets), tracked
-separately from this measurement pass.
+Phase 1's indexes are real and helped exactly where they were designed to -
+the status/date-filtered queries showed clear, measured wins (11x, 159x) and
+that work is left as-is. The dashboard-specific issues found here were
+different problems in the same family: joins on unindexed columns one hop
+away from the ones Phase 1 did index, a `whereDate()` that accidentally
+defeated an index that already existed, a lost join/sort plan, and a few
+widgets with no bound on the data they aggregate. All are now fixed.

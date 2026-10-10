@@ -113,6 +113,7 @@ visual report layout).
   no automated coverage.
 - **Load/performance testing** of the dashboard and report queries is done -
   see [PERFORMANCE_NOTES.md](PERFORMANCE_NOTES.md). Found several dashboard
-  queries that take seconds-to-minutes at real production data volume
-  (~74k orders, ~1.9M cart rows), independent of Phase 1's indexes - not
-  fixed as part of this measurement pass.
+  queries taking seconds-to-minutes at real production data volume (~74k
+  orders, ~1.9M cart rows); all have since been fixed (missing indexes, a
+  `whereDate()` that defeated an existing one, caching for the genuinely
+  unbounded aggregates) and re-verified against the same data.
