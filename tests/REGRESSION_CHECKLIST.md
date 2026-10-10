@@ -48,7 +48,7 @@ visual report layout).
 | Routes: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add/update covered by tests; delete manually verified 2026-10-10 in a live browser |
 | Reps: add, assign/update shop assignments, update access, delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add + assign + access-update + delete all manually verified 2026-10-10 in a live browser. Delete now also removes the linked login account and `rep_assign_shops` row (fixed 2026-10-10, see below) |
 | Create order on a shop's behalf (cart, add items, submit) | `OrderAdmin/CartAndOrderTest.php` | ✅ |
-| Export report (Excel download) | — | 🟡 manually verified 2026-10-10 the route/category selection form renders correctly; actually generating and downloading the Excel file wasn't exercised |
+| Export report (Excel download) | — | ✅ manually verified 2026-10-10, including the actual file generation - it's entirely client-side (SheetJS/`xlsx.full.min.js` via `table_to_book()`), not a server download; confirmed by calling `exportToExcel()` directly and inspecting the generated workbook (19 rows × 15 cols, real cell data matching the on-screen report) |
 | Shop report: morning/evening, normal/full-screen | — | 🟡 manually verified 2026-10-10 the morning/normal variant renders correctly with real shop data; evening and full-screen variants not separately checked |
 | Final report: morning/evening, full-screen | — | 🟡 manually verified 2026-10-10 the morning variant renders correctly (route×item matrix); evening and full-screen variants not separately checked |
 | Google Sheets refresh ×4 (morning/evening summary, morning/evening shop report) | `OrderAdmin/GoogleSheetWiringTest.php` | 🟡 wiring covered by tests; the actual live write was manually verified 2026-10-10 for Morning Summary against the real production spreadsheet (`storage/credentials.json`, real spreadsheet ID) - confirmed via the Logs table entry (only written after `updateRow()` returns) plus no exception in that minute's log output. Evening Summary and the 2 Shop Report refreshes share the identical `GoogleSheetExportService` call pattern and weren't separately triggered, to avoid writing to those 3 live sheets beyond what was needed to confirm the mechanism works |
@@ -84,7 +84,7 @@ visual report layout).
 | Processing orders: list/view | — | ✅ manually verified 2026-10-10 |
 | Under-Review orders: list/view | — | 🔲 manual QA - and currently *can't* be exercised even manually: zero Under Review orders exist anywhere in the dev dataset right now |
 | Complete orders: list/view | — | ✅ manually verified 2026-10-10 |
-| Default (standing) orders: list/view/delete, update item, delete item, add items | `OrderLifecycleTest.php` (creation only) | 🟡 creating a default order is covered; the empty-state list page was manually verified 2026-10-10 to render without error, but managing an *existing* default order (view/delete/update-item/delete-item/add-items) is still 🔲 manual QA - no test account with an existing default order was available this session |
+| Default (standing) orders: list/view/delete, update item, delete item, add items | `OrderLifecycleTest.php` (creation only) | ✅ creating a default order is covered by tests; list/view/update-item/delete-item/add-items/delete-whole-order on an *existing* default order all manually verified 2026-10-10 against a throwaway order, including that deleting the whole order also cleans up its cart rows (no orphaned data, unlike the shop/rep delete bugs fixed the same day) |
 | Create order: price-tier selection, duplicate-default-item guard | `Shop/PricingTierTest.php`, `Services/CartServiceTest.php`, `Services/PricingServiceTest.php` | ✅ |
 | Create order: time window, zero-total rejection, same-period same-day rejection | `OrderLifecycleTest.php`, `Services/OrderServiceTest.php` | ✅ |
 | Create order: save as default standing order | `OrderLifecycleTest.php`, `Services/OrderServiceTest.php` | ✅ |
@@ -103,14 +103,8 @@ visual report layout).
 
 - **Google Sheets actual writes** can't run in CI without live credentials and
   network access; only the wiring (correct spreadsheet target) is automated.
-- Several admin CRUD **delete** actions (shops, routes, reps) and rep
-  **access-update** aren't directly tested, only add/update.
-- Shop's **default-order management** on an *existing* default order
-  (view/delete/update-item/delete-item/add-items, as opposed to creating one)
-  still has no automated or manual coverage - no test account with existing
-  default-order data was available during the 2026-10-10 manual QA pass.
-- **Export Report's actual Excel generation** (the download itself, not the
-  selection form) wasn't exercised in the 2026-10-10 manual QA pass.
+  (The live write itself was manually verified once, 2026-10-10 - see the
+  "Manual QA pass" notes below.)
 - Evening and full-screen variants of Shop Report / Final Report weren't
   separately checked in the 2026-10-10 pass (only the morning/normal variant
   was); same underlying query/view pattern as the checked variant, but not
@@ -196,3 +190,25 @@ and **fixed 2026-10-10** (not left as-is - explicitly requested):
   across the app's real history. Those 190 pre-existing orphaned rows
   were **not** retroactively cleaned up - the fix only stops new ones from
   being created going forward.
+
+## Export Report and default-order management pass, 2026-10-10
+
+The last two open rows - Export Report's actual Excel generation and Shop's
+existing-default-order management - were also manually verified this day:
+
+- **Export Report**: turned out not to be a server-generated download at
+  all - `OrderAdmin\ExportReport::index()` only ever renders an HTML table;
+  "Export to Excel" converts that already-rendered table to a `.xlsx` file
+  entirely client-side via SheetJS. Verified by filtering to a real
+  date range with real Complete orders (route×item matrix populated
+  correctly, including Sinhala item names), then calling `exportToExcel()`
+  directly and inspecting the resulting workbook object - 19 rows × 15
+  columns, real cell values matching the on-screen table.
+- **Shop default-order management**: created a throwaway Default order
+  with 2 cart items (direct DB insert mirroring a real default order's
+  schema, to avoid touching real shop order history) and exercised every
+  action on it through the real UI: list, view, update an item's qty
+  (order total recalculated correctly), delete an item (total
+  recalculated again), add a new item (total recalculated again), and
+  finally delete the whole order - which also correctly removed its cart
+  rows, unlike the shop/rep delete bugs fixed earlier today.
