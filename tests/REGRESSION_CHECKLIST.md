@@ -111,3 +111,8 @@ visual report layout).
 - Shop's **default-order management** (view/delete/update-item/delete-item/
   add-items on an *existing* default order, as opposed to creating one) has
   no automated coverage.
+- **Load/performance testing** of the dashboard and report queries is done -
+  see [PERFORMANCE_NOTES.md](PERFORMANCE_NOTES.md). Found several dashboard
+  queries that take seconds-to-minutes at real production data volume
+  (~74k orders, ~1.9M cart rows), independent of Phase 1's indexes - not
+  fixed as part of this measurement pass.
