@@ -44,9 +44,9 @@ visual report layout).
 | Products: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ |
 | Order times: add/delete (incl. reserved-name rejection) | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ |
 | Product categories: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ |
-| Shops: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | 🟡 add/update covered; delete (`shops.delete`) not directly tested |
-| Routes: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | 🟡 add/update covered; delete not directly tested |
-| Reps: add, assign/update shop assignments, update access, delete | `OrderAdmin/AdminCrudFormRequestTest.php` | 🟡 add + assign covered; access-update and delete not directly tested |
+| Shops: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add/update covered by tests; delete manually verified 2026-10-10 in a live browser (both the shop row and its linked login account are removed, matching `ShopProcess::delete()`) |
+| Routes: add/update/delete | `OrderAdmin/AdminCrudFormRequestTest.php` | ✅ add/update covered by tests; delete manually verified 2026-10-10 in a live browser |
+| Reps: add, assign/update shop assignments, update access, delete | `OrderAdmin/AdminCrudFormRequestTest.php` | 🟡 add + assign + delete manually verified 2026-10-10 (delete removes the `reps` row only - see bug note below); **access-update is broken** - confirmed via live browser + DOM inspection, not a test gap. See "Manual QA pass, 2026-10-10" below |
 | Create order on a shop's behalf (cart, add items, submit) | `OrderAdmin/CartAndOrderTest.php` | ✅ |
 | Export report (Excel download) | — | 🟡 manually verified 2026-10-10 the route/category selection form renders correctly; actually generating and downloading the Excel file wasn't exercised |
 | Shop report: morning/evening, normal/full-screen | — | 🟡 manually verified 2026-10-10 the morning/normal variant renders correctly with real shop data; evening and full-screen variants not separately checked |
@@ -144,3 +144,39 @@ introduced here - preserved as-is, not fixed, per this project's mandate:
   `shop/components/menu.blade.php` / `rep/components/menu.blade.php`.
 - The Shop Report page's browser tab title reads "Order Admin | Cart" -
   already wrong in the baseline's `shop-report-morning.blade.php`.
+
+## Admin delete/access-update pass, 2026-10-10
+
+Tested Shop/Route/Rep delete and Rep access-update with throwaway rows
+(created and removed via the real UI, never touching real shops/routes/reps)
+in a live browser. Found 3 more pre-existing bugs this way, each confirmed
+against baseline `15546ca` and left as-is per the preservation mandate:
+
+- **Rep access-update is completely non-functional.** The "Update Access"
+  button does nothing at all - confirmed via `closest('form')` returning
+  `null` for every one of these buttons in the live DOM. Cause:
+  `add-rep.blade.php` wraps the checkbox + hidden `rep_email` + submit
+  button in a `<form>` that is itself a direct child of a `<tr>`, which is
+  invalid HTML - no browser allows `<form>` there, so the parser's table
+  foster-parenting rules strip the form out from around its own fields,
+  leaving the button entirely disconnected from any form. A backend
+  (`RepAssignProcess::update_access()`) and Form Request test can never
+  catch this class of bug - it only exists once a real browser parses the
+  actual HTML, which is exactly why this stayed invisible until now.
+- **Deleting a Shop doesn't clean up its `rep_assign_shops` row.**
+  `ShopProcess::delete()` removes the shop and its linked login (`users`)
+  row, but leaves the shop's row in `rep_assign_shops` pointing at a
+  `shop_id` that no longer exists.
+- **Deleting a Rep doesn't clean up its `rep_assign_shops` row either, nor
+  its linked `users` login.** `RepProcess::delete()` only removes the
+  `reps` row. The dangling `rep_assign_shops` row has a real, visible
+  knock-on effect: any shop still assigned to that now-deleted rep
+  disappears from the Shops admin list *and* from the "unassigned shops"
+  dropdown on the Rep-Assign page (both queries inner-join through
+  `rep_assign_shops` → `reps`), making that shop's own Delete action
+  unreachable through the UI until it's re-assigned to a rep that still
+  exists.
+- These aren't isolated to test data - `rep_assign_shops` currently has
+  **190 rows** pointing at a `shop_id`/`rep_id` that no longer exists in
+  the real dev dataset, meaning this has been happening across the app's
+  real history, not just introduced by this session's testing.
