@@ -51,7 +51,7 @@ visual report layout).
 | Export report (Excel download) | — | 🟡 manually verified 2026-10-10 the route/category selection form renders correctly; actually generating and downloading the Excel file wasn't exercised |
 | Shop report: morning/evening, normal/full-screen | — | 🟡 manually verified 2026-10-10 the morning/normal variant renders correctly with real shop data; evening and full-screen variants not separately checked |
 | Final report: morning/evening, full-screen | — | 🟡 manually verified 2026-10-10 the morning variant renders correctly (route×item matrix); evening and full-screen variants not separately checked |
-| Google Sheets refresh ×4 (morning/evening summary, morning/evening shop report) | `OrderAdmin/GoogleSheetWiringTest.php` | 🟡 wiring (correct spreadsheet target) covered; the actual Google API write is 🔲 manual QA (no network access in tests) |
+| Google Sheets refresh ×4 (morning/evening summary, morning/evening shop report) | `OrderAdmin/GoogleSheetWiringTest.php` | 🟡 wiring covered by tests; the actual live write was manually verified 2026-10-10 for Morning Summary against the real production spreadsheet (`storage/credentials.json`, real spreadsheet ID) - confirmed via the Logs table entry (only written after `updateRow()` returns) plus no exception in that minute's log output. Evening Summary and the 2 Shop Report refreshes share the identical `GoogleSheetExportService` call pattern and weren't separately triggered, to avoid writing to those 3 live sheets beyond what was needed to confirm the mechanism works |
 | Processing → Complete bulk transfer | `OrderLifecycleTest.php`, `Services/OrderServiceTest.php` | ✅ |
 | Profile: edit details, change password | `ProfileFormRequestTest.php` | ✅ |
 
