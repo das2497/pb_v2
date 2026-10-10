@@ -3,6 +3,7 @@
 namespace Tests\Feature\Services;
 
 use App\Models\Cart;
+use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
 use App\Models\User;
@@ -108,5 +109,39 @@ class CartServiceTest extends TestCase
 
         $this->assertDatabaseMissing('carts', ['item_number' => 'ITM-2', 'shop_bc_number' => 'BC-1']);
         $this->assertDatabaseHas('logs', ['type' => 'Delete item']);
+    }
+
+    public function test_add_item_to_existing_order_creates_the_row_and_bumps_the_order_total(): void
+    {
+        $order = Orders::create(['unique_id' => 'ORD-ADD', 'shop' => 'BC-1', 'total_price' => 50, 'time_period' => 'Morning', 'status' => 'Pending']);
+
+        $cart = $this->service->addItemToExistingOrder('ORD-ADD', 'ITM-3', 'BC-1', 10.0, 2);
+
+        $this->assertSame('ITM-3', $cart->item_number);
+        $this->assertSame('ORD-ADD', $cart->order_number);
+        $this->assertSame(70.0, (float) $order->refresh()->total_price);
+    }
+
+    public function test_apply_order_item_qty_change_adjusts_the_order_total_by_the_delta(): void
+    {
+        $order = Orders::create(['unique_id' => 'ORD-QTY', 'shop' => 'BC-1', 'total_price' => 50, 'time_period' => 'Morning', 'status' => 'Pending']);
+        $cart = Cart::factory()->create(['item_number' => 'ITM-4', 'shop_bc_number' => 'BC-1', 'order_number' => 'ORD-QTY', 'qty' => 2]);
+
+        $this->service->applyOrderItemQtyChange('ORD-QTY', 'ITM-4', 10.0, 5, 'less sugar');
+
+        $this->assertSame(80.0, (float) $order->refresh()->total_price);
+        $this->assertSame(5, (int) $cart->refresh()->qty);
+        $this->assertSame('less sugar', $cart->remarke);
+    }
+
+    public function test_remove_order_item_reverses_its_contribution_and_deletes_the_row(): void
+    {
+        $order = Orders::create(['unique_id' => 'ORD-REM', 'shop' => 'BC-1', 'total_price' => 50, 'time_period' => 'Morning', 'status' => 'Pending']);
+        Cart::factory()->create(['item_number' => 'ITM-5', 'shop_bc_number' => 'BC-1', 'order_number' => 'ORD-REM', 'qty' => 3]);
+
+        $this->service->removeOrderItem('ORD-REM', 'ITM-5', 10.0, 3);
+
+        $this->assertSame(20.0, (float) $order->refresh()->total_price);
+        $this->assertDatabaseMissing('carts', ['order_number' => 'ORD-REM', 'item_number' => 'ITM-5']);
     }
 }

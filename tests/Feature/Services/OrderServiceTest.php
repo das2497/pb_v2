@@ -137,6 +137,17 @@ class OrderServiceTest extends TestCase
         $this->assertSame('Cancelled', $order->time_period);
     }
 
+    public function test_delete_order_removes_the_order_and_its_cart_rows(): void
+    {
+        Orders::create(['unique_id' => 'ORD-DEL', 'shop' => 'BC-1', 'total_price' => 10, 'time_period' => 'Morning', 'status' => 'Pending']);
+        Cart::factory()->create(['order_number' => 'ORD-DEL']);
+
+        $this->service->deleteOrder('ORD-DEL');
+
+        $this->assertDatabaseMissing('orders', ['unique_id' => 'ORD-DEL']);
+        $this->assertDatabaseMissing('carts', ['order_number' => 'ORD-DEL']);
+    }
+
     public function test_transfer_moves_every_processing_order_to_complete_and_nothing_else(): void
     {
         Orders::create(['unique_id' => uniqid(), 'shop' => 'BC-1', 'total_price' => 10, 'time_period' => 'Morning', 'status' => 'Processing']);
