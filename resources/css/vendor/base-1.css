@@ -1,0 +1,3 @@
+/* Replaces the standalone bootstrap.min.css <link> tag. Byte-identical to the
+   original public/assets/vendor/bootstrap/css/bootstrap.min.css. */
+@import "../../vendor-src/bootstrap/bootstrap.min.css";

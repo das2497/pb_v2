@@ -1,0 +1,6 @@
+/* Replaces the chartist.css + morris.css + c3.css <link> tags, in the same
+   relative order. These are the theme's customized builds (colors/fonts differ
+   from the stock library CSS), kept byte-identical on purpose. */
+@import "../../vendor-src/charts/chartist.css";
+@import "../../vendor-src/charts/morris.css";
+@import "../../vendor-src/charts/c3.css";
