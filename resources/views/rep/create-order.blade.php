@@ -113,33 +113,42 @@
                                 <div class="alert alert-danger" style="display: none;" id="warning">
                                     <p class="text-center">Pleace select a shop and search or this dosn't have any item in the cart!</p>
                                 </div>
-                                <form action="/rep/create-order" method="GET" class="input-group flex-nowrap p-2">
+                                <form action="/rep/create-order" method="GET" class="row g-2 p-2">
                                     @csrf
-                                    <input type="text" class="form-control" placeholder="Type To Search Products...." aria-describedby="addon-wrapping" name="search" value="{{old('search', session('input.search'))}}">
-                                    <br>
-                                    <select class="form-control m-l-10" id="category" name="category">
-                                        <option value="" @selected(session('category')=='' )>All category</option>
-                                        @foreach ( $categories as $category )
-                                        <option value="{{$category->category}}" @selected(session('category')==$category->category)>{{$category->category}}</option>
-                                        @endforeach
-                                    </select>
-                                    <select class="form-control mx-2" id="shop" name="shop">
-                                        <option value="">Select Shop</option>
-                                        @foreach($shops as $shop)
-                                        <option value="{{ $shop->branch_code }}" {{ (request()->input('shop') == $shop->branch_code || old('shop') == $shop->branch_code) ? 'selected' : '' }}>
-                                            {{ $shop->name }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    <select class="form-control mr-2" id="order_time" name="order_time">
-                                        @if (!$period)
-                                        <option value="" selected>Select Order Time</option>
-                                        @endif
-                                        @foreach ($allowed_times as $time)
-                                        <option value="{{ $time }}" @selected($period===$time)>{{ $time }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="btn btn-outline-primary">Search</button>
+                                    <div class="col-12 col-lg-3">
+                                        <input type="text" class="form-control" placeholder="Type To Search Products...." aria-describedby="addon-wrapping" name="search" value="{{old('search', session('input.search'))}}">
+                                    </div>
+                                    <div class="col-6 col-lg-2">
+                                        <select class="form-control" id="category" name="category">
+                                            <option value="" @selected(session('category')=='' )>All category</option>
+                                            @foreach ( $categories as $category )
+                                            <option value="{{$category->category}}" @selected(session('category')==$category->category)>{{$category->category}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-lg-3">
+                                        <select class="form-control" id="shop" name="shop">
+                                            <option value="">Select Shop</option>
+                                            @foreach($shops as $shop)
+                                            <option value="{{ $shop->branch_code }}" {{ (request()->input('shop') == $shop->branch_code || old('shop') == $shop->branch_code) ? 'selected' : '' }}>
+                                                {{ $shop->name }}
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-lg-2">
+                                        <select class="form-control" id="order_time" name="order_time">
+                                            @if (!$period)
+                                            <option value="" selected>Select Order Time</option>
+                                            @endif
+                                            @foreach ($allowed_times as $time)
+                                            <option value="{{ $time }}" @selected($period===$time)>{{ $time }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-lg-2">
+                                        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+                                    </div>
                                 </form>
 
                                 @if (!$period)
@@ -153,7 +162,7 @@
                                             <thead class="bg-light">
                                                 <tr class="border-0">
                                                     <th class="border-0">#</th>
-                                                    <th class="border-0 d-none d-lg-block">Item image</th>
+                                                    <th class="border-0">Item image</th>
                                                     <th class="border-0">Item Id</th>
                                                     <th class="border-0">Item Name English</th>
                                                     <th class="border-0">Quantity</th>
