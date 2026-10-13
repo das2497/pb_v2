@@ -115,10 +115,10 @@
                                 </div>
                                 <form action="/rep/create-order" method="GET" class="row g-2 p-2">
                                     @csrf
-                                    <div class="col-12 col-lg-3">
+                                    <div class="col-12 col-xl-3">
                                         <input type="text" class="form-control" placeholder="Type To Search Products...." aria-describedby="addon-wrapping" name="search" value="{{old('search', session('input.search'))}}">
                                     </div>
-                                    <div class="col-6 col-lg-2">
+                                    <div class="col-6 col-xl-2">
                                         <select class="form-control" id="category" name="category">
                                             <option value="" @selected(session('category')=='' )>All category</option>
                                             @foreach ( $categories as $category )
@@ -126,7 +126,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-6 col-lg-3">
+                                    <div class="col-6 col-xl-3">
                                         <select class="form-control" id="shop" name="shop">
                                             <option value="">Select Shop</option>
                                             @foreach($shops as $shop)
@@ -136,7 +136,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-6 col-lg-2">
+                                    <div class="col-6 col-xl-2">
                                         <select class="form-control" id="order_time" name="order_time">
                                             @if (!$period)
                                             <option value="" selected>Select Order Time</option>
@@ -146,7 +146,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-6 col-lg-2">
+                                    <div class="col-6 col-xl-2">
                                         <button type="submit" class="btn btn-outline-primary w-100">Search</button>
                                     </div>
                                 </form>
