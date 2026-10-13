@@ -13,7 +13,7 @@
                             <div class="page-breadcrumb">
                                 <nav aria-label="breadcrumb">
                                     <ol class="breadcrumb">
-                                        <li class="breadcrumb-item"><a href="/order-admin/dashboard" class="breadcrumb-link">Dashboard</a></li>
+                                        <li class="breadcrumb-item"><a href="/shop/dashboard" class="breadcrumb-link">Dashboard</a></li>
                                         <li class="breadcrumb-item"><a href="/rep/pending-order" class="breadcrumb-link">Default Orders</a></li>
                                         <li class="breadcrumb-item"><a href="/rep/pending-orders-view/{{$order_number}}" class="breadcrumb-link">Default Orders View</a></li>
                                         <li class="breadcrumb-item active" aria-current="page">Default Orders Add Items</li>
