@@ -283,3 +283,28 @@ deleted after each pass) - not just a code read.
 Rep report/pivot-table pages' mobile layout beyond confirming they already
 have their own scroll mechanism (not re-verified pixel-by-pixel on a real
 phone).
+
+## Phase 8 (foundation) retrofit, 2026-10-13
+
+Done last, after Phases 9-13: by the time this was picked up, Phases 9-11
+had already settled on 991.98px as the one breakpoint for the sidebar,
+tables and forms, which covered most of what Phase 8 was meant to set up
+ahead of time. What was actually still missing, found by auditing the
+remaining CSS:
+
+- `.dashboard-content`'s padding (30px desktop) only dropped to 20px at the
+  older ≤768px cutoff, so the 769-991px tablet band - already fixed for the
+  sidebar/tables/forms in Phases 9-11 - still got desktop spacing. Closed
+  with the same 991.98px breakpoint. Confirmed live at 850px width (inside
+  that former gap): sidebar collapses to the drawer, table scrolls with a
+  sticky first column, and padding is now the compact 20px - all three
+  behaviors now change together at the same width instead of in three
+  separate steps.
+- Base typography (14px body text, 24px `.pageheader-title`) and
+  Bootstrap's default control sizing (~40px buttons, `.page-link` pagination
+  controls) were audited and left alone - already reasonable at 375px/850px,
+  so no separate fluid type/spacing scale was introduced on top of them.
+  Note: this project's CSS isn't run through a preprocessor (plain `.css`,
+  not `.scss`/`.less`), so a token-based breakpoint system (CSS custom
+  properties referenced from `@media` conditions) isn't workable here
+  either way - custom properties can't be read inside a media query.

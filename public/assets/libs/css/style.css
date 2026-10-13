@@ -7109,3 +7109,24 @@ scrolling, bigger tap targets, and smoother momentum scrolling.
         flex-shrink: 0;
     }
 }
+
+
+/* -----------------------
+Phase 8: foundation - consistent breakpoint below 992px
+Added after the fact: Phases 9-11 already settled on 991.98px as the one
+"mobile/tablet" breakpoint for the sidebar/tables/forms. This closes the
+last place still keyed to the older 768px cutoff - .dashboard-content kept
+the desktop 30px padding from 769-991px - so page spacing matches
+everything else at the same breakpoint instead of changing a step later.
+
+Base typography (14px body text, 24px page headers via .pageheader-title)
+and Bootstrap's default control sizing (~40px buttons) were audited and
+left as-is - already reasonable at 375px, so no separate fluid type/spacing
+scale was introduced on top of them.
+------------------------- */
+
+@media only screen and (max-width: 991.98px) {
+    .dashboard-content {
+        padding: 20px 20px 60px 20px;
+    }
+}
