@@ -213,3 +213,73 @@ existing-default-order management - were also manually verified this day:
   recalculated again), add a new item (total recalculated again), and
   finally delete the whole order - which also correctly removed its cart
   rows, unlike the shop/rep delete bugs fixed earlier today.
+
+## Mobile-first responsive UI pass (Phases 9-13), 2026-10-13
+
+Continuing the phase numbering past Phase 7's QA pass: a phased rework of the
+shared dashboard UI (order-admin/rep/shop, all 3 built on the same
+`layouts.dashboard` + header/menu components) to be usable on phone/tablet
+widths, not just desktop. Each phase below was verified live (login,
+navigate, click/scroll/type) against real dev data at 375px (mobile) and
+1280px (desktop), using temporary throwaway accounts (`qa-*@example.test`,
+deleted after each pass) - not just a code read.
+
+- **Phase 9 (sidebar navigation)**: the fixed desktop sidebar becomes an
+  off-canvas drawer below 992px (slide-in, backdrop, body scroll lock) for
+  all 3 roles. Fixed along the way: the header previously had *two* mobile
+  hamburger buttons (one for the sidebar, one for a now-redundant
+  single-item profile-dropdown collapse); the sidebar was invisible with no
+  way to open it between 769-991px (the old breakpoint only handled
+  ≤768px, while the sidebar still claimed a 264px margin); the mobile
+  navbar-brand (shop/rep/admin's name, `font-size:30px` + `white-space:nowrap`)
+  overflowed the fixed-height header and pushed content underneath it.
+- Sidebar nav-links now highlight the current page (`request()->is()`
+  against the URL, not route names - many routes here aren't named) and
+  submenus auto-expand when a child page is active. Fixed along the way:
+  shop role's sidebar "Dashboard" link pointed at `/order-admin/dashboard`
+  instead of `/shop/dashboard`.
+- **Phase 10 (data tables)**: audited every view with a `<table`. Order
+  lists (Pending/Processing/Under-Review/Complete ×3 roles) and Logs get a
+  sticky first column + touch-sized buttons/inputs/selects below 992px.
+  Implemented with `:first-of-type`, not `:first-child` - the editable rows
+  wrap a `<form>` around their `<td>`s, which real browsers still submit
+  correctly (parser-level form-ownership, not DOM containment) but which
+  makes the `<form>`, not the first `<td>`, the actual first child. Fixed
+  `order-admin/log.blade.php`, the one real gap found (no responsive
+  wrapper at all, rigid 20/20/20/40% column widths - would overflow the
+  whole page horizontally on a phone). The Shop/Final Report and Export
+  Report pivot tables (×14 files) already had their own working
+  sticky-header/sticky-column scroll mechanism (a custom `.div`/
+  `.table-wrapper` class, not Bootstrap's `.table-responsive`) and were
+  left as-is.
+- **Phase 11 (create-order/cart forms)**: the create-order filter bar
+  (search/category/shop/order-time/search, ×3 roles) used
+  `input-group flex-nowrap`, which cannot wrap - on a phone the row just
+  overflowed the screen with no way to reach the later fields. Converted to
+  a responsive grid (stacks on mobile, one row on desktop). Fixed along the
+  way: the "Item image" column header was hidden below `lg` via
+  `d-none d-lg-block` (also the wrong display type for a `<th>`) while the
+  image `<td>` itself stayed visible - header and body were misaligned by
+  one column below `lg`. Cart pages needed no changes (already
+  `table-responsive`, already a responsive grid for the Proceed form).
+- **Phase 12 (dashboard widgets/charts)**: audited all 4 dashboards. Grid
+  classes (`col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12` etc.) and every
+  Chart.js `<canvas>` were already correctly responsive (no fixed pixel
+  width/height anywhere, `responsive:true`) - no code changes were needed.
+  Confirmed live on Shop's dashboard (server-rendered, no load delay) at
+  375px: stat cards, bar chart, legend and axis labels all render
+  correctly. order-admin's dashboard loads its chart data via a
+  client-side `axios` call that can take over a minute on a cold cache
+  (a known, already-documented Phase 6 characteristic, not a
+  responsiveness bug) - too slow to practically re-verify per edit here.
+- **Phase 13 (polish)**: preloader (already percentage/viewBox-sized, not
+  fixed px), the profile dropdown (`min-width:230px`, right-aligned to an
+  avatar near the viewport edge - confirmed no page-level horizontal
+  overflow at 375px), and a Bootstrap modal (Add Products' "Update
+  Product") all checked at 375px - already responsive, nothing to fix.
+
+**Not tested**: 768px/1024px tablet widths specifically (only 375px and
+1280px), real iOS/Android devices, landscape orientation, and the Shop and
+Rep report/pivot-table pages' mobile layout beyond confirming they already
+have their own scroll mechanism (not re-verified pixel-by-pixel on a real
+phone).
