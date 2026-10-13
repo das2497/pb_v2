@@ -98,13 +98,32 @@ jQuery(document).ready(function($) {
 
         });
     }
-    // ============================================================== 
+    // ==============================================================
     // dropzone script
-    // ============================================================== 
+    // ==============================================================
 
  //     if ($('.dz-clickable').length) {
  //            $(".dz-clickable").dropzone({ url: "/file/post" });
  // }
+
+    // ==============================================================
+    // Mobile sidebar off-canvas drawer (Phase 9)
+    // ==============================================================
+
+    if ($('#navbarNav').length) {
+
+        $('#navbarNav')
+            .on('show.bs.collapse', function() {
+                $('body').addClass('sidebar-open');
+            })
+            .on('hide.bs.collapse', function() {
+                $('body').removeClass('sidebar-open');
+            });
+
+        $(document).on('click', '.sidebar-backdrop', function() {
+            $('#navbarNav').collapse('hide');
+        });
+    }
 
 }); // AND OF JQUERY
 

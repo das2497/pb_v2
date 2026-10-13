@@ -6976,3 +6976,88 @@ Media Query
 
 /* Custom, iPhone Retina */
 @media only screen and (max-width:320px) {}
+
+
+/* -----------------------
+Phase 9: off-canvas sidebar navigation (tablet + mobile, <992px)
+Supersedes the older .nav-left-sidebar/.dashboard-wrapper rules above for
+this same range - kept last so it wins the cascade and the sidebar behaves
+the same from 320px up to the lg breakpoint instead of only below 768px.
+------------------------- */
+
+.sidebar-toggle {
+    display: none;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+@media only screen and (max-width: 991.98px) {
+
+    .sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dashboard-header .navbar {
+        flex-wrap: nowrap;
+    }
+
+    .dashboard-header .navbar-brand {
+        font-size: 16px;
+        padding: 11px 8px;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dashboard-header .navbar-brand img {
+        width: 24px;
+    }
+
+    .nav-left-sidebar {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: auto;
+        width: 85%;
+        max-width: 300px;
+        height: calc(100% - 60px);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1025;
+    }
+
+    body.sidebar-open .nav-left-sidebar {
+        transform: translateX(0);
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+        z-index: 1020;
+    }
+
+    body.sidebar-open .sidebar-backdrop {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .dashboard-wrapper {
+        margin-left: 0;
+    }
+}

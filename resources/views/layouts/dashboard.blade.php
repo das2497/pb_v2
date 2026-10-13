@@ -28,6 +28,10 @@
     @include($menuView)
     <!-- /menu -->
 
+    <!-- mobile sidebar backdrop -->
+    <div class="sidebar-backdrop"></div>
+    <!-- /mobile sidebar backdrop -->
+
     <!-- content -->
     @yield('content')
     <!-- /content -->
