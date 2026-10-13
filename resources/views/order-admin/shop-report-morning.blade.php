@@ -123,19 +123,19 @@
                                         </h5>
                                     </div>
                                     <div class="col-12 col-lg-8 pt-3">
-                                        <form class="row" action="/order-admin/shop-report" method="GET">
+                                        <form class="row g-2" action="/order-admin/shop-report" method="GET">
                                             @csrf
-                                            <div class="col-4">
+                                            <div class="col-12 col-sm-4">
                                                 <input type="date" name="date" id="" class="form-control">
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-12 col-sm-4">
                                                 <select name="state" id="" class="form-control">
                                                     <option value="Processing">Processing</option>
                                                     <option value="Pending">Pending</option>
                                                     <option value="Complete">Complete</option>
                                                 </select>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-12 col-sm-4">
                                                 <button class="btn btn-primary" type="submit">Search</button>
                                             </div>
                                         </form>
