@@ -122,7 +122,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-12 cart-actions-card">
                             <div class="card">
                                 <div class="card-body p-2">
                                     <form action="/shop/cart/order-process" method="POST" class="row mt-2">
@@ -148,7 +148,7 @@
                                         <div class="col-12 col-md-6 offset-md-3 m-b-10 mt-4">
                                             <input type="hidden" name="total" value="{{$total}}">
                                             <input type="hidden" name="shop" value="{{$shop->branch_code}}">
-                                            <button class="btn btn-outline-success px-4 w-100">Proceed</button>
+                                            <button id="proceedBtn" class="btn btn-outline-success px-4 w-100">Proceed</button>
                                         </div>
                                     </form>
                                 </div>
@@ -163,8 +163,15 @@
             </div>
         </div>
 
+        <div class="cart-sticky-bar">
+            <div class="cart-sticky-bar-total">
+                <span class="cart-sticky-bar-label">Total</span>
+                <strong>රු. {{number_format($total,2)}}</strong>
+            </div>
+            <button type="button" class="btn btn-outline-success px-4" onclick="document.getElementById('proceedBtn').click();">Proceed</button>
+        </div>
     </div>
-    
+
 @endsection
 
 @push('scripts')

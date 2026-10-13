@@ -376,3 +376,28 @@ widths QA'd for order-admin (skipped as lower-risk since header/menu are
 shared components, but not independently re-verified at 768px/1024px
 for those two roles beyond the create-order and report page checks
 above), and no real-device pass (iOS/Android) for any of this.
+
+## Cart sticky-bottom summary bar, 2026-10-13
+
+Final deferred item from Phase 11 (create-order): below 992px, the cart
+page's Total and Proceed button lived in a card at the very bottom of a
+potentially long item list, so confirming an order meant scrolling all
+the way down every time.
+
+Added a `.cart-sticky-bar` (order-admin, rep and shop's `cart.blade.php`)
+fixed to the bottom of the viewport below 992px, showing the live total
+and a Proceed button. The bar's button doesn't duplicate the real
+order-process form - it calls `.click()` on the existing Proceed button
+by id, so there's still exactly one submission path (hidden
+`order_time`/`total`/`shop` inputs, the Special Note textarea, shop's
+Default Order toggle) and no risk of the two getting out of sync. Added
+`margin-bottom` to the actions card on the same breakpoint so the real
+Proceed button/card is never hidden behind the fixed bar.
+
+Verified live (QA shop + cart item, cleaned up after): bar shows the
+correct total and stays fixed while scrolling at 375px; clicking it
+fires a click on the real Proceed button (confirmed via an intercepted
+click listener); hidden entirely at 1280px; and hidden while the
+mobile sidebar drawer is open (`body.sidebar-open`) so it can't show
+through the drawer's backdrop, which shares the same z-index and would
+otherwise win on DOM order.

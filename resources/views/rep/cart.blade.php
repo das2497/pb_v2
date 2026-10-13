@@ -120,7 +120,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-12 cart-actions-card">
                             <div class="card">
                                 <div class="card-body p-1">
                                     <form action="/rep/cart/order-process" method="POST" class="row">
@@ -154,8 +154,15 @@
             </div>
         </div>
 
+        <div class="cart-sticky-bar">
+            <div class="cart-sticky-bar-total">
+                <span class="cart-sticky-bar-label">Total</span>
+                <strong>රු. {{number_format($total,2)}}</strong>
+            </div>
+            <button type="button" class="btn btn-outline-success px-4" onclick="document.getElementById('proceedbtn').click();">Proceed</button>
+        </div>
     </div>
-    
+
 @endsection
 
 @push('scripts')
