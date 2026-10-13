@@ -125,7 +125,7 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="row">
-                                    <div class="col-4">
+                                    <div class="col-12 col-lg-4">
                                         <h5 class="card-header">Today Evining Final Report &nbsp;&nbsp;
                                             <a href="/rep/final-report-evening-full-screen" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#morning_shop_wise_report">
                                                 Full Screen
