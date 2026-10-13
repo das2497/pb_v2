@@ -7061,3 +7061,51 @@ the same from 320px up to the lg breakpoint instead of only below 768px.
         margin-left: 0;
     }
 }
+
+
+/* -----------------------
+Phase 10: data table polish for tablet + mobile (<992px)
+Applies to every Bootstrap .table-responsive table (the order-admin/rep/shop
+pending/processing/under-review/complete order lists) - the table markup
+itself is unchanged, this just makes the existing horizontal scroll usable
+with the touch keyboard/thumb: a frozen first column for orientation while
+scrolling, bigger tap targets, and smoother momentum scrolling.
+------------------------- */
+
+@media only screen and (max-width: 991.98px) {
+
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive table th:first-of-type,
+    .table-responsive table td:first-of-type {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: #fff;
+        box-shadow: 2px 0 4px -2px rgba(82, 63, 105, 0.2);
+    }
+
+    .table-responsive table thead th:first-of-type {
+        z-index: 3;
+        background-color: #f8f9fa;
+    }
+
+    .table-responsive .btn {
+        min-height: 42px;
+        padding-top: .5rem;
+        padding-bottom: .5rem;
+        white-space: nowrap;
+    }
+
+    .table-responsive select.form-control,
+    .table-responsive input.form-control {
+        min-height: 42px;
+        font-size: 15px;
+    }
+
+    .table-responsive .switch {
+        flex-shrink: 0;
+    }
+}

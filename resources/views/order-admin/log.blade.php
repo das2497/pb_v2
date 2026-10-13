@@ -65,28 +65,28 @@
                                     </form>
                                     <div class="row">
                                         <div class="col-12">
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th style="width: 20%;">DateTime</th>
-                                                        <th style="width: 20%;">Type</th>
-                                                        <th style="width: 20%;">User</th>
-                                                        <th style="width: 40%;">Messege</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($logs as $log)
-                                                    <tr>
-                                                        <td>[{{$log->created_at}}]</td>
-                                                        <td>{{$log->type}}</td>
-                                                        <td>{{$log->user}}</td>
-                                                        <td>
-                                                            <p class="overflow-x-scroll">{{$log->message}}</p>
-                                                        </td>
-                                                    </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <thead class="bg-light">
+                                                        <tr>
+                                                            <th class="border-0">DateTime</th>
+                                                            <th class="border-0">Type</th>
+                                                            <th class="border-0">User</th>
+                                                            <th class="border-0">Messege</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($logs as $log)
+                                                        <tr>
+                                                            <td>[{{$log->created_at}}]</td>
+                                                            <td>{{$log->type}}</td>
+                                                            <td>{{$log->user}}</td>
+                                                            <td>{{$log->message}}</td>
+                                                        </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                     <div>
