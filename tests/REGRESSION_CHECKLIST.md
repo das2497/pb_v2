@@ -308,3 +308,71 @@ remaining CSS:
   not `.scss`/`.less`), so a token-based breakpoint system (CSS custom
   properties referenced from `@media` conditions) isn't workable here
   either way - custom properties can't be read inside a media query.
+
+## Tablet/landscape QA + report pages mobile polish, 2026-10-13
+
+Extended the Phases 9-13 pass with a live tablet/landscape QA sweep
+(order-admin, then rep and shop), plus a dedicated mobile-polish pass on
+the Final/Shop/Export Report pages explicitly deferred out of Phase 10.
+
+**Tablet/landscape QA findings (order-admin, then rep/shop):**
+- create-order's filter bar (`col-lg-*`) crammed 5 fields into one row
+  between 992-1199px, truncating select text (e.g. "CAKE ITEMS" ->
+  "CAKE ITI"). Moved to `col-xl-*` so the compact row only kicks in at
+  1200px+; verified at 1024px (3 stacked rows) and 1280px (unchanged).
+- Extending the same QA to rep/shop surfaced an unrelated bug: the
+  create-order breadcrumb's "Dashboard" link was hardcoded to
+  `/order-admin/dashboard` for all three roles (copy-pasted from the
+  order-admin version). Fixed for rep/shop create-order, then found the
+  same copy-paste bug in 25 more rep/* and shop/* views - fixed those
+  too. order-admin's own views were already correct and left alone.
+
+**Report pages mobile polish (Final Report, Shop Report, Export Report -
+both the dashboard-embedded and `layouts.report-fullscreen` variants,
+rep and order-admin):**
+- Found export-report.blade.php (order-admin) doesn't `@extends` any
+  layout - it's a standalone HTML document - and was missing
+  `jquery.slimscroll.js`/`assets/libs/js/main-js.js`. Since main-js.js is
+  what toggles `body.sidebar-open` on the navbar's collapse events (the
+  thing that actually slides the off-canvas drawer into view below
+  992px, per Phase 9), the mobile sidebar was completely non-functional
+  on this one page - tapping the hamburger did nothing visible. Added
+  both scripts; verified `body.sidebar-open` now gets set and the
+  drawer slides to `left: 0` at 768px.
+- Every report page's title/button header row (`col-4`, or `col-3`/
+  `col-7`/`col-2` on the full-screen variants) and, where present, the
+  date/state/Search filter form (`col-4` x3) used fixed-width Bootstrap
+  columns with no responsive variant, so on mobile the title, buttons
+  and filter fields were all crammed into their desktop proportions
+  regardless of screen width. Changed to `col-12 col-lg-*` (headers) and
+  `col-12 col-sm-4` (filter fields), matching the breakpoint convention
+  used everywhere else in this pass. Verified at 375px on both an
+  order-admin dashboard-embedded page (final-report-evening) and a
+  full-screen page (shop-report-full-screen): title, buttons and filter
+  form all stack full-width and are usable; the pivot tables' own
+  existing sticky-column/scroll CSS (unrelated to this fix) still works
+  underneath.
+- The pivot tables themselves (routes/shops as columns) were left as-is:
+  they already have their own touch-scrollable, sticky-first-two-columns
+  CSS defined per-page (not the shared `.table-responsive` convention),
+  and that already works - confirmed via the screenshots above. A true
+  mobile-friendly redesign of a report with 20+ dynamic columns (e.g.
+  collapsing to a card list, or a route picker instead of all-columns)
+  would be a much bigger change and wasn't attempted here.
+
+**Note on git history for this section:** order-admin's report views
+carry substantial pre-existing *uncommitted* work (a report refactor in
+progress - new filter forms, an Export to Excel flow, new partials).
+Where the header/filter markup I was fixing already existed at the
+last commit, the fix was isolated into its own commit as usual. Where
+the markup itself (e.g. final-report-evening's whole filter form) only
+exists in that uncommitted work, there was no clean baseline to isolate
+against, so the responsive-grid fix was applied directly on top of the
+existing uncommitted changes instead - it'll show up as part of that
+work's eventual commit rather than its own.
+
+**Not tested**: rep/shop role sidebar+drawer at the same tablet/landscape
+widths QA'd for order-admin (skipped as lower-risk since header/menu are
+shared components, but not independently re-verified at 768px/1024px
+for those two roles beyond the create-order and report page checks
+above), and no real-device pass (iOS/Android) for any of this.
