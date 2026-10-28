@@ -1,0 +1,66 @@
+{
+  "resources/css/vendor/base-1.css": {
+    "file": "assets/base-1-RQFheCF2.css",
+    "src": "resources/css/vendor/base-1.css",
+    "isEntry": true
+  },
+  "resources/css/vendor/base-2.css": {
+    "file": "assets/base-2-SVIyWwcY.css",
+    "src": "resources/css/vendor/base-2.css",
+    "isEntry": true
+  },
+  "resources/js/vendor/register.js": {
+    "file": "assets/register-l0sNRNKZ.js",
+    "name": "register",
+    "src": "resources/js/vendor/register.js",
+    "isEntry": true
+  },
+  "resources/vendor-src/bootstrap/bootstrap.bundle.js": {
+    "file": "assets/bootstrap.bundle-KHWyy_bs.js",
+    "src": "resources/vendor-src/bootstrap/bootstrap.bundle.js"
+  },
+  "resources/vendor-src/charts/C3chartjs.js": {
+    "file": "assets/C3chartjs-Z81cJDhO.js",
+    "src": "resources/vendor-src/charts/C3chartjs.js"
+  },
+  "resources/vendor-src/charts/Chart.bundle.js": {
+    "file": "assets/Chart.bundle-DQjS9Hs4.js",
+    "src": "resources/vendor-src/charts/Chart.bundle.js"
+  },
+  "resources/vendor-src/charts/c3.min.js": {
+    "file": "assets/c3.min-CT_CWkv_.js",
+    "src": "resources/vendor-src/charts/c3.min.js"
+  },
+  "resources/vendor-src/charts/chartist.min.js": {
+    "file": "assets/chartist.min-IkpWgx3y.js",
+    "src": "resources/vendor-src/charts/chartist.min.js"
+  },
+  "resources/vendor-src/charts/chartjs-demo.js": {
+    "file": "assets/chartjs-demo-DoW6en45.js",
+    "src": "resources/vendor-src/charts/chartjs-demo.js"
+  },
+  "resources/vendor-src/charts/d3-5.4.0.min.js": {
+    "file": "assets/d3-5.4.0.min-CuYg4NaM.js",
+    "src": "resources/vendor-src/charts/d3-5.4.0.min.js"
+  },
+  "resources/vendor-src/charts/morris.js": {
+    "file": "assets/morris-B6LVvqoT.js",
+    "src": "resources/vendor-src/charts/morris.js"
+  },
+  "resources/vendor-src/charts/raphael.min.js": {
+    "file": "assets/raphael.min-B5zA8uFx.js",
+    "src": "resources/vendor-src/charts/raphael.min.js"
+  },
+  "resources/vendor-src/jquery-3.3.1.min.js": {
+    "file": "assets/jquery-3.3.1.min-v4gFO2v3.js",
+    "src": "resources/vendor-src/jquery-3.3.1.min.js"
+  },
+  "resources/vendor-src/jquery.slimscroll.js": {
+    "file": "assets/jquery.slimscroll-CBTKbmkM.js",
+    "src": "resources/vendor-src/jquery.slimscroll.js"
+  },
+  "resources/vendor-src/jquery.sparkline.js": {
+    "file": "assets/jquery.sparkline-D22cTjgw.js",
+    "src": "resources/vendor-src/jquery.sparkline.js"
+  }
+}
