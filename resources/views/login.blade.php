@@ -185,7 +185,7 @@
             <!-- Logo -->
             <img src="{{ asset('assets/images/logo.png') }}" alt="Peoples Bakers Logo" class="logo-img">
 
-            <h2>Welcome Back...</h2>
+            <h2>Welcome Back</h2>
             <span class="splash-description">Please sign in to continue</span>
 
             @if ($errors->any())
