@@ -42,7 +42,7 @@ class CartService
         }
     }
 
-    public function addItemToCart(Shops $shop, Products $product, int $qty, ?string $remark = null): Cart
+    public function addItemToCart(Shops $shop, Products $product, float $qty, ?string $remark = null): Cart
     {
         $this->assertNotDuplicateDefaultItem($shop, $product->item_number);
 
@@ -56,7 +56,7 @@ class CartService
     }
 
     /**
-     * @param array<int, array{item_number: string, qty: int}> $items
+     * @param array<int, array{item_number: string, qty: float}> $items
      * @return Cart[]
      */
     public function addAllItemsToCart(Shops $shop, array $items): array
@@ -65,7 +65,7 @@ class CartService
 
         foreach ($items as $entry) {
             $itemNumber = $entry['item_number'];
-            $qty = (int) ($entry['qty'] ?? 0);
+            $qty = round((float) ($entry['qty'] ?? 0), 2);
 
             $this->assertNotDuplicateDefaultItem($shop, $itemNumber);
 
@@ -89,7 +89,7 @@ class CartService
         return $created;
     }
 
-    public function updateCartItemQty(string $itemNumber, string $branchCode, int $qty, ?string $remark): void
+    public function updateCartItemQty(string $itemNumber, string $branchCode, float $qty, ?string $remark): void
     {
         Cart::where('item_number', $itemNumber)
             ->where('shop_bc_number', $branchCode)
@@ -114,7 +114,7 @@ class CartService
      * controllers (OrderAdmin/Rep/Shop x Pending/Processing/Under-Review/
      * Default) check for that, so this primitive doesn't either.
      */
-    public function addItemToExistingOrder(string $orderNumber, string $itemNumber, string $branchCode, float $price, int $qty): Cart
+    public function addItemToExistingOrder(string $orderNumber, string $itemNumber, string $branchCode, float $price, float $qty): Cart
     {
         $cart = Cart::create([
             'item_number' => $itemNumber,
@@ -137,7 +137,7 @@ class CartService
      * access gate and logging differ by role/controller, so callers
      * keep doing those themselves.
      */
-    public function applyOrderItemQtyChange(string $orderNumber, string $itemNumber, float $price, int $qty, ?string $remark): void
+    public function applyOrderItemQtyChange(string $orderNumber, string $itemNumber, float $price, float $qty, ?string $remark): void
     {
         $qtyCart = Cart::where('order_number', $orderNumber)->where('item_number', $itemNumber)->first()->qty;
 
@@ -153,7 +153,7 @@ class CartService
      * reverses the item's contribution to total_price, then removes
      * the cart row.
      */
-    public function removeOrderItem(string $orderNumber, string $itemNumber, float $price, int $qty): void
+    public function removeOrderItem(string $orderNumber, string $itemNumber, float $price, float $qty): void
     {
         Orders::where('unique_id', $orderNumber)->decrement('total_price', $price * $qty);
 
@@ -162,7 +162,7 @@ class CartService
 
     // ---- Shop's exact guarded + logged flow ----
 
-    public function addToCart(Shops $shop, Products $product, int $qty, ?string $remark = null): Cart
+    public function addToCart(Shops $shop, Products $product, float $qty, ?string $remark = null): Cart
     {
         $this->guardAgainstDuplicateSubmission(
             'cart-add',
@@ -192,7 +192,7 @@ class CartService
         return $created;
     }
 
-    public function updateQty(string $itemNumber, string $branchCode, int $qty, ?string $remark, string $actorName): void
+    public function updateQty(string $itemNumber, string $branchCode, float $qty, ?string $remark, string $actorName): void
     {
         $this->updateCartItemQty($itemNumber, $branchCode, $qty, $remark);
 

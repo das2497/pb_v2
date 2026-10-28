@@ -27,15 +27,6 @@ class CartProcess extends Controller
     {
         $branch_code = $request->query('shop');
 
-        $cart = DB::table('carts')
-            ->join('products', 'products.item_number', '=', 'carts.item_number')
-            ->join('shops', 'shops.branch_code', '=', 'carts.shop_bc_number')
-            ->select('carts.*', 'products.*', 'shops.*')
-            ->where('carts.shop_bc_number', $branch_code)
-            ->whereNull('order_number')
-            ->orderBy('products.item_number')
-            ->get();
-
         $shop = Shops::where('branch_code', '=', $branch_code)
             ->first();
 
@@ -44,6 +35,19 @@ class CartProcess extends Controller
         if (!in_array($period, $allowed_times, true)) {
             $period = count($allowed_times) === 1 ? $allowed_times[0] : null;
         }
+
+        if ($period !== null) {
+            $this->orderService->applyScheduledOrdersForToday($shop, $period);
+        }
+
+        $cart = DB::table('carts')
+            ->join('products', 'products.item_number', '=', 'carts.item_number')
+            ->join('shops', 'shops.branch_code', '=', 'carts.shop_bc_number')
+            ->select('carts.*', 'products.*', 'shops.*')
+            ->where('carts.shop_bc_number', $branch_code)
+            ->whereNull('order_number')
+            ->orderBy('products.item_number')
+            ->get();
 
         return view('shop.cart', [
             'shop' => $shop,
@@ -56,7 +60,7 @@ class CartProcess extends Controller
     {
         $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
-        $this->cartService->updateQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke, Auth::user()->name);
+        $this->cartService->updateQty($request->item_number, $request->branch_code, round((float) $request->qty, 2), $request->remarke, Auth::user()->name);
 
         return back()
             ->with('success', 'Quantity updated successfully')
@@ -113,7 +117,8 @@ class CartProcess extends Controller
         ];
 
         try {
-            Mail::to($shop->email)->send(new OrderCreated($details));
+            // Queued (not sent inline) so the "Proceed" response doesn't wait on SMTP.
+            Mail::to($shop->email)->queue(new OrderCreated($details));
         } catch (\Throwable $th) {
             // Mail failure is intentionally swallowed here, matching
             // existing behavior — the order itself is already created.

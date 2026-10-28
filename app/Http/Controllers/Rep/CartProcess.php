@@ -56,7 +56,7 @@ class CartProcess extends Controller
     {
         $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
-        $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke);
+        $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, round((float) $request->qty, 2), $request->remarke);
 
         $shop_name = Shops::where('branch_code', '=', $request->branch_code)->first()->name;
 

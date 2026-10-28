@@ -25,7 +25,10 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
-                                <h5 class="card-header">Pending Orders Add Items <a href="/rep/pending-orders-view/{{$order_number}}" class="btn btn-outline-danger m-l-10 float-right">Go Back</a></h5>
+                                <h5 class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    Pending Orders Add Items
+                                    <a href="/rep/pending-orders-view/{{$order_number}}" class="btn btn-outline-danger">Go Back</a>
+                                </h5>
                                 @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul>
@@ -48,18 +51,24 @@
                                 <div class="alert alert-danger" style="display: none;" id="warning">
                                     <p class="text-center">Pleace select a shop and search or this dosn't have any item in the cart!</p>
                                 </div>
-                                <div class="input-group flex-nowrap p-2">
-                                    <form action="/rep/pending-orders-add-item" method="GET" class="input-group flex-nowrap p-2">
+                                <div class="p-2">
+                                    <form action="/rep/pending-orders-add-item" method="GET" class="row g-2">
                                         @csrf
-                                        <input type="text" class="form-control mr-2" id="" placeholder="Search Orders" aria-describedby="addon-wrapping" name="search">
-                                        <select class="form-control m-l-10" id="category" name="category">
-                                            <option value="" @selected(session('category')=='' )>All category</option>
-                                            @foreach ( $categories as $category )
-                                            <option value="{{$category->category}}" @selected(session('category')==$category->category)>{{$category->category}}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="col-12 col-sm-5">
+                                            <input type="text" class="form-control" placeholder="Search item name or code" name="search" value="{{ request('search') }}">
+                                        </div>
+                                        <div class="col-12 col-sm-4">
+                                            <select class="form-control" id="category" name="category">
+                                                <option value="" @selected(session('category')=='' )>All category</option>
+                                                @foreach ( $categories as $category )
+                                                <option value="{{$category->category}}" @selected(session('category')==$category->category)>{{$category->category}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         <input type="hidden" value="{{ $order_number }}" name="order_number">
-                                        <button type="submit" class="btn btn-outline-primary m-l-10">Search</button>
+                                        <div class="col-12 col-sm-3">
+                                            <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+                                        </div>
                                     </form>
                                 </div>
 
@@ -69,7 +78,7 @@
                                             <thead class="bg-light">
                                                 <tr class="border-0">
                                                     <th class="border-0">#</th>
-                                                    <th class="border-0 d-none d-lg-block">Item image</th>
+                                                    <th class="border-0 d-none d-lg-table-cell">Item image</th>
                                                     <th class="border-0">Item Id</th>
                                                     <th class="border-0">Item Name English</th>
                                                     <th class="border-0">Quantity</th>
@@ -78,29 +87,32 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($products as $product)
-                                                <tr @if(isset($cart_items) && $cart_items->contains('item_number', $product->item_number)) class="table-success" @endif>
+                                                @php
+                                                $inCart = isset($cart_items) && $cart_items->contains('item_number', $product->item_number);
+                                                @endphp
+                                                <tr @if($inCart) class="table-success" @endif>
                                                     <td>{{ $loop->iteration }}</td>
-                                                    <td><img src="{{asset('assets/images/item-images/'.$product->img)}}" alt="" width="50" /></td>
+                                                    <td class="d-none d-lg-table-cell"><img src="{{asset('assets/images/item-images/'.$product->img)}}" alt="" width="50" /></td>
                                                     <td>{{$product->item_number}}</td>
                                                     <td>{{$product->name_english}}</td>
+                                                    @if ($inCart)
                                                     <td>
-                                                        @if (isset($cart_items) && $cart_items->contains('item_number', $product->item_number))
-                                                        <input class="form-control" type="number" name="qty" value="{{ $cart_items->firstWhere('item_number', $product->item_number)->qty }}" disabled>
+                                                        <input class="form-control" type="number" value="{{ $cart_items->firstWhere('item_number', $product->item_number)->qty }}" disabled>
                                                     </td>
-                                                    <td>
-                                                    <td><button class="btn btn-outline-success disabled">Add item to processing orders</button></td>
-                                                    </td>
+                                                    <td><button class="btn btn-outline-success disabled" disabled>Already in order</button></td>
                                                     @else
-                                                    <form action="{{route('rep.processing-orders-add-items-process')}}" method="POST">
-                                                        @csrf
-                                                        <input class="form-control" type="number" min="0" step="0.01" required pattern="[0-9]+(\.[0-9]+)?" name="qty">
-                                                        <input type="hidden" name="order_number" value="{{ $order_number }}">
-                                                        <input type="hidden" name="item_number" value="{{ $product->item_number }}">
-                                                        <input type="hidden" name="shop" value="{{ $shop }}">
-                                                        <td>
-                                                        <td><button type="submit" class="btn btn-outline-success">Add item to processing orders</button></td>
-                                                        </td>
-                                                    </form>
+                                                    <td>
+                                                        <input form="addItem{{ $loop->index }}" class="form-control" type="number" min="0" step="0.01" required pattern="[0-9]+(\.[0-9]+)?" name="qty">
+                                                    </td>
+                                                    <td>
+                                                        <form id="addItem{{ $loop->index }}" action="{{route('rep.pending-orders-add-items-process')}}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            <input type="hidden" name="order_number" value="{{ $order_number }}">
+                                                            <input type="hidden" name="item_number" value="{{ $product->item_number }}">
+                                                            <input type="hidden" name="shop" value="{{ $shop }}">
+                                                            <button type="submit" class="btn btn-outline-success">Add to order</button>
+                                                        </form>
+                                                    </td>
                                                     @endif
                                                 </tr>
                                                 @endforeach

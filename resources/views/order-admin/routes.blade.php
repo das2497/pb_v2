@@ -137,8 +137,9 @@
                                                     <label for="input-select">Route Time</label>
                                                     <select class="form-control" name="time">
                                                         <option value="">Select Route Time</option>
-                                                        <option value="Morning">Morning</option>
-                                                        <option value="Evening">Evening</option>
+                                                        @foreach ($route_times as $route_time)
+                                                        <option value="{{ $route_time }}">{{ $route_time }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div>
@@ -245,8 +246,9 @@
                                                                         <label for="input-select">Route Time</label>
                                                                         <select class="form-control" name="time">
                                                                             <option value="">Select Route Time</option>
-                                                                            <option value="Morning" @selected($route->time === 'Morning')>Morning</option>
-                                                                            <option value="Evening" @selected($route->time === 'Evening')>Evening</option>
+                                                                            @foreach ($route_times as $route_time)
+                                                                            <option value="{{ $route_time }}" @selected($route->time === $route_time)>{{ $route_time }}</option>
+                                                                            @endforeach
                                                                         </select>
                                                                     </div>
                                                                 </div>

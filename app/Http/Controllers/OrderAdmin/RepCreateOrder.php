@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AddToCartRequest;
-use App\Models\Cart;
 use App\Models\Logs;
 use App\Models\OrderTime;
 use App\Models\Product_category;
@@ -23,10 +21,11 @@ class RepCreateOrder extends Controller
 
     public function index(Request $request)
     {
-        $Shops = Shops::all()->sortBy('name ASC');
+        $Shops = Shops::orderBy('name')->get();
         $categories = Product_category::all();
 
-        $selectedShop = $request->shop ? Shops::where('branch_code', $request->shop)->first() : null;
+        $my_shop = $request->input('shop');
+        $selectedShop = $my_shop ? Shops::where('branch_code', $my_shop)->first() : null;
         $allowed_times = $selectedShop
             ? $selectedShop->allowedOrderTimes()
             : OrderTime::orderBy('id')->pluck('name')->all();
@@ -35,14 +34,16 @@ class RepCreateOrder extends Controller
             $period = ($selectedShop && count($allowed_times) === 1) ? $allowed_times[0] : null;
         }
 
-        if ($period === null) {
-            return view('order-admin.create-order', [
-                'category' => session('category'),
+        if (!$selectedShop || $period === null) {
+            return $this->respond($request, [
+                'category' => $request->input('category', session('category', '')),
+                'search' => (string) $request->input('search', ''),
                 'shops' => $Shops,
+                'selected_shop' => $selectedShop,
                 'products' => collect(),
                 'cart_item' => collect(),
                 'categories' => $categories,
-                'my_shop' => $request->shop,
+                'my_shop' => $my_shop,
                 'period' => null,
                 'allowed_times' => $allowed_times,
             ]);
@@ -50,129 +51,54 @@ class RepCreateOrder extends Controller
 
         $request->session()->put('order_time', $period);
 
-        if (isset($request) && $request->has('category') && $request->search == '') {
+        $category = $request->has('category') ? (string) $request->category : 'CAKE ITEMS';
+        $request->session()->put('category', $category);
+        $search = trim((string) $request->input('search', ''));
 
-            $request->session()->put('category', $request->category);
-
-            if ($request->category == '') {
-
-                $Products = Products::forPeriod($period)->orderBy('item_number', 'asc')
-                    ->get();
-
-                $cart_item = Cart::where('shop_bc_number', '=', $request->shop)
-                    ->whereNull('order_number')
-                    ->get();
-            } else {
-
-                $Products = Products::forPeriod($period)->where('category', '=', $request->category)
-                    ->orderBy('item_number', 'asc')
-                    ->get();
-
-                $cart_item = DB::table('products')
-                    ->join('carts', 'products.item_number', '=', 'carts.item_number')
-                    ->where('products.category', $request->category)
-                    ->where('carts.shop_bc_number', '=', $request->shop)
-                    ->whereNull('carts.order_number')
-                    ->select('carts.*', 'products.*')
-                    ->get();
-            }
-
-            return view('order-admin.create-order', [
-                'category' => session('category'),
-                'shops' => $Shops,
-                'products' => $Products,
-                'cart_item' => $cart_item,
-                'input' => $request->all(),
-                'categories' => $categories,
-                'my_shop' => $request->shop,
-                'period' => $period,
-                'allowed_times' => $allowed_times,
-            ]);
-        }
-
-        if (isset($request) && $request->has('category') && $request->search != '') {
-
-            $request->session()->put('category', $request->category);
-
-            if ($request->category == '') {
-
-                $Products = Products::forPeriod($period)->where('name_english', 'like', '%' . $request->search . '%')
-                    ->orderBy('item_number', 'asc')
-                    ->get();
-
-                $cart_item = Cart::where('shop_bc_number', '=', $request->shop)
-                    ->whereNull('order_number')
-                    ->get();
-            } else {
-
-                $Products = Products::forPeriod($period)->where('category', '=', $request->category)
-                    ->where('name_english', 'like', '%' . $request->search . '%')
-                    ->orderBy('item_number', 'asc')
-                    ->get();
-
-                $cart_item = DB::table('products')
-                    ->join('carts', 'products.item_number', '=', 'carts.item_number')
-                    ->where('products.category', $request->category)
-                    ->where('carts.shop_bc_number', '=', $request->shop)
-                    ->whereNull('carts.order_number')
-                    ->select('carts.*', 'products.*')
-                    ->get();
-            }
-
-            return view('order-admin.create-order', [
-                'category' => session('category'),
-                'shops' => $Shops,
-                'products' => $Products,
-                'cart_item' => $cart_item,
-                'input' => $request->all(),
-                'categories' => $categories,
-                'my_shop' => $request->shop,
-                'period' => $period,
-                'allowed_times' => $allowed_times,
-            ]);
-        }
-
-        $request->session()->put('category', 'CAKE ITEMS');
-
-        $Products = Products::forPeriod($period)->where('category', '=', 'CAKE ITEMS')
+        $Products = Products::forPeriod($period)
+            ->when($category !== '', fn ($query) => $query->where('category', $category))
+            ->when($search !== '', fn ($query) => $query->where(function ($q) use ($search) {
+                $q->where('item_number', 'like', "%{$search}%")
+                    ->orWhere('name_english', 'like', "%{$search}%")
+                    ->orWhere('name_sinhala', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
+            }))
             ->orderBy('item_number', 'asc')
             ->get();
 
         $cart_item = DB::table('products')
             ->join('carts', 'products.item_number', '=', 'carts.item_number')
-            ->where('products.category', 'CAKE ITEMS')
-            ->where('carts.shop_bc_number', '=', $request->shop)
+            ->when($category !== '', fn ($query) => $query->where('products.category', $category))
+            ->where('carts.shop_bc_number', '=', $my_shop)
             ->whereNull('carts.order_number')
             ->select('carts.*', 'products.*')
             ->get();
 
-        return view('order-admin.create-order', [
-            'category' =>  session('category'),
+        return $this->respond($request, [
+            'category' => $category,
+            'search' => $search,
             'shops' => $Shops,
-            'cart_item' => $cart_item,
+            'selected_shop' => $selectedShop,
             'products' => $Products,
+            'cart_item' => $cart_item,
             'categories' => $categories,
-            'my_shop' => $request->shop,
+            'my_shop' => $my_shop,
             'period' => $period,
             'allowed_times' => $allowed_times,
         ]);
     }
 
-    public function add_to_cart(Request $request)
+    private function respond(Request $request, array $viewData)
     {
-        $request->validate((new AddToCartRequest())->rules());
-
-        $shop = Shops::where('branch_code', '=', $request->branch_code)->first();
-        $product = Products::where('item_number', '=', $request->item_number)->first();
-
-        try {
-            $this->cartService->addItemToCart($shop, $product, (int) $request->qty);
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+        if ($request->ajax()) {
+            return response()->json([
+                'header_html' => view('order-admin.partials.create-order-header', $viewData)->render(),
+                'order_time_options_html' => view('order-admin.partials.order-time-options', $viewData)->render(),
+                'results_html' => view('order-admin.partials.create-order-results', $viewData)->render(),
+            ]);
         }
 
-        return back()
-            ->with('success', 'Product added to cart successfully!');
+        return view('order-admin.create-order', $viewData);
     }
 
     public function addAllToCart(Request $request)
@@ -183,14 +109,18 @@ class RepCreateOrder extends Controller
         $shop = Shops::where('branch_code', '=', $branchCode)->first();
 
         $items = array_map(
-            fn ($itemNumber) => ['item_number' => $itemNumber, 'qty' => (int) ($quantities[$itemNumber] ?? 0)],
+            fn ($itemNumber) => ['item_number' => $itemNumber, 'qty' => round((float) ($quantities[$itemNumber] ?? 0), 2)],
             $selectedItems
         );
 
         try {
-            $this->cartService->addAllItemsToCart($shop, $items);
+            $created = $this->cartService->addAllItemsToCart($shop, $items);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
+        }
+
+        if (empty($created)) {
+            return back()->with('error', 'No items were added - select at least one item and enter a quantity greater than 0.');
         }
 
         Logs::create([

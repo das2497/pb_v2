@@ -4,6 +4,7 @@ namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RouteRequest;
+use App\Models\OrderTime;
 use App\Models\Routes;
 use Illuminate\Http\Request;
 
@@ -11,20 +12,23 @@ class RouteProcess extends Controller
 {
     public function index(Request $request)
     {
+        $route_times = OrderTime::orderBy('id')->pluck('name');
 
         if ($request->has('search')) {
             $routes = Routes::where('name', 'like', '%' . $request->search . '%')
-            ->paginate(10);        
+            ->paginate(10);
 
             return view('order-admin.routes', [
-                'routes' => $routes
+                'routes' => $routes,
+                'route_times' => $route_times,
             ]);
         }
 
         $routes = Routes::paginate(10);
 
         return view('order-admin.routes', [
-            'routes' => $routes
+            'routes' => $routes,
+            'route_times' => $route_times,
         ]);
     }
 

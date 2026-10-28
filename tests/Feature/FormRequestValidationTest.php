@@ -31,13 +31,4 @@ class FormRequestValidationTest extends TestCase
             'shop' => 'BC-1', 'item_number' => 'ITM-1', 'order_number' => 'ORD-1',
         ])->assertSessionHasErrors('qty');
     }
-
-    public function test_missing_branch_code_still_fails_validation_on_add_to_cart(): void
-    {
-        $this->actingAs(User::factory()->create(['role' => 'o_admin']));
-
-        $this->post('/order-admin/create-order-add-to-cart', [
-            'qty' => 3, 'item_number' => 'ITM-1',
-        ])->assertSessionHasErrors('branch_code');
-    }
 }

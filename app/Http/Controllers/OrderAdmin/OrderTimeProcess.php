@@ -27,7 +27,15 @@ class OrderTimeProcess extends Controller
             return redirect()->back()->with('error', 'Morning and Evening cannot be deleted');
         }
 
-        if (Products::where('order_time', $orderTime->name)->exists()) {
+        $name = $orderTime->name;
+        $stillInUse = Products::where(function ($q) use ($name) {
+            $q->where('order_time', $name)
+                ->orWhere('order_time', 'like', $name . ',%')
+                ->orWhere('order_time', 'like', '%,' . $name)
+                ->orWhere('order_time', 'like', '%,' . $name . ',%');
+        })->exists();
+
+        if ($stillInUse) {
             return redirect()->back()->with('error', 'Some products still use this order time');
         }
 

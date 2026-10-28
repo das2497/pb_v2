@@ -134,6 +134,81 @@ class OrderService
         return $order;
     }
 
+    public function assertNoDuplicateScheduledOrder(Shops $shop, string $period, string $date): void
+    {
+        $exists = Orders::where('status', 'Scheduled')
+            ->where('shop', $shop->branch_code)
+            ->where('time_period', $period)
+            ->whereDate('order_date', $date)
+            ->exists();
+        if ($exists) {
+            throw new \RuntimeException('A scheduled order already exists for this date and time period.');
+        }
+    }
+
+    /**
+     * Creates an empty "Scheduled" order header for a future date + time
+     * period — the shop adds products to it afterward (via the add-items
+     * screen, same primitives as Default orders). Unlike Default orders,
+     * this does not touch the shop's live cart: nothing is selected yet.
+     */
+    public function createScheduledOrder(Shops $shop, string $period, string $date): Orders
+    {
+        $this->assertPeriodAllowed($shop, $period);
+        $this->assertNoDuplicateScheduledOrder($shop, $period, $date);
+
+        $uniqueId = uniqid();
+
+        return Orders::create([
+            'unique_id' => $uniqueId,
+            'shop' => $shop->branch_code,
+            'shop_id' => $shop->id,
+            'total_price' => 0,
+            'note' => '',
+            'time_period' => $period,
+            'status' => 'Scheduled',
+            'order_date' => $date,
+        ]);
+    }
+
+    /**
+     * Moves every item from today's matching Scheduled order(s) for this
+     * shop + period into the shop's live cart (order_number null), so it
+     * is already there when the shop opens the cart to place the real
+     * order. An item already in the live cart is left as-is and its
+     * scheduled copy is dropped rather than duplicated. Each matched
+     * Scheduled order is fully consumed (and deleted) by one call, so
+     * calling this more than once for the same visit is harmless.
+     */
+    public function applyScheduledOrdersForToday(Shops $shop, string $period): void
+    {
+        $scheduled = Orders::where('status', 'Scheduled')
+            ->where('shop', $shop->branch_code)
+            ->where('time_period', $period)
+            ->whereDate('order_date', Carbon::today())
+            ->get();
+
+        foreach ($scheduled as $order) {
+            $items = Cart::where('order_number', $order->unique_id)->get();
+
+            foreach ($items as $item) {
+                $alreadyInCart = Cart::where('shop_bc_number', $shop->branch_code)
+                    ->where('item_number', $item->item_number)
+                    ->whereNull('order_number')
+                    ->exists();
+
+                if ($alreadyInCart) {
+                    $item->delete();
+                    continue;
+                }
+
+                $item->update(['order_number' => null]);
+            }
+
+            Orders::where('unique_id', $order->unique_id)->delete();
+        }
+    }
+
     public function createDefaultOrder(Shops $shop, string $period, float $total, ?string $name, string $actorName): Orders
     {
         $this->guardAgainstDuplicateSubmission(

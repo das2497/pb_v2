@@ -1,6 +1,6 @@
-@extends('layouts.dashboard', ['headerView' => 'shop.components.header', 'menuView' => 'shop.components.menu'])
+@extends('layouts.shop-dashboard')
 
-@section('title', 'Order Admin | Cart')
+@section('title', 'Shop | Cart')
 
 @section('content')
     <div class="dashboard-wrapper">
@@ -12,12 +12,17 @@
                 <div class="row">
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="page-header">
-                            <h2 class="pageheader-title"> Cart </h2>
+                            <h2 class="pageheader-title">
+                                🛒 Cart
+                                @if ($carts->isNotEmpty())
+                                <span class="bakery-cart-count">{{ $carts->count() }} item{{ $carts->count() === 1 ? '' : 's' }}</span>
+                                @endif
+                            </h2>
                             <div class="page-breadcrumb">
                                 <nav aria-label="breadcrumb">
                                     <ol class="breadcrumb">
-                                        <li class="breadcrumb-item"><a href="/rep/dashboard" class="breadcrumb-link">Dashboard</a></li>
-                                        <li class="breadcrumb-item"><a href="/rep/create-order?shop={{session('selected_shop')}}" class="breadcrumb-link">Create Order</a></li>
+                                        <li class="breadcrumb-item"><a href="/shop/dashboard" class="breadcrumb-link">Dashboard</a></li>
+                                        <li class="breadcrumb-item"><a href="/shop/create-order" class="breadcrumb-link">Create Order</a></li>
                                         <li class="breadcrumb-item active" aria-current="page">Cart</li>
                                     </ol>
                                 </nav>
@@ -29,15 +34,9 @@
                 <!-- end pageheader  -->
                 <!-- ============================================================== -->
                 <div class="ecommerce-widget">
+                    @php $total = 0; @endphp
 
                     <div class="row">
-                        <!-- ============================================================== -->
-
-                        <!-- ============================================================== -->
-
-                        <!-- recent orders  -->
-                        <!-- ============================================================== -->
-
                         <div class="col-12 col-md-12">
                             <div class="card">
                                 @if ($errors->any())
@@ -58,111 +57,112 @@
                                     {{ session('error') }}
                                 </div>
                                 @endif
-                                <h5 class="card-header">{{$shop->name}}'s Cart <a href="/shop/create-order?shop={{session('selected_shop')}}" class="btn btn-outline-danger float-right">Go Back</a></h5>
+                                <h5 class="card-header">{{$shop->name}}'s Cart <a href="/shop/create-order" class="btn btn-outline-danger float-right"><i class="fa fa-arrow-left"></i> Add More Items</a></h5>
+
+                                @if ($carts->isEmpty())
+                                <div class="bakery-empty-cart">
+                                    <div class="bakery-empty-cart-icon">🧁</div>
+                                    <h4>Your cart is empty</h4>
+                                    <p class="text-muted">Browse the menu and add some bakery items to get started.</p>
+                                    <a href="/shop/create-order" class="btn btn-outline-success"><i class="fa fa-cart-plus"></i> Start an Order</a>
+                                </div>
+                                @else
                                 <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead class="bg-light">
-                                                <tr class="border-0">
-                                                    <th class="border-0">#</th>
-                                                    <th class="border-0">Item image</th>
-                                                    <th class="border-0">Item Id</th>
-                                                    <th class="border-0">Item Name English</th>
-                                                    <th class="border-0">Price Range</th>
-                                                    <th class="border-0">Price</th>
-                                                    <th class="border-0">quantity</th>
-                                                    <th class="border-0">Remarke</th>
-                                                    <th class="border-0">Total</th>
-                                                    <th class="border-0">Update</th>
-                                                    <th class="border-0">Delete</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @php
-                                                $total=0;
-                                                @endphp
-                                                @foreach ($carts as $cart)
-                                                <tr>
-                                                    <td>{{$loop->iteration}}</td>
-                                                    <td>
-                                                        <img 
-                                                            class="img-thumbnail"
-                                                            src="{{ asset('assets/images/item-images/' . $cart->img) }}"
-                                                            alt="product image"
-                                                            style="height: 100px; width: 100px;">
-                                                    </td>
-                                                    <td>{{$cart->item_number}}</td>
-                                                    <td>{{$cart->name_english}}</td>
-                                                    <td>{{$cart->price_range}}</td>
-                                                    <td>රු. {{number_format($cart->price,2)}}</td>
-                                                    <form action="/shop/cart/update-qty" method="POST">
-                                                        @csrf
-                                                        <td><input type="number" style="width: 100px;" name="qty" class="form-control" value="{{$cart->qty}}" min="0" step="0.01" required pattern="[0-9]+(\.[0-9]+)?"></td>
-                                                        <td style="width: 100px;"><input type="text" class="form-control" style="width: 200px;" name="remarke" value="{{$cart->remarke}}" /></td>
-                                                        <td>රු. {{number_format($cart->price*$cart->qty,2)}}</td>
-                                                        <input type="hidden" name="item_number" value="{{$cart->item_number}}" />
-                                                        <input type="hidden" name="branch_code" value="{{$cart->shop_bc_number}}">
-                                                        <td><button type="submit" class="btn btn-outline-primary">Update</button></td>
-                                                        <td><button type="submit" formaction="/shop/cart/delete-item" onclick="return confirmDelete();" class="btn btn-outline-danger">Delete</button></td>
-                                                    </form>
-                                                </tr>
-                                                @php
-                                                $total+=$cart->price*$cart->qty;
-                                                @endphp
-                                                @endforeach
-                                                <tr>
-                                                    <td colspan="7"></td>
-                                                    <th class="text-right">Total Price : </th>
-                                                    <th colspan="3">රු. {{number_format($total,2)}}</th>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    @if ($carts->first()->price_range)
+                                    <div class="bakery-price-tier-note"><i class="fa fa-tag"></i> Pricing tier: <strong>{{ $carts->first()->price_range }}</strong></div>
+                                    @endif
+
+                                    <div class="bakery-cart-list">
+                                        @foreach ($carts as $cart)
+                                        @php $total += $cart->price * $cart->qty; @endphp
+                                        <form action="/shop/cart/update-qty" method="POST" class="bakery-cart-item">
+                                            @csrf
+                                            <img class="bakery-cart-item-img" src="{{ asset('assets/images/item-images/' . $cart->img) }}" alt="" loading="lazy">
+                                            <div class="bakery-cart-item-info">
+                                                <div class="bakery-cart-item-name">{{ $cart->name_english }}</div>
+                                                <div class="bakery-cart-item-id">#{{ $cart->item_number }} &middot; රු. {{ number_format($cart->price, 2) }} each</div>
+                                            </div>
+                                            <div class="bakery-qty-stepper bakery-qty-stepper-lg">
+                                                <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                <input type="number" name="qty" value="{{$cart->qty}}" min="0" step="0.01" required pattern="[0-9]+(\.[0-9]+)?">
+                                                <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                            </div>
+                                            <input type="text" class="form-control bakery-cart-item-note" name="remarke" value="{{$cart->remarke}}" placeholder="Note (optional)">
+                                            <div class="bakery-cart-item-total">රු. {{ number_format($cart->price*$cart->qty, 2) }}</div>
+                                            <input type="hidden" name="item_number" value="{{$cart->item_number}}" />
+                                            <input type="hidden" name="branch_code" value="{{$cart->shop_bc_number}}">
+                                            <div class="bakery-cart-item-actions">
+                                                <button type="submit" class="btn btn-outline-primary btn-sm" title="Update this item"><i class="fa fa-check"></i> Update</button>
+                                                <button type="submit" formaction="/shop/cart/delete-item" onclick="return confirmDelete();" class="btn btn-outline-danger btn-sm" title="Remove this item"><i class="fa fa-trash"></i></button>
+                                            </div>
+                                        </form>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="bakery-cart-total-row">
+                                        <span>Total Price</span>
+                                        <strong>රු. {{ number_format($total, 2) }}</strong>
                                     </div>
                                 </div>
+                                @endif
                             </div>
                         </div>
 
+                        @if ($carts->isNotEmpty())
                         <div class="col-12 cart-actions-card">
                             <div class="card">
-                                <div class="card-body p-2">
-                                    <form action="/shop/cart/order-process" method="POST" class="row mt-2">
+                                <h5 class="card-header">Order Summary</h5>
+                                <div class="card-body">
+                                    <form action="/shop/cart/order-process" method="POST">
                                         @csrf
-                                        <div class="col-12 col-md-6 m-b-10">
-                                            <label for="order_note" id="note">Special Note</label>
-                                            <textarea class="form-control" name="note" cols="30" rows="2"></textarea>
-                                        </div>
-                                        @if ($period)
-                                        <input type="hidden" name="order_time" value="{{ $period }}">
-                                        @else
-                                        <div class="col-12 m-b-10">
-                                            <div class="alert alert-warning mb-0">Select an order time on the <a href="/shop/create-order">Create Order</a> page first (not needed for Default Orders).</div>
-                                        </div>
-                                        @endif
-                                        <div class="col-12 col-md-6 offset-md-0 m-b-10">
-                                            <div class="form-check form-switch">
-                                                <input type="checkbox" onchange="default_name();" data-toggle="switchbutton" data-size="sm" data-offlabel="Normal Order" data-onlabel="Default Order" name="default" id="default">
-                                                <!-- <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" name="default"> -->
-                                                <!-- <label class="form-check-label" for="flexSwitchCheckDefault">Default Order</label> -->
+                                        <div class="row">
+                                            <div class="col-12 col-md-6 m-b-10">
+                                                <label for="order_note_field" class="bakery-form-label" id="note">Special Note</label>
+                                                <textarea id="order_note_field" class="form-control" name="note" rows="2" placeholder="Anything we should know about this order? (optional)"></textarea>
+                                            </div>
+
+                                            @if ($period)
+                                            <input type="hidden" name="order_time" value="{{ $period }}">
+                                            @else
+                                            <div class="col-12 m-b-10">
+                                                <div class="alert alert-warning mb-0">Select an order time on the <a href="/shop/create-order">Create Order</a> page first (not needed for Default Orders).</div>
+                                            </div>
+                                            @endif
+
+                                            <div class="col-12 col-md-6 m-b-10">
+                                                <div class="bakery-default-order-toggle">
+                                                    <label class="switch">
+                                                        <input type="checkbox" onchange="default_name();" name="default" id="default">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                    <div>
+                                                        <div class="bakery-form-label">Save as Default Order</div>
+                                                        <small class="text-muted">Repeats automatically every time - skips picking an order time.</small>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-12 col-md-6 offset-md-3 m-b-10 mt-4">
-                                            <input type="hidden" name="total" value="{{$total}}">
-                                            <input type="hidden" name="shop" value="{{$shop->branch_code}}">
-                                            <button id="proceedBtn" class="btn btn-outline-success px-4 w-100">Proceed</button>
+
+                                        <div class="bakery-cart-total-row mt-3">
+                                            <span>Total Price</span>
+                                            <strong>රු. {{ number_format($total, 2) }}</strong>
                                         </div>
+
+                                        <input type="hidden" name="total" value="{{$total}}">
+                                        <input type="hidden" name="shop" value="{{$shop->branch_code}}">
+                                        <button id="proceedBtn" class="btn btn-outline-success px-4 w-100 mt-3"><i class="fa fa-check-circle"></i> Proceed</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
-                        <!-- ============================================================== -->
-                        <!-- end recent orders  -->
-
+                        @endif
                     </div>
 
                 </div>
             </div>
         </div>
 
+        @if ($carts->isNotEmpty())
         <div class="cart-sticky-bar">
             <div class="cart-sticky-bar-total">
                 <span class="cart-sticky-bar-label">Total</span>
@@ -170,6 +170,7 @@
             </div>
             <button type="button" class="btn btn-outline-success px-4" onclick="document.getElementById('proceedBtn').click();">Proceed</button>
         </div>
+        @endif
     </div>
 
 @endsection
@@ -177,20 +178,13 @@
 @push('scripts')
 <script>
         function confirmDelete() {
-            return confirm('Are you sure you want to delete this item?');
+            return confirm('Are you sure you want to remove this item from your cart?');
         }
 
         function default_name() {
             let isCheck = document.getElementById('default').checked;
             let note = document.getElementById('note');
-            console.log(isCheck);
-            if (isCheck == true) {
-                console.log('true');
-                note.innerHTML = 'Default Order Name';
-            } else {
-                console.log('false');
-                note.innerHTML = 'Special Note';
-            }
+            note.textContent = isCheck ? 'Default Order Name' : 'Special Note';
         }
     </script>
 @endpush

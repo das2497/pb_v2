@@ -55,6 +55,8 @@ use App\Http\Controllers\Shop\PendingOrders as ShopPendingOrders;
 use App\Http\Controllers\Shop\PendingOrdersAddItems as ShopPendingOrdersAddItems;
 use App\Http\Controllers\Shop\ProcessingOrders as ShopProcessingOrders;
 use App\Http\Controllers\Shop\Profile;
+use App\Http\Controllers\Shop\ScheduledOrders;
+use App\Http\Controllers\Shop\ScheduledOrdersAddItems;
 use App\Http\Controllers\Shop\UnderReviewOrders as ShopUnderReviewOrders;
 use App\Http\Controllers\test\Test;
 use App\Models\Cart;
@@ -151,7 +153,6 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::post('/order-admin/rep-assign-update', [RepAssignProcess::class, 'update']);
 
     Route::get('/order-admin/create-order', [RepCreateOrder::class, 'index']);
-    Route::post('/order-admin/create-order-add-to-cart', [RepCreateOrder::class, 'add_to_cart'])->name('add-to-cart');
     Route::post('/order-admin/add-to-cart-all', [RepCreateOrder::class, 'addAllToCart'])->name('order-admin.add-to-cart-all');
     Route::get('/order-admin/cart', [CartProcess::class, 'index'])->name('order-admin.cart');
     Route::post('/order-admin/cart/update-qty', [CartProcess::class, 'update_qty']);
@@ -164,6 +165,10 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::get('/order-admin/shop-normal-report', [ShopReport::class, 'index_normal']);
     Route::get('/order-admin/shop-report-evening', [ShopReport::class, 'index_evening']);
 
+    Route::get('/order-admin/shop-report/export', [ShopReport::class, 'exportMorning']);
+    Route::get('/order-admin/shop-normal-report/export', [ShopReport::class, 'exportMorningNormal']);
+    Route::get('/order-admin/shop-report-evening/export', [ShopReport::class, 'exportEvening']);
+
     Route::get('/order-admin/shop-report-full-screen', [ShopReport::class, 'fullScreen']);
     Route::get('/order-admin/shop-report-normal-full-screen', [ShopReport::class, 'fullScreen_normal']);
     Route::get('/order-admin/shop-report-full-screen-evening', [ShopReport::class, 'fullScreen_evening']);
@@ -174,6 +179,9 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::get('/order-admin/final-report-full-screen', [FinalReport::class, 'fullScreen']);
     Route::get('/order-admin/final-report-evening', [FinalReport::class, 'index_evening']);
     Route::get('/order-admin/final-report-evening-full-screen', [FinalReport::class, 'fullScreen_evening']);
+
+    Route::get('/order-admin/final-report/export', [FinalReport::class, 'exportMorning']);
+    Route::get('/order-admin/final-report-evening/export', [FinalReport::class, 'exportEvening']);
 
     Route::get('/order-admin/refresh-morning-summary', [OrderAdminGoogleSheetController::class, 'updateGoogleSheet'])->name('morning-summary');
     Route::get('/order-admin/refresh-evening-summary', [OrderAdminGoogleSheetController2::class, 'updateGoogleSheet'])->name('evening-summary');
@@ -192,6 +200,8 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
 
 Route::middleware('role:rep')->group(function () {
     Route::get('/rep/dashboard', [RepDashboard::class, 'index'])->name('rep.dashboard');
+    Route::get('/rep/first-load-data', [RepDashboard::class, 'firstLoading'])->name('rep.first-load-data');
+    Route::get('/api/rep/dashboard-data', [RepDashboard::class, 'getDashboardData'])->name('api.rep.dashboard-data');
     Route::get('/rep/my-shops', [Shops::class, 'index'])->name('rep.my-shops');
     Route::get('/rep/create-order', [OrderProcess::class, 'index'])->name('rep.create-order');
     Route::get('/rep/clear-cart', [OrderProcess::class, 'clearcart']);
@@ -231,10 +241,13 @@ Route::middleware('role:rep')->group(function () {
     Route::get('/rep/complete-order', [CompleteOrders::class, 'index'])->name('rep.complete-order');
     Route::get('/rep/under-complete-orders-view/{id}', [CompleteOrders::class, 'view'])->name('rep.complete-orders-view');
 
-    Route::get('/rep/export-report', [RepExportReport::class, 'index']);
+    Route::get('/rep/export-report', [RepExportReport::class, 'index'])->name('rep.export-report');
+    Route::get('/rep/export-report-data', [RepExportReport::class, 'data'])->name('rep.export-report-data');
 
     Route::get('/rep/shop-report-morning', [RepShopReport::class, 'index'])->name('rep.shop-report-morning');
     Route::get('/rep/shop-report-evening', [RepShopReport::class, 'index_evening']);
+    Route::get('/rep/shop-report-morning/export', [RepShopReport::class, 'exportMorning']);
+    Route::get('/rep/shop-report-evening/export', [RepShopReport::class, 'exportEvening']);
     Route::get('/rep/shop-report-full-screen', [RepShopReport::class, 'fullScreen']);
     Route::get('/rep/shop-report-full-screen-evening', [RepShopReport::class, 'fullScreen_evening']);
     Route::get('/rep/shop-report-back-to-report', [RepShopReport::class, 'back_to_report']);
@@ -244,6 +257,8 @@ Route::middleware('role:rep')->group(function () {
     Route::get('/rep/final-report-morning-full-screen', [RepFinalReport::class, 'fullScreen']);
     Route::get('/rep/final-report-evening', [RepFinalReport::class, 'index_evening']);
     Route::get('/rep/final-report-evening-full-screen', [RepFinalReport::class, 'fullScreen_evening']);
+    Route::get('/rep/final-report-morning/export', [RepFinalReport::class, 'exportMorning']);
+    Route::get('/rep/final-report-evening/export', [RepFinalReport::class, 'exportEvening']);
 
     Route::get('/rep/profile', [RepProfile::class, 'view'])->name('rep.profile');
     Route::post('/rep/profile-update', [RepProfile::class, 'update'])->name('rep.profile-update');
@@ -251,6 +266,8 @@ Route::middleware('role:rep')->group(function () {
 
 Route::middleware('role:shop')->group(function () {
     Route::get('/shop/dashboard', [ShopDashboard::class, 'index'])->name('shop.dashboard');
+    Route::get('/shop/first-load-data', [ShopDashboard::class, 'firstLoading'])->name('shop.first-load-data');
+    Route::get('/api/shop/dashboard-data', [ShopDashboard::class, 'getDashboardData'])->name('api.shop.dashboard-data');
 
     Route::get('/shop/profile', [Profile::class, 'index'])->name('shop.profile');
     Route::post('/shop/profile-update', [Profile::class, 'update'])->name('shop.profile-update');
@@ -282,6 +299,16 @@ Route::middleware('role:shop')->group(function () {
     Route::post('/shop/default-orders-add-to-cart', [DefaultOrders::class, 'add_to_cart'])->name('shop.default-orders-add-to-cart');
     Route::get('/shop/default-orders-add-items', [DefaultOrdersAddItems::class, 'index'])->name('shop.default-orders-add-items');
     Route::post('/shop/default-orders-add-items-process', [DefaultOrdersAddItems::class, 'store'])->name('shop.default-orders-add-items-process');
+
+    Route::get('/shop/scheduled-orders', [ScheduledOrders::class, 'index'])->name('shop.scheduled-orders');
+    Route::get('/shop/scheduled-orders-create', [ScheduledOrders::class, 'create'])->name('shop.scheduled-orders-create');
+    Route::post('/shop/scheduled-orders-create', [ScheduledOrders::class, 'store'])->name('shop.scheduled-orders-store');
+    Route::get('/shop/scheduled-orders-view', [ScheduledOrders::class, 'view'])->name('shop.scheduled-orders-view');
+    Route::post('/shop/scheduled-orders-delete', [ScheduledOrders::class, 'delete'])->name('shop.scheduled-orders-delete');
+    Route::post('/shop/scheduled-orders-update-item', [ScheduledOrders::class, 'update_item'])->name('shop.scheduled-orders-update-item');
+    Route::post('/shop/scheduled-orders-delete-item', [ScheduledOrders::class, 'delete_item'])->name('shop.scheduled-orders-delete-item');
+    Route::get('/shop/scheduled-orders-add-items', [ScheduledOrdersAddItems::class, 'index'])->name('shop.scheduled-orders-add-items');
+    Route::post('/shop/scheduled-orders-add-items-process', [ScheduledOrdersAddItems::class, 'store'])->name('shop.scheduled-orders-add-items-process');
 
     Route::get('/shop/create-order', [CreateOrders::class, 'index']);
     Route::post('/shop/add-to-cart', [CreateOrders::class, 'add_to_cart'])->name('shop.add-to-cart');

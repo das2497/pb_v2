@@ -53,7 +53,7 @@ class CartProcess extends Controller
     {
         $request->validate((new UpdateOrderItemQuantityRequest())->rules());
 
-        $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, (int) $request->qty, $request->remarke);
+        $this->cartService->updateCartItemQty($request->item_number, $request->branch_code, round((float) $request->qty, 2), $request->remarke);
 
         return back()
             ->with('success', 'Quantity updated successfully')

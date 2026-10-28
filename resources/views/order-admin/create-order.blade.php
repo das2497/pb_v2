@@ -3,62 +3,7 @@
 @section('title', 'Order Admin | Create Order')
 
 @push('styles')
-<style>
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
-
-        input:checked+.slider {
-            background-color: #2196F3;
-        }
-
-        input:focus+.slider {
-            box-shadow: 0 0 1px #2196F3;
-        }
-
-        input:checked+.slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
-        }
-    </style>
-
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="{{ asset('assets/css/order-admin-order-theme.css') }}">
 @endpush
 
 @section('content')
@@ -89,186 +34,71 @@
                 <div class="ecommerce-widget">
                     <div class="row">
                         <div class="col-12">
-                            <div class="card">
-                                @if (!empty($my_shop) && $cart_item->contains('shop_bc_number', $my_shop))
-                                <h5 class="card-header">All Products <a href="/order-admin/cart?shop={{$my_shop}}" class="btn btn-outline-warning m-l-10 float-right cart-btn"><i class="bi bi-cart4"></i> Cart</a></h5>
-                                @else
-                                <h5 class="card-header">All Products <button class="btn btn-outline-warning m-l-10 float-right" onclick="cart_btn();"><i class="bi bi-cart4"></i> Cart</button></h5>
-                                @endif
-                                <div class="alert alert-danger" style="display: none;" id="warning">
-                                    <p class="text-center">Pleace select a shop and search or this dosn't have any item in the cart!</p>
+                            <div class="card oa-order-card">
+                                @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
                                 </div>
-                                <form action="/order-admin/create-order" method="GET" class="row g-2 p-2">
+                                @endif
+                                @if (session('success'))
+                                <div class="alert alert-success">
+                                    {{ session('success') }}
+                                </div>
+                                @elseif (session('error'))
+                                <div class="alert alert-danger">
+                                    {{ session('error') }}
+                                </div>
+                                @endif
+                                <h5 class="card-header" id="oa-order-header">
+                                    @include('order-admin.partials.create-order-header')
+                                </h5>
+                                <form action="/order-admin/create-order" method="GET" class="row g-2 p-2 oa-order-filters-bar" id="oa-order-filters-form">
                                     @csrf
                                     <div class="col-12 col-xl-3">
-                                        <input type="text" class="form-control" placeholder="Type To Search Products...." aria-describedby="addon-wrapping"
-                                            name="search" value="{{old('search', session('input.search'))}}">
+                                        <label for="shop-search" class="oa-order-form-label"><i class="fa fa-store"></i> Shop</label>
+                                        <div class="oa-shop-combo" id="oa-shop-combo">
+                                            <input type="text" class="form-control oa-shop-combo-input" id="shop-search" placeholder="Select Shop (type to search)" autocomplete="off">
+                                            <button type="button" class="oa-shop-combo-clear" id="oa-shop-combo-clear" aria-label="Clear shop" hidden>&times;</button>
+                                            <div class="oa-shop-combo-list" id="oa-shop-combo-list" hidden></div>
+                                            <select class="form-control" id="shop" name="shop" hidden>
+                                                <option value="">Select Shop</option>
+                                                @foreach($shops as $shop)
+                                                <option value="{{ $shop->branch_code }}" @selected($my_shop === $shop->branch_code)>
+                                                    {{ $shop->name }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="col-6 col-xl-2">
-                                        <select class="form-control" id="category" name="category">
-                                            <option value="" @selected(session('category')=='' )>All category</option>
-                                            @foreach ( $categories as $category )
-                                            <option value="{{$category->category}}" @selected(session('category')==$category->category)>{{$category->category}}</option>
-                                            @endforeach
+                                        <label for="order_time" class="oa-order-form-label"><i class="fa fa-clock"></i> Order Time</label>
+                                        <select class="form-control" id="order_time" name="order_time">
+                                            @include('order-admin.partials.order-time-options')
                                         </select>
+                                    </div>
+                                    <div class="col-12 col-xl-3">
+                                        <label for="search" class="oa-order-form-label"><i class="fa fa-search"></i> Search Products</label>
+                                        <input type="text" class="form-control" id="search" placeholder="Type a product name...."
+                                            name="search" value="{{ $search ?? '' }}">
                                     </div>
                                     <div class="col-6 col-xl-3">
-                                        <select class="form-control select2" id="shop" name="shop">
-                                            <option value="">Select Shop <small>(Type the first letter of the shop)</small></option>
-                                            @foreach($shops as $shop)
-                                            <option value="{{ $shop->branch_code }}" {{ (request()->input('shop') == $shop->branch_code || old('shop') == $shop->branch_code) ? 'selected' : '' }}>
-                                                {{ $shop->name }}
-                                            </option>
+                                        <label for="category" class="oa-order-form-label"><i class="fa fa-tags"></i> Category</label>
+                                        <select class="form-control" id="category" name="category">
+                                            <option value="" @selected(($category ?? '') === '')>All category</option>
+                                            @foreach ( $categories as $cat )
+                                            <option value="{{$cat->category}}" @selected(($category ?? '')===$cat->category)>{{$cat->category}}</option>
                                             @endforeach
                                         </select>
-                                    </div>
-                                    <div class="col-6 col-xl-2">
-                                        <select class="form-control" id="order_time" name="order_time">
-                                            @if (!$period)
-                                            <option value="" selected>Select Order Time</option>
-                                            @endif
-                                            @foreach ($allowed_times as $time)
-                                            <option value="{{ $time }}" @selected($period===$time)>{{ $time }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-6 col-xl-2">
-                                        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
                                     </div>
                                 </form>
 
-                                @if (!$period)
-                                <div class="card-body">
-                                    <p class="text-center text-muted mb-0">Select a shop and an order time, then press Search to view products.</p>
+                                <div id="oa-order-results">
+                                    @include('order-admin.partials.create-order-results')
                                 </div>
-                                @else
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead class="bg-light">
-                                                <tr class="border-0">
-                                                    <th class="border-0">#</th>
-                                                    <th class="border-0">Item image</th>
-                                                    <th class="border-0">Item Id</th>
-                                                    <th class="border-0">Item Name English</th>
-                                                    <th class="border-0">Quantity</th>
-                                                    <th class="border-0"></th>
-                                                </tr>
-                                            </thead>
-                                            <!-- <tbody>
-                                                @if ($errors->any())
-                                                <tr>
-                                                    <td colspan="6">
-                                                        <div class="alert alert-danger">
-                                                            <ul>
-                                                                @foreach ($errors->all() as $error)
-                                                                <li>{{ $error }}</li>
-                                                                @endforeach
-                                                            </ul>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                @endif
-
-                                                @foreach($products as $product)
-                                                <tr @if(isset($cart_item) && $cart_item->contains('item_number', $product->item_number)) class="table-success" @endif>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td><img src="{{ asset('assets/images/item-images/'.$product->img) }}" width="60" height="60" /></td>
-                                                    <td>{{ $product->item_number }}</td>
-                                                    <td>{{ $product->name_english }}</td>
-                                                    <td>
-                                                        @if (isset($cart_item) && $cart_item->contains('item_number', $product->item_number))
-                                                        <input class="form-control" type="number" name="qty" value="{{ $cart_item->firstWhere('item_number', $product->item_number)->qty }}" disabled>
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-outline-success" disabled>Add to cart</button>
-                                                    </td>
-                                                    @else
-                                                    <form action="{{ route('add-to-cart') }}" method="POST">
-                                                        @csrf
-                                                        <input class="form-control" style="min-width: 100px;" type="number" name="qty" required>
-                                                        <input type="hidden" name="branch_code" value="{{ session('selected_shop') }}">
-                                                        <input type="hidden" name="item_number" value="{{ $product->item_number }}">
-                                                        <td>
-                                                            <button type="submit" class="btn btn-outline-success add-to-cart-btn">Add to cart</button>
-                                                        </td>
-                                                    </form>
-                                                    @endif
-                                                    </td>
-
-                                                    </td>
-                                                </tr>
-                                                @endforeach
-                                            </tbody> -->
-
-                                            <form action="{{ route('order-admin.add-to-cart-all') }}" method="POST">
-                                                @csrf
-                                                <tbody>
-                                                    @if ($errors->any())
-                                                    <tr>
-                                                        <td colspan="7">
-                                                            <div class="alert alert-danger">
-                                                                <ul>
-                                                                    @foreach ($errors->all() as $error)
-                                                                    <li>{{ $error }}</li>
-                                                                    @endforeach
-                                                                </ul>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    @endif
-                                                    @foreach($products as $product)
-                                                    <tr @if(isset($cart_item) && $cart_item->contains('item_number', $product->item_number)) class="table-success" @endif>
-                                                        <td>{{ $loop->iteration }}</td>
-                                                        <td><img src="{{ asset('assets/images/item-images/'.$product->img) }}" width="60" height="60" /></td>
-                                                        <td>{{ $product->item_number }}</td>
-                                                        <td>{{ $product->name_english }}</td>
-                                                        <td>
-                                                            @if (isset($cart_item) && $cart_item->contains('item_number', $product->item_number))
-                                                            <input class="form-control" type="number" name="qty[{{ $product->item_number }}]" value="{{ $cart_item->firstWhere('item_number', $product->item_number)->qty }}" disabled>
-                                                            @else
-                                                            <input class="form-control" style="min-width: 100px;" type="number" name="qty[{{ $product->item_number }}]" min="0" step="0.01" required pattern="[0-9]+(\.[0-9]+)?" value="0">
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            @if (isset($cart_item) && $cart_item->contains('item_number', $product->item_number))
-                                                            <!-- <button class="btn btn-outline-success" disabled>Add to cart</button> -->
-                                                            <label class="switch">
-                                                                <input type="checkbox" name="selected_items[]" value="{{ $product->item_number }}" disabled checked>
-                                                                <span class="slider"></span>
-                                                            </label>
-                                                            @else
-                                                            <input type="hidden" name="item_numbers[]" value="{{ $product->item_number }}">
-                                                            <!-- <button type="submit" class="btn btn-outline-success add-to-cart-btn">Add to cart</button> -->
-                                                            <label class="switch">
-                                                                <input type="checkbox" name="selected_items[]" value="{{ $product->item_number }}">
-                                                                <span class="slider"></span>
-                                                            </label>
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            <!-- <input type="checkbox" data-toggle="switchbutton" data-size="sm" data-offlabel="Select" data-onlabel="Selected" name="selected_items[]" value="{{ $product->item_number }}" id="default"> -->
-                                                        </td>
-                                                    </tr>
-                                                    @endforeach
-                                                    <tr>
-                                                        <td colspan="5"></td>
-                                                        <td>
-                                                            @if ($my_shop)
-                                                            <input type="hidden" name="branch_code" value="{{ $my_shop }}">
-                                                            <button type="submit" class="btn btn-outline-success">Add all to cart</button>
-                                                            @else
-                                                            <button disabled class="btn btn-outline-success">Add all to cart</button>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </form>
-                                        </table>
-
-                                    </div>
-                                </div>
-                                @endif
                             </div>
                         </div>
 
@@ -278,41 +108,278 @@
             </div>
         </div>
     </div>
-    
+
+    <div class="oa-order-selection-bar" id="oa-order-selection-bar">
+        <span><strong id="oa-order-selection-count">0</strong> <span id="oa-order-selection-label">items</span> selected</span>
+        <button type="button" class="btn btn-outline-success" onclick="document.getElementById('oa-order-form').requestSubmit();">
+            <i class="fa fa-cart-plus"></i> Add to Cart
+        </button>
+    </div>
 @endsection
 
 @push('scripts')
+<script src="{{ asset('assets/js/order-admin-order-theme.js') }}?v={{ filemtime(public_path('assets/js/order-admin-order-theme.js')) }}"></script>
 <script>
-        $(document).ready(function() {
-            $('#shop').change(function() {
-                let shop = $(this).val(); // Retrieve the selected value of the select element
-                let add_to_cart = $('.add-to-cart-btn'); // Select the Add to cart button
-                let cart = $('.cart-btn'); // Select the cart button
+    (function () {
+        // Same cross-page persistence pattern as the rep role's create-order
+        // page (assets/js/rep-order-theme.js's stepper + this page-level
+        // script), keyed per shop: an admin can switch between any shop in
+        // the system, and picks for one shop must never bleed into another
+        // shop's cart.
+        var STORAGE_KEY_PREFIX = 'oa-create-order-selections:';
+        var bar = document.getElementById('oa-order-selection-bar');
+        var countEl = document.getElementById('oa-order-selection-count');
+        var labelEl = document.getElementById('oa-order-selection-label');
+        var resultsEl = document.getElementById('oa-order-results');
+        var headerEl = document.getElementById('oa-order-header');
+        var orderTimeSelect = document.getElementById('order_time');
+        var filtersForm = document.getElementById('oa-order-filters-form');
+        var shopSelect = document.getElementById('shop');
+        var searchInput = document.getElementById('search');
+        var categorySelect = document.getElementById('category');
 
-                if (shop == '') {
-                    add_to_cart.prop('disabled', true); // Disable the button if no shop is selected
-                    cart.addClass('disabled');
-                } else {
-                    add_to_cart.prop('disabled', false); // Enable the button if a shop is selected
-                    cart.removeClass('disabled');
+        function currentShop() {
+            return shopSelect.value || '';
+        }
+
+        function storageKey() {
+            return STORAGE_KEY_PREFIX + currentShop();
+        }
+
+        function readStore() {
+            try {
+                return JSON.parse(localStorage.getItem(storageKey()) || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function writeStore(store) {
+            try {
+                localStorage.setItem(storageKey(), JSON.stringify(store));
+            } catch (e) {}
+        }
+
+        function updateSelectionBar() {
+            var selected = Object.keys(readStore()).length;
+            countEl.textContent = selected;
+            labelEl.textContent = selected === 1 ? 'item' : 'items';
+            bar.classList.toggle('is-active', selected > 0);
+        }
+
+        function qtyInputFor(checkbox) {
+            var stepper = checkbox.closest('.oa-order-label-bottom')?.querySelector('.oa-order-qty-stepper');
+            return stepper ? stepper.querySelector('.oa-order-label-qty') : null;
+        }
+
+        function syncStoreFromCheckbox(checkbox) {
+            var qtyInput = qtyInputFor(checkbox);
+            var qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : 0;
+            var store = readStore();
+
+            if (checkbox.checked && qty > 0) {
+                store[checkbox.value] = qty;
+            } else {
+                delete store[checkbox.value];
+            }
+
+            writeStore(store);
+            updateSelectionBar();
+        }
+
+        function bindForm() {
+            var form = document.getElementById('oa-order-form');
+            if (!form || form.dataset.bound) return;
+            form.dataset.bound = '1';
+
+            form.addEventListener('submit', function () {
+                var onThisPage = new Set(Array.from(form.querySelectorAll('.oa-order-select-checkbox')).map(function (cb) { return cb.value; }));
+                var pending = readStore();
+
+                Object.keys(pending).forEach(function (itemNumber) {
+                    if (onThisPage.has(itemNumber)) {
+                        return;
+                    }
+
+                    var qtyField = document.createElement('input');
+                    qtyField.type = 'hidden';
+                    qtyField.name = 'qty[' + itemNumber + ']';
+                    qtyField.value = pending[itemNumber];
+                    form.appendChild(qtyField);
+
+                    var selectedField = document.createElement('input');
+                    selectedField.type = 'hidden';
+                    selectedField.name = 'selected_items[]';
+                    selectedField.value = itemNumber;
+                    form.appendChild(selectedField);
+                });
+            });
+        }
+
+        function initResults() {
+            var checkboxes = resultsEl.querySelectorAll('.oa-order-select-checkbox');
+            var store = readStore();
+
+            checkboxes.forEach(function (checkbox) {
+                if (Object.prototype.hasOwnProperty.call(store, checkbox.value)) {
+                    var qtyInput = qtyInputFor(checkbox);
+                    if (qtyInput) {
+                        qtyInput.value = store[checkbox.value];
+                    }
+                    checkbox.checked = true;
+                }
+
+                checkbox.addEventListener('change', function () {
+                    syncStoreFromCheckbox(checkbox);
+                });
+            });
+
+            if (window.OAOrderTheme) window.OAOrderTheme.initQtySteppers(resultsEl);
+            bindForm();
+            updateSelectionBar();
+        }
+
+        initResults();
+
+        @if (session('success'))
+        writeStore({});
+        updateSelectionBar();
+        @endif
+
+        // ----- AJAX filtering: shop / order time / search / category -----
+        var debounceTimer = null;
+
+        function buildParams() {
+            return new URLSearchParams({
+                shop: currentShop(),
+                order_time: orderTimeSelect.value || '',
+                search: searchInput.value || '',
+                category: categorySelect.value || '',
+            });
+        }
+
+        function refresh() {
+            var params = buildParams();
+            var url = filtersForm.getAttribute('action') + '?' + params.toString();
+
+            history.replaceState(null, '', url);
+
+            fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    headerEl.innerHTML = data.header_html;
+                    orderTimeSelect.innerHTML = data.order_time_options_html;
+                    resultsEl.innerHTML = data.results_html;
+                    initResults();
+                });
+        }
+
+        function refreshDebounced() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(refresh, 400);
+        }
+
+        shopSelect.addEventListener('change', refresh);
+        orderTimeSelect.addEventListener('change', refresh);
+        categorySelect.addEventListener('change', refresh);
+        searchInput.addEventListener('input', refreshDebounced);
+        filtersForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            clearTimeout(debounceTimer);
+            refresh();
+        });
+
+        // ----- Searchable shop dropdown (no external dependency - the CDN
+        // select2 this used to be relied on jQuery/select2 loading from a
+        // CDN, which isn't reliable in every environment; this is a small
+        // self-contained combobox over the real, hidden <select id="shop">
+        // so every existing listener/value read above keeps working) -----
+        (function () {
+            var combo = document.getElementById('oa-shop-combo');
+            var input = document.getElementById('shop-search');
+            var list = document.getElementById('oa-shop-combo-list');
+            var clearBtn = document.getElementById('oa-shop-combo-clear');
+
+            var options = Array.from(shopSelect.options)
+                .filter(function (o) { return o.value !== ''; })
+                .map(function (o) { return { value: o.value, label: o.textContent.trim() }; });
+
+            function labelForValue(value) {
+                var match = options.filter(function (o) { return o.value === value; })[0];
+                return match ? match.label : '';
+            }
+
+            function renderList(filterText) {
+                var q = (filterText || '').toLowerCase();
+                var matches = q ? options.filter(function (o) { return o.label.toLowerCase().indexOf(q) !== -1; }) : options;
+                list.innerHTML = '';
+
+                if (matches.length === 0) {
+                    var empty = document.createElement('div');
+                    empty.className = 'oa-shop-combo-empty';
+                    empty.textContent = 'No shops found';
+                    list.appendChild(empty);
+                    return;
+                }
+
+                matches.slice(0, 200).forEach(function (o) {
+                    var item = document.createElement('div');
+                    item.className = 'oa-shop-combo-item' + (o.value === shopSelect.value ? ' is-active' : '');
+                    item.textContent = o.label;
+                    item.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        selectShop(o.value, o.label);
+                    });
+                    list.appendChild(item);
+                });
+            }
+
+            function selectShop(value, label) {
+                shopSelect.value = value;
+                input.value = label;
+                clearBtn.hidden = !value;
+                list.hidden = true;
+                shopSelect.dispatchEvent(new Event('change'));
+            }
+
+            input.addEventListener('focus', function () {
+                input.select();
+                renderList(input.value === labelForValue(shopSelect.value) ? '' : input.value);
+                list.hidden = false;
+            });
+
+            input.addEventListener('input', function () {
+                clearBtn.hidden = !input.value;
+                renderList(input.value);
+                list.hidden = false;
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    list.hidden = true;
+                    input.blur();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var first = list.querySelector('.oa-shop-combo-item');
+                    if (first) selectShop(options.filter(function (o) { return o.label === first.textContent; })[0].value, first.textContent);
                 }
             });
 
-            $('#shop').trigger('change');
-        });
-
-        function cart_btn() {
-            document.getElementById('warning').style.display = 'block';
-        }
-    </script>
-
-
-    <script>
-        $(document).ready(function() {
-            $('#shop').select2({
-                placeholder: "Select Shop",
-                allowClear: true
+            clearBtn.addEventListener('click', function () {
+                selectShop('', '');
+                input.focus();
             });
-        });
-    </script>
+
+            document.addEventListener('click', function (e) {
+                if (!combo.contains(e.target)) list.hidden = true;
+            });
+
+            input.value = labelForValue(shopSelect.value);
+            clearBtn.hidden = !shopSelect.value;
+        })();
+    })();
+</script>
 @endpush

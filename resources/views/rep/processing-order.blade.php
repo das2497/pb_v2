@@ -78,7 +78,7 @@
                                                             @csrf
                                                             <input class="form-control" type="text" value="{{ $order->note }}" name="note">
                                                             <input type="hidden" name="order_number" value="{{ $order->unique_id }}">
-                                                            <button type="submit" class="btn btn-link"><i class="fa fa-refresh" aria-hidden="true"></i></button>
+                                                            <button type="submit" class="btn btn-outline-primary" title="Save note">Save</button>
                                                         </form>
                                                     </td>
                                                     <td>රු. {{ number_format($order->total_price,2) }}</td>

@@ -125,12 +125,33 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="row">
-                                    <div class="col-4">
+                                    <div class="col-12 col-lg-4">
                                         <h5 class="card-header">Today Morning Final Report &nbsp;&nbsp;
                                             <a href="/order-admin/final-report-full-screen" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#morning_shop_wise_report">
                                                 Full Screen
                                             </a>
+                                            <button type="button" id="exportBtn" class="btn btn-success" onclick="exportFullReport()">
+                                                Export to Excel
+                                            </button>
                                         </h5>
+                                    </div>
+                                    <div class="col-12 col-lg-8 pt-3">
+                                        <form class="row g-2" action="/order-admin/final-report" method="GET">
+                                            @csrf
+                                            <div class="col-12 col-sm-4">
+                                                <input type="date" name="date" id="" class="form-control" value="{{ $currentDate }}">
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <select name="state" id="" class="form-control">
+                                                    <option value="Processing" @selected($state === 'Processing')>Processing</option>
+                                                    <option value="Pending" @selected($state === 'Pending')>Pending</option>
+                                                    <option value="Complete" @selected($state === 'Complete')>Complete</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <button class="btn btn-primary" type="submit">Search</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                                 <div class="card-body p-0">
@@ -167,9 +188,6 @@
                                                 </tr>
                                             </thead>
                                             <tbody style="max-height: 400px;">
-                                                @php
-                                                $currentDate = new DateTime();
-                                                @endphp
                                                 @foreach ($products as $product)
                                                 @php
                                                 $normal_total = 0;
@@ -182,15 +200,7 @@
 
                                                     @foreach ($routes_normal as $route)
                                                     @php
-                                                    $qty = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->join('shops','orders.shop','=','shops.branch_code')
-                                                    ->where('carts.item_number', $product->item_number)
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->where('shops.morning_route', $route->name)
-                                                    ->where('orders.status', '=', 'Processing')
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->sum('carts.qty');
+                                                    $qty = $orderMap[$route->name][$product->item_number] ?? 0;
                                                     $normal_total += $qty;
                                                     @endphp
                                                     <td>{{$qty}}</td>
@@ -200,15 +210,7 @@
 
                                                     @foreach ($routes_special as $route)
                                                     @php
-                                                    $qty = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->join('shops','orders.shop','=','shops.branch_code')
-                                                    ->where('carts.item_number', $product->item_number)
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->where('shops.morning_route', $route->name)
-                                                    ->where('orders.status', '=', 'Processing')
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->sum('carts.qty');
+                                                    $qty = $orderMap[$route->name][$product->item_number] ?? 0;
                                                     $special_total += $qty;
                                                     @endphp
                                                     <td>{{$qty}}</td>
@@ -218,15 +220,7 @@
 
                                                     @foreach ($routes_pbd as $route)
                                                     @php
-                                                    $qty = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->join('shops','orders.shop','=','shops.branch_code')
-                                                    ->where('carts.item_number', $product->item_number)
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->where('shops.morning_route', $route->name)
-                                                    ->where('orders.status', '=', 'Processing')
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->sum('carts.qty');
+                                                    $qty = $orderMap[$route->name][$product->item_number] ?? 0;
                                                     $pbd_total += $qty;
                                                     @endphp
                                                     <td>{{$qty}}</td>
@@ -237,9 +231,6 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
-                                    </div>
-                                    <div>
-                                        {{$products->links()}}
                                     </div>
                                 </div>
                             </div>
@@ -258,9 +249,74 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
         function confirmDelete() {
             return confirm('Are you sure you want to delete this item?');
+        }
+
+        async function exportFullReport() {
+            const btn = document.getElementById('exportBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Exporting...';
+
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const res = await fetch('/order-admin/final-report/export?' + params.toString());
+                if (!res.ok) throw new Error('Export request failed');
+
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const table = doc.getElementById('exportTable');
+                if (!table) throw new Error('Export table not found');
+
+                downloadTableAsExcel(table, 'Morning_Final_Report');
+            } catch (e) {
+                alert('Export failed: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function downloadTableAsExcel(table, filenamePrefix) {
+            const wb = XLSX.utils.table_to_book(table, { sheet: 'Report' });
+            const ws = wb.Sheets['Report'];
+            const range = XLSX.utils.decode_range(ws['!ref']);
+
+            const borderStyle = {
+                top: { style: 'thin' },
+                bottom: { style: 'thin' },
+                left: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[addr]) ws[addr] = { v: '' };
+                    ws[addr].s = ws[addr].s || {};
+                    ws[addr].s.border = borderStyle;
+                    ws[addr].s.alignment = { horizontal: 'center', vertical: 'center' };
+                }
+            }
+
+            const colWidths = [];
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                let maxWidth = 10;
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+                    if (cell && cell.v !== undefined && cell.v.toString().length > maxWidth) {
+                        maxWidth = cell.v.toString().length;
+                    }
+                }
+                colWidths.push({ wch: Math.min(maxWidth + 4, 50) });
+            }
+            ws['!cols'] = colWidths;
+
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            XLSX.writeFile(wb, `${filenamePrefix}_${today}.xlsx`);
         }
     </script>
 @endpush

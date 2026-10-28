@@ -3,197 +3,177 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
-use App\Models\Orders;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Controller
 {
+    /**
+     * Instant shell - no DB queries. The page renders immediately and the
+     * two endpoints below fill it in asynchronously (see shop/dashboard.blade.php).
+     */
     public function index()
     {
-        $pending_orders_count = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
-            ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-            ->where('shops.email', '=', Auth::user()->email)
-            ->where('orders.status', '=', 'Pending')
-            ->count('orders.id');
+        return view('shop.dashboard');
+    }
 
-        $processing_orders_count = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
-            ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-            ->where('shops.email', '=', Auth::user()->email)
-            ->where('orders.status', '=', 'Processing')
-            ->count('orders.id');
+    /**
+     * Fast, above-the-fold numbers: order status counts and revenue sums.
+     * Kept separate from getDashboardData() so the stat cards can paint
+     * before the heavier chart/leaderboard queries finish.
+     */
+    public function firstLoading()
+    {
+        $shop = DB::table('shops')->where('email', Auth::user()->email)->first();
 
-        $complete_orders_count = DB::table('orders')
+        $statusCounts = DB::table('orders')
             ->join('shops', 'orders.shop', '=', 'shops.branch_code')
             ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
             ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
             ->where('shops.email', '=', Auth::user()->email)
-            ->where('orders.status', '=', 'Complete')
-            ->count('orders.id');
+            ->selectRaw("
+                SUM(CASE WHEN orders.status = 'Pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN orders.status = 'Processing' THEN 1 ELSE 0 END) as processing,
+                SUM(CASE WHEN orders.status = 'Complete' THEN 1 ELSE 0 END) as complete,
+                SUM(CASE WHEN orders.status = 'Under Review' THEN 1 ELSE 0 END) as under_review
+            ")
+            ->first();
 
-        $under_review_orders_count = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
-            ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-            ->where('shops.email', '=', Auth::user()->email)
-            ->where('orders.status', '=', 'Under Review')
-            ->count('orders.id');
+        $today = Carbon::today()->format('Y-m-d');
+        $startOfThisWeek = Carbon::now()->startOfWeek();
+        $endOfThisWeek = Carbon::now()->endOfWeek();
+        $startOfThisMonth = Carbon::now()->startOfMonth();
+        $endOfThisMonth = Carbon::now()->endOfMonth();
+
+        $revenues = DB::table('orders')
+            ->where('orders.shop', $shop->branch_code)
+            ->selectRaw("
+                SUM(CASE WHEN DATE(created_at) = ? AND status IN ('Processing', 'Complete') THEN total_price ELSE 0 END) as today_total_revenue,
+                SUM(CASE WHEN created_at BETWEEN ? AND ? AND status IN ('Processing', 'Complete') THEN total_price ELSE 0 END) as thisWeek_total_revenue,
+                SUM(CASE WHEN created_at BETWEEN ? AND ? AND status IN ('Processing', 'Complete') THEN total_price ELSE 0 END) as thisMonth_total_revenue
+            ", [
+                $today,
+                $startOfThisWeek->format('Y-m-d H:i:s'),
+                $endOfThisWeek->format('Y-m-d H:i:s'),
+                $startOfThisMonth->format('Y-m-d H:i:s'),
+                $endOfThisMonth->format('Y-m-d H:i:s'),
+            ])
+            ->first();
+
+        return response()->json([
+            'stats' => [
+                'pending_orders_count' => (int) ($statusCounts->pending ?? 0),
+                'processing_orders_count' => (int) ($statusCounts->processing ?? 0),
+                'complete_orders_count' => (int) ($statusCounts->complete ?? 0),
+                'under_review_orders_count' => (int) ($statusCounts->under_review ?? 0),
+                'today_total_revenue' => (float) ($revenues->today_total_revenue ?? 0),
+                'thisWeek_total_revenue' => (float) ($revenues->thisWeek_total_revenue ?? 0),
+                'lastMonth_total_revenue' => (float) ($revenues->thisMonth_total_revenue ?? 0),
+                'startOfThisWeek' => $startOfThisWeek->format('Y-m-d'),
+                'endOfThisWeek' => $endOfThisWeek->format('Y-m-d'),
+                'startOfThisMonth' => $startOfThisMonth->format('Y-m-d'),
+                'endOfThisMonth' => $endOfThisMonth->format('Y-m-d'),
+            ],
+        ]);
+    }
+
+    /**
+     * Heavier chart/leaderboard data, cached per shop for a few minutes
+     * since none of it needs to be real-time.
+     */
+    public function getDashboardData()
+    {
+        $shop = DB::table('shops')->where('email', Auth::user()->email)->first();
 
         $latest_orders = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->where('shops.email', '=', Auth::user()->email)
+            ->where('orders.shop', $shop->branch_code)
             ->select('orders.*', 'orders.created_at as order_date')
-            ->orderBy('orders.created_at')
+            ->orderByDesc('orders.created_at')
             ->limit(10)
             ->get();
 
         $top_orders = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code') // Join orders with shops
-            ->where('shops.email', Auth::user()->email) // Filter by the authenticated user's email
-            ->where('orders.created_at', '>=', Carbon::now()->subDays(30)) // Filter last 30 days
-            ->select('orders.*', 'orders.created_at as order_date') // Select orders and order date
-            ->orderByDesc('orders.total_price') // Order by total price (descending)
-            ->limit(10) // Limit to top 10 orders
+            ->where('orders.shop', $shop->branch_code)
+            ->where('orders.created_at', '>=', Carbon::now()->subDays(30))
+            ->select('orders.*', 'orders.created_at as order_date')
+            ->orderByDesc('orders.total_price')
+            ->limit(10)
             ->get();
 
-        // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        $cacheKey = fn (string $suffix) => "shop-dashboard:{$shop->branch_code}:{$suffix}";
+        $cacheTtl = now()->addMinutes(10);
 
-        // Get today's date
-        $today = Carbon::today();
-        $date = $today->format('Y-m-d');
+        $last12montsrevenue = Cache::remember($cacheKey('last-12-months-revenue'), $cacheTtl, function () use ($shop) {
+            return DB::table('orders')
+                ->select(
+                    DB::raw('YEAR(created_at) as year'),
+                    DB::raw('MONTH(created_at) as month'),
+                    DB::raw('SUM(total_price) as amount')
+                )
+                ->where('shop', $shop->branch_code)
+                ->where('created_at', '>=', Carbon::now()->subMonths(12))
+                ->groupBy('year', 'month')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get();
+        });
 
-        // Calculate today's total revenue
-        $today_total_revenue = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->whereDate('orders.created_at', $date)
-            ->where(function ($query) {
-                $query->where('orders.status', 'Processing')
-                    ->orWhere('orders.status', 'Complete');
-            })
-            ->where('shops.email', '=', Auth::user()->email)
-            ->sum('total_price');
+        $last30DaysRevenue = Cache::remember($cacheKey('last-30-days-revenue'), $cacheTtl, function () use ($shop) {
+            return DB::table('orders')
+                ->select(
+                    DB::raw('DATE(created_at) as date'),
+                    DB::raw('SUM(total_price) as amount')
+                )
+                ->where('shop', $shop->branch_code)
+                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
+        });
 
-        // Get the start and end of the current week
-        $startOfThisWeek = Carbon::now()->startOfWeek();
-        $endOfThisWeek = Carbon::now()->endOfWeek();
+        $bestSellingCategories = Cache::remember($cacheKey('best-selling-categories'), $cacheTtl, function () use ($shop) {
+            return DB::table('carts')
+                ->join('products', 'carts.item_number', '=', 'products.item_number')
+                ->join('product_categories', 'products.category', '=', 'product_categories.category')
+                ->where('carts.shop_bc_number', $shop->branch_code)
+                ->select(
+                    'product_categories.category',
+                    DB::raw('SUM(carts.qty) as total_quantity_sold'),
+                    DB::raw('SUM(carts.qty * carts.price) as total_revenue')
+                )
+                ->groupBy('product_categories.category')
+                ->orderByDesc('total_quantity_sold')
+                ->get();
+        });
 
-        // Calculate this week's total revenue
-        $thisWeek_total_revenue = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->whereBetween('orders.created_at', [$startOfThisWeek, $endOfThisWeek])
-            ->where(function ($query) {
-                $query->where('orders.status', 'Processing')
-                    ->orWhere('orders.status', 'Complete');
-            })
-            ->where('shops.email', '=', Auth::user()->email)
-            ->sum('total_price');
+        $topSellingProducts = Cache::remember($cacheKey('top-selling-products'), $cacheTtl, function () use ($shop) {
+            return DB::table('carts')
+                ->join('products', 'carts.item_number', '=', 'products.item_number')
+                ->where('carts.shop_bc_number', $shop->branch_code)
+                ->select(
+                    'products.item_number',
+                    'products.name_english',
+                    'products.name_sinhala',
+                    DB::raw('SUM(carts.qty) as total_quantity_sold'),
+                    DB::raw('SUM(carts.qty * carts.price) as total_revenue')
+                )
+                ->groupBy('products.item_number', 'products.name_english', 'products.name_sinhala')
+                ->orderByDesc('total_quantity_sold')
+                ->limit(10)
+                ->get();
+        });
 
-        // Get the start and end of the current month
-        $startOfThisMonth = Carbon::now()->startOfMonth();
-        $endOfThisMonth = Carbon::now()->endOfMonth();
-
-        // Calculate this month's total revenue
-        $lastMonth_total_revenue = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->whereBetween('orders.created_at', [$startOfThisMonth, $endOfThisMonth])
-            ->where(function ($query) {
-                $query->where('orders.status', 'Processing')
-                    ->orWhere('orders.status', 'Complete');
-            })
-            ->where('shops.email', '=', Auth::user()->email)
-            ->sum('total_price');
-
-        // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-        $shop = DB::table('shops')
-            ->where('email', Auth::user()->email)
-            ->first();
-
-        $last12montsrevenue = DB::table('orders')
-            ->select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('SUM(total_price) as amount')
-            )
-            ->where('shop', $shop->branch_code) // Use the shop's name to filter orders
-            ->where('created_at', '>=', Carbon::now()->subMonths(12)) // Last 12 months
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
-            ->get();
-
-        // dd($last12montsrevenue);
-
-        // ============================================================================================================================
-
-        // Calculate the date 30 days ago
-        $last30DaysRevenue = DB::table('orders')
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(total_price) as amount')
-            )
-            ->where('shop', $shop->branch_code) // Use the shop's name to filter orders
-            ->where('created_at', '>=', Carbon::now()->subDays(30)) // Last 30 days
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get();
-
-        // ============================================================================================================================
-
-        $bestSellingCategories = DB::table('carts')
-            ->join('products', 'carts.item_number', '=', 'products.item_number') // Join carts with products
-            ->join('product_categories', 'products.category', '=', 'product_categories.category') // Join products with product_categories
-            ->where('carts.shop_bc_number', $shop->branch_code) // Use the shop's branch code to filter carts
-            ->select(
-                'product_categories.category', // Select the category
-                DB::raw('SUM(carts.qty) as total_quantity_sold'), // Sum the quantity sold
-                DB::raw('SUM(carts.qty * carts.price) as total_revenue') // Calculate total revenue
-            )
-            ->groupBy('product_categories.category') // Group by category
-            ->orderByDesc('total_quantity_sold') // Order by total quantity sold (descending)
-            ->get();
-
-        //============================================================================================================================
-
-        $topSellingProducts = DB::table('carts')
-            ->join('products', 'carts.item_number', '=', 'products.item_number') // Join carts with products
-            ->where('carts.shop_bc_number', $shop->branch_code) // Use the shop's branch code to filter carts
-            ->select(
-                'products.item_number', // Product item number
-                'products.name_english', // Product name in English
-                'products.name_sinhala', // Product name in Sinhala
-                DB::raw('SUM(carts.qty) as total_quantity_sold'), // Total quantity sold
-                DB::raw('SUM(carts.qty * carts.price) as total_revenue') // Total revenue
-            )
-            ->groupBy('products.item_number', 'products.name_english', 'products.name_sinhala') // Group by product
-            ->orderByDesc('total_quantity_sold') // Order by total quantity sold (descending)
-            ->limit(10) // Limit to top 10 products
-            ->get();
-
-        return view('shop.dashboard', [
-            'pending_orders_count' => $pending_orders_count,
-            'processing_orders_count' => $processing_orders_count,
-            'complete_orders_count' => $complete_orders_count,
-            'under_review_orders_count' => $under_review_orders_count,
-            'latest_orders' => $latest_orders,
-            'top_orders' => $top_orders,
-            'today_total_revenue' => $today_total_revenue,
-            'thisWeek_total_revenue' => $thisWeek_total_revenue,
-            'startOfThisWeek' => $startOfThisWeek,
-            'endOfThisWeek' => $endOfThisWeek,
-            'lastMonth_total_revenue' => $lastMonth_total_revenue,
-            'startOfThisMonth' => $startOfThisMonth,
-            'endOfThisMonth' => $endOfThisMonth,
-            'last12montsrevenue' => $last12montsrevenue,
-            'last30DaysRevenue' => $last30DaysRevenue,
-            'bestSellingCategories' => $bestSellingCategories,
-            'topSellingProducts' => $topSellingProducts,
+        return response()->json([
+            'stats' => [
+                'latest_orders' => $latest_orders,
+                'top_orders' => $top_orders,
+                'last12montsrevenue' => $last12montsrevenue->values(),
+                'last30DaysRevenue' => $last30DaysRevenue->values(),
+                'bestSellingCategories' => $bestSellingCategories->values(),
+                'topSellingProducts' => $topSellingProducts->values(),
+            ],
         ]);
     }
 }

@@ -22,36 +22,27 @@ class PendingOrders extends Controller
     }
     public function index(Request $request)
     {
+        $search = trim((string) $request->input('search'));
 
-        $Orders = null;
-        if ($request->has('search') && $request->search != '') {
-            $Orders = DB::table('orders')
-                ->join('shops', 'shops.branch_code', '=', 'orders.shop')
-                ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-                ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-                ->where('orders.status', '=', 'Pending')
-                ->where('reps.email', '=', Auth::user()->email)
-                ->where(function ($query) use ($request) {
-                    $query->where('orders.unique_id', 'like', '%' . $request->search . '%')
-                        ->orWhere('shops.name', 'like', '%' . $request->search . '%');
-                })
-                ->select('orders.*', 'shops.name as shop_name', 'shops.branch_code as shop')
-                ->orderBy('orders.created_at', 'asc')
-                ->get();
-        } else {
-            $Orders = DB::table('orders')
-                ->join('shops', 'shops.branch_code', '=', 'orders.shop')
-                ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-                ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-                ->where('orders.status', '=', 'Pending')
-                ->where('reps.email', '=', Auth::user()->email)
-                ->select('orders.*', 'shops.name as shop_name', 'shops.branch_code as shop')
-                ->orderBy('orders.created_at', 'asc')
-                ->get();
-        }
+        $Orders = DB::table('orders')
+            ->join('shops', 'shops.branch_code', '=', 'orders.shop')
+            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
+            ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
+            ->where('orders.status', '=', 'Pending')
+            ->where('reps.email', '=', Auth::user()->email)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('orders.unique_id', 'like', '%' . $search . '%')
+                        ->orWhere('shops.name', 'like', '%' . $search . '%');
+                });
+            })
+            ->select('orders.*', 'shops.name as shop_name', 'shops.branch_code as shop')
+            ->orderBy('orders.created_at', 'asc')
+            ->get();
 
         return view('rep.pending-order', [
-            'Orders' => $Orders
+            'Orders' => $Orders,
+            'search' => $search,
         ]);
     }
 

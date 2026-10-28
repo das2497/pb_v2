@@ -195,14 +195,19 @@
                                                     </select>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label for="order_time">Select Order Time</label>
-                                                    <select class="form-control" id="order_time" name="order_time" required>
-                                                        <option value="">Select Order Time</option>
+                                                    <label>Select Order Time</label>
+                                                    <div>
                                                         @foreach ($order_times as $ot)
-                                                        <option value="{{ $ot->name }}" @selected(old('order_time')===$ot->name)>{{ $ot->name }}</option>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input order-time-option" type="checkbox" name="order_time[]" id="order_time_{{ $ot->id }}" value="{{ $ot->name }}" @checked(is_array(old('order_time')) && in_array($ot->name, old('order_time'), true))>
+                                                            <label class="form-check-label" for="order_time_{{ $ot->id }}">{{ $ot->name }}</label>
+                                                        </div>
                                                         @endforeach
-                                                        <option value="All" @selected(old('order_time')==='All' )>All</option>
-                                                    </select>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input order-time-all" type="checkbox" name="order_time[]" id="order_time_all" value="All" @checked(is_array(old('order_time')) && in_array('All', old('order_time'), true))>
+                                                            <label class="form-check-label" for="order_time_all">All</label>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="inputEmail">PB Unit Price</label>
@@ -355,106 +360,21 @@
                                                             Update
                                                         </button>
                                                     </td>
-                                                    <form method="POST" action="{{route('order-admin-products.delete', $product->id)}}">
-                                                        @csrf
-                                                        <td><button type="submit" onclick="return confirmDelete();" class="btn btn-outline-danger">Delete</button></td>
-                                                    </form>
+                                                    <td>
+                                                        <!--
+                                                            A <form> can't be a direct child of <tr> - browsers
+                                                            silently foster-parent it out of the table (and, worse,
+                                                            the parser's "form pointer" stays set from this invalid
+                                                            form, so the *next* <form> it sees - the Update modal's -
+                                                            gets ignored entirely, which is why the modal's own
+                                                            checkboxes/inputs end up with no enclosing <form> and
+                                                            e.target.closest('form') returns null). The delete
+                                                            button instead targets a real <form> rendered after the
+                                                            table via the form="..." attribute.
+                                                        -->
+                                                        <button type="submit" form="deleteForm{{ $product->id }}" onclick="return confirmDelete();" class="btn btn-outline-danger">Delete</button>
+                                                    </td>
                                                 </tr>
-
-                                                <!-- Update Modal -->
-                                                <div class="modal fade" id="updateModal{{ $product->id }}" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel{{ $product->id }}" aria-hidden="true">
-                                                    <div class="modal-dialog" role="document">
-                                                        <div class="modal-content">
-                                                            <form action="{{ route('order-admin-products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
-                                                                @csrf
-                                                                @method('PUT')
-                                                                <div class="modal-header">
-                                                                    <h5 class="modal-title" id="updateModalLabel{{ $product->id }}">Update Product</h5>
-                                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                        <span aria-hidden="true">&times;</span>
-                                                                    </button>
-                                                                </div>
-                                                                <div class="modal-body">
-                                                                    <div class="form-group">
-                                                                        <label for="item_number">Item ID</label>
-                                                                        <input type="text" class="form-control" name="item_number" value="{{ $product->item_number }}" required>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="name_english">Item Name English</label>
-                                                                        <input type="text" class="form-control" name="name_english" value="{{ $product->name_english }}" required>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="name_sinhala">Item Name Sinhala</label>
-                                                                        <input type="text" class="form-control" name="name_sinhala" value="{{ $product->name_sinhala }}" required>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="category">Category</label>
-                                                                        <select class="form-control" id="category" name="category">
-                                                                            <option value="">Select Category</option>
-                                                                            @foreach ($product_categories_drop_down as $category)
-                                                                            <option value="{{ $category->category }}" @selected($product->category==$category->category)>
-                                                                                {{ $category->category }}
-                                                                            </option>
-                                                                            @endforeach
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <div class="form-group">
-                                                                            <label for="input-select">Select Visibility</label>
-                                                                            <select class="form-control" id="visibility" name="visibility">
-                                                                                <option value="">Select Visibility</option>
-                                                                                @if ($product->visibility === "All" )
-                                                                                <option value="All" selected>All</option>
-                                                                                @else
-                                                                                <option value="All">All</option>
-                                                                                @endif
-                                                                                @if ($product->visibility === "Rep" )
-                                                                                <option value="Rep" selected>Rep</option>
-                                                                                @else
-                                                                                <option value="Rep">Rep</option>
-                                                                                @endif
-                                                                                @if ($product->visibility === "Shop" )
-                                                                                <option value="Shop" selected>Shop</option>
-                                                                                @else
-                                                                                <option value="Shop">Shop</option>
-                                                                                @endif
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="order_time">Select Order Time</label>
-                                                                        <select class="form-control" name="order_time" required>
-                                                                            @foreach ($order_times as $ot)
-                                                                            <option value="{{ $ot->name }}" @selected($product->order_time === $ot->name)>{{ $ot->name }}</option>
-                                                                            @endforeach
-                                                                            <option value="All" @selected(!$order_times->contains('name', $product->order_time))>All</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="unit_price">PB Unit Price</label>
-                                                                        <input type="text" class="form-control" name="unit_price" value="{{ $product->unit_price }}" required>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="mrp">PB MRP</label>
-                                                                        <input type="text" class="form-control" name="mrp" value="{{ $product->mrp }}" required>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="direct_sale_price">PB Direct Sale Price</label>
-                                                                        <input type="text" class="form-control" name="direct_sale_price" value="{{ $product->direct_sale_price }}" required>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="img">Item Image</label>
-                                                                        <input type="file" class="form-control" name="img">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-                                                                    <button type="submit" class="btn btn-outline-primary">Save changes</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                                 @endforeach
                                                 <tr>
                                                     <td></td>
@@ -465,6 +385,114 @@
                                         </table>
 
                                     </div>
+
+                                    <!-- Delete forms and Update modals for every row above, rendered
+                                         outside the table - see the comment on the Delete button. -->
+                                    @foreach ($products as $product)
+                                    <form id="deleteForm{{ $product->id }}" method="POST" action="{{ route('order-admin-products.delete', $product->id) }}">
+                                        @csrf
+                                    </form>
+
+                                    <div class="modal fade" id="updateModal{{ $product->id }}" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel{{ $product->id }}" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <form action="{{ route('order-admin-products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="updateModalLabel{{ $product->id }}">Update Product</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="form-group">
+                                                            <label for="item_number">Item ID</label>
+                                                            <input type="text" class="form-control" name="item_number" value="{{ $product->item_number }}" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="name_english">Item Name English</label>
+                                                            <input type="text" class="form-control" name="name_english" value="{{ $product->name_english }}" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="name_sinhala">Item Name Sinhala</label>
+                                                            <input type="text" class="form-control" name="name_sinhala" value="{{ $product->name_sinhala }}" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="category">Category</label>
+                                                            <select class="form-control" id="category" name="category">
+                                                                <option value="">Select Category</option>
+                                                                @foreach ($product_categories_drop_down as $category)
+                                                                <option value="{{ $category->category }}" @selected($product->category==$category->category)>
+                                                                    {{ $category->category }}
+                                                                </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <div class="form-group">
+                                                                <label for="input-select">Select Visibility</label>
+                                                                <select class="form-control" id="visibility" name="visibility">
+                                                                    <option value="">Select Visibility</option>
+                                                                    @if ($product->visibility === "All" )
+                                                                    <option value="All" selected>All</option>
+                                                                    @else
+                                                                    <option value="All">All</option>
+                                                                    @endif
+                                                                    @if ($product->visibility === "Rep" )
+                                                                    <option value="Rep" selected>Rep</option>
+                                                                    @else
+                                                                    <option value="Rep">Rep</option>
+                                                                    @endif
+                                                                    @if ($product->visibility === "Shop" )
+                                                                    <option value="Shop" selected>Shop</option>
+                                                                    @else
+                                                                    <option value="Shop">Shop</option>
+                                                                    @endif
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Select Order Time</label>
+                                                            <div>
+                                                                @foreach ($order_times as $ot)
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input order-time-option" type="checkbox" name="order_time[]" id="order_time_{{ $ot->id }}_{{ $product->id }}" value="{{ $ot->name }}" @checked(in_array($ot->name, $product->orderTimeList(), true)) @disabled($product->order_time === 'All')>
+                                                                    <label class="form-check-label" for="order_time_{{ $ot->id }}_{{ $product->id }}">{{ $ot->name }}</label>
+                                                                </div>
+                                                                @endforeach
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input order-time-all" type="checkbox" name="order_time[]" id="order_time_all_{{ $product->id }}" value="All" @checked($product->order_time === 'All')>
+                                                                    <label class="form-check-label" for="order_time_all_{{ $product->id }}">All</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="unit_price">PB Unit Price</label>
+                                                            <input type="text" class="form-control" name="unit_price" value="{{ $product->unit_price }}" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="mrp">PB MRP</label>
+                                                            <input type="text" class="form-control" name="mrp" value="{{ $product->mrp }}" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="direct_sale_price">PB Direct Sale Price</label>
+                                                            <input type="text" class="form-control" name="direct_sale_price" value="{{ $product->direct_sale_price }}" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="img">Item Image</label>
+                                                            <input type="file" class="form-control" name="img">
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-outline-primary">Save changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
                                 </div>
                             </div>
 
@@ -572,5 +600,24 @@
         function confirmDelete() {
             return confirm('Are you sure you want to delete this item?');
         }
+
+        // "All" and the specific order-time checkboxes are mutually exclusive.
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('order-time-all')) {
+                const form = e.target.closest('form');
+                form.querySelectorAll('.order-time-option').forEach(function (cb) {
+                    if (e.target.checked) {
+                        cb.checked = false;
+                    }
+                    cb.disabled = e.target.checked;
+                });
+            } else if (e.target.classList.contains('order-time-option') && e.target.checked) {
+                const form = e.target.closest('form');
+                const allBox = form.querySelector('.order-time-all');
+                if (allBox) {
+                    allBox.checked = false;
+                }
+            }
+        });
     </script>
 @endpush

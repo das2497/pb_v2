@@ -5,7 +5,7 @@
 @push('styles')
 <style>
         .div {
-            height: 600px;
+            height: calc(100vh - 150px);
             /* max-width: 100vw; */
             overflow-x: auto;
             overflow-y: auto;
@@ -81,12 +81,30 @@
         <div class="row">
             <div class="col-12 p-2">
                 <div class="card p-2">
-                    <div class="row">
-                        <div class="col-4">
+                    <div class="row align-items-center">
+                        <div class="col-12 col-lg-3">
                             <h5 class="card-header">Today Evening Shop Report &nbsp;&nbsp;
                             </h5>
                         </div>
-                        <div class="col-2 offset-6">
+                        <div class="col-12 col-lg-7">
+                            <form class="row g-2" method="GET" action="/order-admin/shop-report-full-screen-evening">
+                                @csrf
+                                <div class="col-12 col-sm-4">
+                                    <input type="date" name="date" class="form-control" value="{{ $currentDate }}">
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <select name="state" class="form-control">
+                                        <option value="Processing" @selected($state === 'Processing')>Processing</option>
+                                        <option value="Pending" @selected($state === 'Pending')>Pending</option>
+                                        <option value="Complete" @selected($state === 'Complete')>Complete</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <button class="btn btn-primary w-100" type="submit">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-12 col-lg-2">
                             <a href="/order-admin/shop-report-back-to-report-evening" class="btn btn-outline-dark">Go Back</a>
                         </div>
                     </div>
@@ -138,8 +156,6 @@
                                     $total_special = 0;
                                     $total_pbd = 0;
                                     $index = 0;
-                                    $timeZone = 'Asia/Colombo';
-                                    $currentDate = new DateTime();
                                     @endphp
                                     @foreach ($products as $product)
                                     @php
@@ -155,26 +171,15 @@
                                         {{-- Normal Route --}}
                                         @foreach ($header_normal as $head)
                                         @php
-                                        $order = DB::table('orders')
-                                        ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                        ->where('orders.shop', '=', $head->branch_code)
-                                        ->where('carts.item_number', '=', $product->item_number)
-                                        ->where('orders.time_period', '=', 'Evening')
-                                        ->where('orders.status','=','Processing')
-                                        ->whereDate('orders.created_at', $currentDate)
-                                        ->select('carts.*', 'orders.*')
-                                        ->first();
-
-                                        $orderQty = $order ? $order->qty : 0; // Check if $order exists
-                                        if ($order) {
+                                        $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                        $orderQty = $order['qty'] ?? 0;
                                         $total_normal += $orderQty;
-                                        }
                                         @endphp
                                         <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
                                             {{ $orderQty }}
                                         </th>
                                         <th style="max-width: 180px; overflow-x: scroll;">
-                                            <span>{{ $order ? $order->remarke : '' }}</span>
+                                            <span>{{ $order['remark'] ?? '' }}</span>
                                         </th>
                                         @endforeach
 
@@ -183,26 +188,15 @@
                                         {{-- Special Route --}}
                                         @foreach ($header_special as $head)
                                         @php
-                                        $order = DB::table('orders')
-                                        ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                        ->where('orders.shop', '=', $head->branch_code)
-                                        ->where('carts.item_number', '=', $product->item_number)
-                                        ->where('orders.time_period', '=', 'Evening')
-                                        ->where('orders.status','=','Processing')
-                                        ->whereDate('orders.created_at', $currentDate)
-                                        ->select('carts.*', 'orders.*')
-                                        ->first();
-
-                                        $orderQty = $order ? $order->qty : 0; // Check if $order exists
-                                        if ($order) {
+                                        $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                        $orderQty = $order['qty'] ?? 0;
                                         $total_special += $orderQty;
-                                        }
                                         @endphp
                                         <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
                                             {{ $orderQty }}
                                         </th>
                                         <th style="max-width: 180px; overflow-x: scroll;">
-                                            <span>{{ $order ? $order->remarke : '' }}</span>
+                                            <span>{{ $order['remark'] ?? '' }}</span>
                                         </th>
                                         @endforeach
 
@@ -211,26 +205,15 @@
                                         {{-- PBD Route --}}
                                         @foreach ($header_pbd as $head)
                                         @php
-                                        $order = DB::table('orders')
-                                        ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                        ->where('orders.shop', '=', $head->branch_code)
-                                        ->where('carts.item_number', '=', $product->item_number)
-                                        ->where('orders.time_period', '=', 'Evening')
-                                        ->where('orders.status','=','Processing')
-                                        ->whereDate('orders.created_at', $currentDate)
-                                        ->select('carts.*', 'orders.*')
-                                        ->first();
-
-                                        $orderQty = $order ? $order->qty : 0; // Check if $order exists
-                                        if ($order) {
+                                        $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                        $orderQty = $order['qty'] ?? 0;
                                         $total_pbd += $orderQty;
-                                        }
                                         @endphp
                                         <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
                                             {{ $orderQty }}
                                         </th>
                                         <th style="max-width: 180px; overflow-x: scroll;">
-                                            <span>{{ $order ? $order->remarke : '' }}</span>
+                                            <span>{{ $order['remark'] ?? '' }}</span>
                                         </th>
                                         @endforeach
 
@@ -245,9 +228,6 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="p-2">
-                            {{ $products->links() }}
                         </div>
                     </div>
                 </div>

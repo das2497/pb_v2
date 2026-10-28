@@ -9,203 +9,178 @@ use Illuminate\Support\Facades\DB;
 
 class FinalReport extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $routes_normal = DB::table('routes')
-            ->join('shops', 'shops.morning_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Normal')
-            ->where('routes.time', '=', 'Morning')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $routes_special = DB::table('routes')
-            ->join('shops', 'shops.morning_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Special')
-            ->where('routes.time', '=', 'Morning')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $routes_pbd = DB::table('routes')
-            ->join('shops', 'shops.morning_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'PBD')
-            ->where('routes.time', '=', 'Morning')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $products = DB::table('products')
-            ->orderBy('item_number', 'asc')
-            ->paginate(20);
+        $routes = $this->routesByType('morning_route', 'Morning');
+        $products = DB::table('products')->orderBy('item_number', 'asc')->get();
+        $orderMap = $this->buildRouteOrderMap('morning_route', 'Morning', $state, $currentDate);
 
         return view('rep.final-report-morning', [
-            'routes_normal' => $routes_normal,
-            'routes_special' => $routes_special,
-            'routes_pbd' => $routes_pbd,
+            'routes_normal' => $routes['Normal'] ?? collect(),
+            'routes_special' => $routes['Special'] ?? collect(),
+            'routes_pbd' => $routes['PBD'] ?? collect(),
             'products' => $products,
+            'orderMap' => $orderMap,
+            'currentDate' => $currentDate,
+            'state' => $state,
         ]);
     }
 
-    public function fullScreen()
+    public function fullScreen(Request $request)
     {
-        $routes_normal = DB::table('routes')
-            ->join('shops', 'shops.morning_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Normal')
-            ->where('routes.time', '=', 'Morning')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $routes_special = DB::table('routes')
-            ->join('shops', 'shops.morning_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Special')
-            ->where('routes.time', '=', 'Morning')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $routes_pbd = DB::table('routes')
-            ->join('shops', 'shops.morning_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'PBD')
-            ->where('routes.time', '=', 'Morning')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $products = DB::table('products')
-            ->orderBy('item_number', 'asc')
-            ->paginate(20);
+        $routes = $this->routesByType('morning_route', 'Morning');
+        $products = DB::table('products')->orderBy('item_number', 'asc')->get();
+        $orderMap = $this->buildRouteOrderMap('morning_route', 'Morning', $state, $currentDate);
 
         return view('rep.final-report-morning-full-screen', [
-            'routes_normal' => $routes_normal,
-            'routes_special' => $routes_special,
-            'routes_pbd' => $routes_pbd,
+            'routes_normal' => $routes['Normal'] ?? collect(),
+            'routes_special' => $routes['Special'] ?? collect(),
+            'routes_pbd' => $routes['PBD'] ?? collect(),
             'products' => $products,
+            'orderMap' => $orderMap,
+            'currentDate' => $currentDate,
+            'state' => $state,
         ]);
     }
 
-    public function index_evening()
+    public function index_evening(Request $request)
     {
-        $routes_normal = DB::table('routes')
-            ->join('shops', 'shops.evening_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Normal')
-            ->where('routes.time', '=', 'Evening')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $routes_special = DB::table('routes')
-            ->join('shops', 'shops.evening_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Special')
-            ->where('routes.time', '=', 'Evening')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $routes_pbd = DB::table('routes')
-            ->join('shops', 'shops.evening_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'PBD')
-            ->where('routes.time', '=', 'Evening')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $products = DB::table('products')
-            ->orderBy('item_number', 'asc')
-            ->paginate(20);
+        $routes = $this->routesByType('evening_route', 'Evening');
+        $products = DB::table('products')->orderBy('item_number', 'asc')->get();
+        $orderMap = $this->buildRouteOrderMap('evening_route', 'Evening', $state, $currentDate);
 
         return view('rep.final-report-evening', [
-            'routes_normal' => $routes_normal,
-            'routes_special' => $routes_special,
-            'routes_pbd' => $routes_pbd,
+            'routes_normal' => $routes['Normal'] ?? collect(),
+            'routes_special' => $routes['Special'] ?? collect(),
+            'routes_pbd' => $routes['PBD'] ?? collect(),
             'products' => $products,
+            'orderMap' => $orderMap,
+            'currentDate' => $currentDate,
+            'state' => $state,
         ]);
     }
 
-    public function fullScreen_evening()
+    public function fullScreen_evening(Request $request)
     {
-        $routes_normal = DB::table('routes')
-            ->join('shops', 'shops.evening_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Normal')
-            ->where('routes.time', '=', 'Evening')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $routes_special = DB::table('routes')
-            ->join('shops', 'shops.evening_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'Special')
-            ->where('routes.time', '=', 'Evening')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $routes_pbd = DB::table('routes')
-            ->join('shops', 'shops.evening_route', '=', 'routes.name')
-            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
-            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
-            ->where('routes.type', '=', 'PBD')
-            ->where('routes.time', '=', 'Evening')
-            ->where('reps.email', '=', Auth::user()->email)
-            ->select('routes.name', 'routes.id')  // Include routes.id in the select clause
-            ->distinct('routes.name')
-            ->orderBy('routes.id')
-            ->get();
-
-        $products = DB::table('products')
-            ->orderBy('item_number', 'asc')
-            ->paginate(20);
+        $routes = $this->routesByType('evening_route', 'Evening');
+        $products = DB::table('products')->orderBy('item_number', 'asc')->get();
+        $orderMap = $this->buildRouteOrderMap('evening_route', 'Evening', $state, $currentDate);
 
         return view('rep.final-report-evening-full-screen', [
-            'routes_normal' => $routes_normal,
-            'routes_special' => $routes_special,
-            'routes_pbd' => $routes_pbd,
+            'routes_normal' => $routes['Normal'] ?? collect(),
+            'routes_special' => $routes['Special'] ?? collect(),
+            'routes_pbd' => $routes['PBD'] ?? collect(),
             'products' => $products,
+            'orderMap' => $orderMap,
+            'currentDate' => $currentDate,
+            'state' => $state,
         ]);
+    }
+
+    /**
+     * Full (unpaginated) morning report table, for "Export to Excel" on the
+     * main final-report page. Honors the same date/state filters as index()
+     * so the export matches whatever the rep currently has on screen.
+     */
+    public function exportMorning(Request $request)
+    {
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
+
+        $routes = $this->routesByType('morning_route', 'Morning');
+        $products = DB::table('products')->orderBy('item_number', 'asc')->get();
+        $orderMap = $this->buildRouteOrderMap('morning_route', 'Morning', $state, $currentDate);
+
+        return view('rep.partials.final-report-export-table', [
+            'routes_normal' => $routes['Normal'] ?? collect(),
+            'routes_special' => $routes['Special'] ?? collect(),
+            'routes_pbd' => $routes['PBD'] ?? collect(),
+            'products' => $products,
+            'orderMap' => $orderMap,
+        ]);
+    }
+
+    /**
+     * Full (unpaginated) evening report table, for "Export to Excel" on the
+     * evening final-report page.
+     */
+    public function exportEvening(Request $request)
+    {
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
+
+        $routes = $this->routesByType('evening_route', 'Evening');
+        $products = DB::table('products')->orderBy('item_number', 'asc')->get();
+        $orderMap = $this->buildRouteOrderMap('evening_route', 'Evening', $state, $currentDate);
+
+        return view('rep.partials.final-report-export-table', [
+            'routes_normal' => $routes['Normal'] ?? collect(),
+            'routes_special' => $routes['Special'] ?? collect(),
+            'routes_pbd' => $routes['PBD'] ?? collect(),
+            'products' => $products,
+            'orderMap' => $orderMap,
+        ]);
+    }
+
+    /**
+     * Routes for the given time ('Morning' / 'Evening') that have at least
+     * one shop assigned to the logged-in rep on the given route-time column
+     * (morning_route / evening_route), grouped by type (Normal / Special /
+     * PBD) in one query instead of one query per type.
+     */
+    private function routesByType(string $routeColumn, string $time)
+    {
+        return DB::table('routes')
+            ->join('shops', "shops.$routeColumn", '=', 'routes.name')
+            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
+            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
+            ->where('routes.time', $time)
+            ->where('reps.email', Auth::user()->email)
+            ->select('routes.name', 'routes.id', 'routes.type')
+            ->distinct()
+            ->orderBy('routes.id')
+            ->get()
+            ->groupBy('type');
+    }
+
+    /**
+     * Sums every matching order+cart row once, grouped by route and item,
+     * instead of running one SUM() query per product x route table cell.
+     * Scoped to shops assigned to the logged-in rep. Returns
+     * route_name => item_number => total_qty.
+     */
+    private function buildRouteOrderMap(string $routeColumn, string $timePeriod, string $status, string $date): array
+    {
+        $rows = DB::table('orders')
+            ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
+            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
+            ->join('rep_assign_shops', 'rep_assign_shops.shop_id', '=', 'shops.id')
+            ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
+            ->where('reps.email', Auth::user()->email)
+            ->where('orders.time_period', $timePeriod)
+            ->where('orders.status', $status)
+            ->whereDate('orders.created_at', $date)
+            ->select("shops.$routeColumn as route", 'carts.item_number', DB::raw('SUM(carts.qty) as total_qty'))
+            ->groupBy("shops.$routeColumn", 'carts.item_number')
+            ->get();
+
+        $orderMap = [];
+        foreach ($rows as $row) {
+            $orderMap[$row->route][$row->item_number] = $row->total_qty;
+        }
+
+        return $orderMap;
     }
 }

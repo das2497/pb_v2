@@ -108,6 +108,22 @@
                                     <button type="submit" class="input-group-text btn" id="addon-wrapping">Search</button>
                                 </form>
                                 <div class="card-body p-0">
+                                    @if (Auth::user()->role != 'view')
+                                    {{-- A <form> can't legally live inside a <tr>/<tbody> (browsers
+                                         foster-parent it out of the table, which silently orphaned the
+                                         period/note/cancel/Update controls below from any form at all).
+                                         Each row's form is declared here instead and linked to its row's
+                                         inputs/button via the HTML5 form="" attribute - same fix as
+                                         rep/pending-orders-view.blade.php. --}}
+                                    @foreach ($Orders as $order)
+                                    <form id="orderForm{{ $loop->index }}" action="/order-admin/processing-orders-update-order" method="POST" class="d-none">
+                                        @csrf
+                                        <input type="hidden" value="{{ $order->unique_id }}" name="order_id">
+                                        <input type="hidden" value="{{ $order->status }}" name="state">
+                                        <input type="hidden" value="{{ $order->shop }}" name="shop">
+                                    </form>
+                                    @endforeach
+                                    @endif
                                     <div class="table-responsive">
                                         <table class="table">
                                             <thead class="bg-light">
@@ -145,43 +161,37 @@
                                             <tbody>
                                                 @foreach ($Orders as $order)
                                                 <tr>
-                                                    <form action="/order-admin/processing-orders-update-order" method="POST">
-                                                        @csrf
-                                                        <td>{{ $loop->iteration}}</td>
-                                                        <td>{{ $order->unique_id }}</td>
-                                                        <td>{{ $order->name }}</td>
-                                                        <td>
-                                                            <select name="period" class="form-control">
-                                                                @php
-                                                                $shop_times = ($order->order_time && $order->order_time !== 'All') ? [$order->order_time] : $order_times->all();
-                                                                if (!in_array($order->time_period, $shop_times, true)) { $shop_times[] = $order->time_period; }
-                                                                @endphp
-                                                                @foreach ($shop_times as $time)
-                                                                <option value="{{ $time }}" @selected($order->time_period === $time)>{{ $time }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </td>
-                                                        <td>{{ $order->order_created }}</td>
-                                                        <td>
-                                                            <input class="form-control" type="text" value="{{ $order->note }}" name="note">
-                                                        </td>
-                                                        <td>රු. {{ number_format($order->total_price,2) }}</td>
-                                                        <td>
-                                                            <label class="switch">
-                                                                <input type="checkbox" name="order_cancel">
-                                                                <span class="slider"></span>
-                                                            </label>
-                                                        </td>
-                                                        <td>
-                                                            <a href="{{ route('order-admin-processing-orders-view', ['id' => $order->unique_id ,'note'=>$order->note]) }}" class="btn btn-outline-success">View</a>
-                                                        </td>
-                                                        <td>
-                                                            <input type="hidden" value="{{ $order->unique_id }}" name="order_id">
-                                                            <input type="hidden" value="{{ $order->status }}" name="state">
-                                                            <input type="hidden" value="{{ $order->shop }}" name="shop">
-                                                            <button type="submit" class="btn btn-outline-primary">Update</button>
-                                                        </td>
-                                                    </form>
+                                                    <td>{{ $loop->iteration}}</td>
+                                                    <td>{{ $order->unique_id }}</td>
+                                                    <td>{{ $order->name }}</td>
+                                                    <td>
+                                                        <select form="orderForm{{ $loop->index }}" name="period" class="form-control">
+                                                            @php
+                                                            $shop_times = ($order->order_time && $order->order_time !== 'All') ? [$order->order_time] : $order_times->all();
+                                                            if (!in_array($order->time_period, $shop_times, true)) { $shop_times[] = $order->time_period; }
+                                                            @endphp
+                                                            @foreach ($shop_times as $time)
+                                                            <option value="{{ $time }}" @selected($order->time_period === $time)>{{ $time }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td>{{ $order->order_created }}</td>
+                                                    <td>
+                                                        <input form="orderForm{{ $loop->index }}" class="form-control" type="text" value="{{ $order->note }}" name="note">
+                                                    </td>
+                                                    <td>රු. {{ number_format($order->total_price,2) }}</td>
+                                                    <td>
+                                                        <label class="switch">
+                                                            <input form="orderForm{{ $loop->index }}" type="checkbox" name="order_cancel">
+                                                            <span class="slider"></span>
+                                                        </label>
+                                                    </td>
+                                                    <td>
+                                                        <a href="{{ route('order-admin-processing-orders-view', ['id' => $order->unique_id ,'note'=>$order->note]) }}" class="btn btn-outline-success">View</a>
+                                                    </td>
+                                                    <td>
+                                                        <button form="orderForm{{ $loop->index }}" type="submit" class="btn btn-outline-primary">Update</button>
+                                                    </td>
                                                 </tr>
                                                 @endforeach
                                             </tbody>

@@ -5,7 +5,7 @@
 @push('styles')
 <style>
         .div {
-            height: 600px;
+            height: calc(100vh - 150px);
             /* max-width: 100vw; */
             overflow-x: auto;
             overflow-y: auto;
@@ -81,18 +81,33 @@
         <div class="row">
             <div class="col-12 p-2">
                 <div class="card p-2">
-                    <div class="row">
-                        <div class="col-4">
+                    <div class="row align-items-center">
+                        <div class="col-12 col-lg-3">
                             <h5 class="card-header">Today Morning Shop Report &nbsp;&nbsp;
                             </h5>
                         </div>
-                        <div class="col-2 offset-6">
+                        <div class="col-12 col-lg-7">
+                            <form class="row g-2" method="GET" action="/order-admin/shop-report-full-screen">
+                                @csrf
+                                <div class="col-12 col-sm-4">
+                                    <input type="date" name="date" class="form-control" value="{{ $currentDate }}">
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <select name="state" class="form-control">
+                                        <option value="Processing" @selected($state === 'Processing')>Processing</option>
+                                        <option value="Pending" @selected($state === 'Pending')>Pending</option>
+                                        <option value="Complete" @selected($state === 'Complete')>Complete</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <button class="btn btn-primary w-100" type="submit">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-12 col-lg-2">
                             <a href="/order-admin/shop-report-back-to-report" class="btn btn-outline-dark">Go Back</a>
                         </div>
                     </div>
-                    @php
-                    $currentDate = now();
-                    @endphp
 
                     <div class="card-body p-0">
                         <div class="div">
@@ -195,10 +210,6 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                        </div>
-
-                        <div class="p-2">
-                            {{ $products->links() }}
                         </div>
                     </div>
 

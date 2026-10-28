@@ -1,4 +1,4 @@
-@extends('layouts.dashboard', ['headerView' => 'shop.components.header', 'menuView' => 'shop.components.menu'])
+@extends('layouts.shop-dashboard')
 
 @section('title', 'Shop')
 

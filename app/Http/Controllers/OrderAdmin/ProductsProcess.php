@@ -53,7 +53,7 @@ class ProductsProcess extends Controller
             'name_english' => $request->item_name_e,
             'name_sinhala' => $request->item_name_s,
             'visibility' => $request->visibility,
-            'order_time' => $request->order_time,
+            'order_time' => $this->normalizeOrderTime($request->order_time),
             'category' => $request->category,
             'unit_price' => $request->pb_unit_price,
             'mrp' => $request->pb_mrp,
@@ -74,7 +74,7 @@ class ProductsProcess extends Controller
         $product->name_sinhala = $request->name_sinhala;
         $product->category = $request->category;
         $product->visibility = $request->visibility;
-        $product->order_time = $request->order_time;
+        $product->order_time = $this->normalizeOrderTime($request->order_time);
         $product->unit_price = $request->unit_price;
         $product->mrp = $request->mrp;
         $product->direct_sale_price = $request->direct_sale_price;
@@ -99,5 +99,17 @@ class ProductsProcess extends Controller
         $product = Products::findOrFail($id);
         $product->delete();
         return redirect()->back()->with('success', 'Product deleted successfully ');
+    }
+
+    /**
+     * @param array<int, string> $orderTimes
+     */
+    private function normalizeOrderTime(array $orderTimes): string
+    {
+        if (in_array('All', $orderTimes, true)) {
+            return 'All';
+        }
+
+        return implode(',', $orderTimes);
     }
 }

@@ -67,16 +67,44 @@ class Products extends Model
 
         return Cart::join('products', 'products.item_number', '=', 'carts.item_number')
             ->where('carts.order_number', $orderNumber)
-            ->whereNotIn('products.order_time', [$period, 'All'])
+            ->where(function ($q) use ($period) {
+                $q->where('products.order_time', '!=', 'All')
+                    ->where('products.order_time', '!=', $period)
+                    ->where('products.order_time', 'not like', $period . ',%')
+                    ->where('products.order_time', 'not like', '%,' . $period)
+                    ->where('products.order_time', 'not like', '%,' . $period . ',%');
+            })
             ->pluck('products.name_english');
     }
 
     public function scopeForPeriod($query, $period)
     {
         if (is_string($period) && $period !== '' && $period !== 'All' && OrderTime::where('name', $period)->exists()) {
-            $query->whereIn('order_time', [$period, 'All']);
+            $query->where(function ($q) use ($period) {
+                $q->where('order_time', 'All')
+                    ->orWhere('order_time', $period)
+                    ->orWhere('order_time', 'like', $period . ',%')
+                    ->orWhere('order_time', 'like', '%,' . $period)
+                    ->orWhere('order_time', 'like', '%,' . $period . ',%');
+            });
         }
 
         return $query;
+    }
+
+    /**
+     * The specific order times this product is restricted to, as stored
+     * (comma-separated, e.g. "Morning,Evening"). Empty when the product
+     * is available for every period ('All') - callers should check
+     * order_time === 'All' separately rather than relying on this being
+     * non-empty.
+     */
+    public function orderTimeList(): array
+    {
+        if (!is_string($this->order_time) || $this->order_time === '' || $this->order_time === 'All') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', $this->order_time))));
     }
 }

@@ -5,7 +5,7 @@
 @push('styles')
 <style>
         .div {
-            height: 600px;
+            height: calc(100vh - 150px);
             /* max-width: 100vw; */
             overflow-x: auto;
             overflow-y: auto;
@@ -91,12 +91,30 @@
         <div class="row">
             <div class="col-12 p-2">
                 <div class="card p-2">
-                    <div class="row">
-                        <div class="col-4">
+                    <div class="row align-items-center">
+                        <div class="col-12 col-lg-3">
                             <h5 class="card-header">Today Morning Final Report &nbsp;&nbsp;
                             </h5>
                         </div>
-                        <div class="col-2 offset-6">
+                        <div class="col-12 col-lg-7">
+                            <form class="row g-2" method="GET" action="/order-admin/final-report-full-screen">
+                                @csrf
+                                <div class="col-12 col-sm-4">
+                                    <input type="date" name="date" class="form-control" value="{{ $currentDate }}">
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <select name="state" class="form-control">
+                                        <option value="Processing" @selected($state === 'Processing')>Processing</option>
+                                        <option value="Pending" @selected($state === 'Pending')>Pending</option>
+                                        <option value="Complete" @selected($state === 'Complete')>Complete</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <button class="btn btn-primary w-100" type="submit">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-12 col-lg-2">
                             <a href="/order-admin/final-report" class="btn btn-outline-dark">Go Back</a>
                         </div>
                     </div>
@@ -134,9 +152,6 @@
                                     </tr>
                                 </thead>
                                 <tbody style="max-height: 400px;">
-                                    @php
-                                    $currentDate = new DateTime();
-                                    @endphp
                                     @foreach ($products as $product)
                                     @php
                                     $normal_total = 0;
@@ -149,15 +164,7 @@
 
                                         @foreach ($routes_normal as $route)
                                         @php
-                                        $qty = DB::table('orders')
-                                        ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                        ->join('shops','orders.shop','=','shops.branch_code')
-                                        ->where('carts.item_number', $product->item_number)
-                                        ->whereDate('orders.created_at', $currentDate)
-                                        ->where('shops.morning_route', $route->name)
-                                        ->where('orders.status', '=', 'Processing')
-                                        ->where('orders.time_period', '=', 'Morning')
-                                        ->sum('carts.qty');
+                                        $qty = $orderMap[$route->name][$product->item_number] ?? 0;
                                         $normal_total += $qty;
                                         @endphp
                                         <td>{{$qty}}</td>
@@ -167,15 +174,7 @@
 
                                         @foreach ($routes_special as $route)
                                         @php
-                                        $qty = DB::table('orders')
-                                        ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                        ->join('shops','orders.shop','=','shops.branch_code')
-                                        ->where('carts.item_number', $product->item_number)
-                                        ->whereDate('orders.created_at', $currentDate)
-                                        ->where('shops.morning_route', $route->name)
-                                        ->where('orders.status', '=', 'Processing')
-                                        ->where('orders.time_period', '=', 'Morning')
-                                        ->sum('carts.qty');
+                                        $qty = $orderMap[$route->name][$product->item_number] ?? 0;
                                         $special_total += $qty;
                                         @endphp
                                         <td>{{$qty}}</td>
@@ -185,15 +184,7 @@
 
                                         @foreach ($routes_pbd as $route)
                                         @php
-                                        $qty = DB::table('orders')
-                                        ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                        ->join('shops','orders.shop','=','shops.branch_code')
-                                        ->where('carts.item_number', $product->item_number)
-                                        ->whereDate('orders.created_at', $currentDate)
-                                        ->where('shops.morning_route', $route->name)
-                                        ->where('orders.status', '=', 'Processing')
-                                        ->where('orders.time_period', '=', 'Morning')
-                                        ->sum('carts.qty');
+                                        $qty = $orderMap[$route->name][$product->item_number] ?? 0;
                                         $pbd_total += $qty;
                                         @endphp
                                         <td>{{$qty}}</td>
@@ -205,15 +196,12 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div>
-                            {{$products->links()}}
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
 @endsection
 
 @push('scripts')

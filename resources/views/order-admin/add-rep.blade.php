@@ -193,6 +193,23 @@
                             <div class="card">
                                 <h5 class="card-header">All Representatives</h5>
                                 <div class="card-body p-0">
+                                    {{-- A <form> can't legally live inside a <tr>/<tbody> (browsers
+                                         foster-parent it out of the table - and with two sequential
+                                         forms in the same row like this, the second one would get
+                                         silently dropped entirely, not just displaced). Each row's
+                                         Update-Access and Delete forms are declared here instead and
+                                         linked to their row's controls via the HTML5 form="" attribute -
+                                         same fix as rep/pending-orders-view.blade.php. --}}
+                                    @foreach($reps as $rep)
+                                    <form id="accessForm{{ $loop->index }}" action="/order-admin/rep-update-access" method="POST" class="d-none">
+                                        @csrf
+                                        <input type="hidden" value="{{ $rep->email }}" name="rep_email">
+                                    </form>
+                                    <form id="deleteRepForm{{ $loop->index }}" action="{{ route('reps.delete',['id'=>$rep->id]) }}" method="POST" class="d-none">
+                                        @csrf
+                                        <input type="hidden" value="{{ $rep->email }}" name="rep_email">
+                                    </form>
+                                    @endforeach
                                     <div class="table-responsive">
                                         <table class="table">
                                             <thead class="bg-light">
@@ -215,27 +232,18 @@
                                                     <td>{{$rep->email}}</td>
                                                     <td>{{$rep->contact}}</td>
                                                     <td>{{$rep->type}}</td>
-                                                    <form action="/order-admin/rep-update-access" method="POST">
-                                                        @csrf
-
-                                                        <td>
-                                                            <label class="switch">
-                                                                <input type="checkbox" name="access" {{$rep->access == 'on' ? 'checked' : ''}}>
-                                                                <span class="slider"></span>
-                                                            </label>
-                                                        </td>
-                                                        <td>
-                                                            <input type="hidden" value="{{$rep->email}}" name="rep_email">
-                                                            <button type="submit" class="btn btn-outline-primary">Update Access</button>
-                                                        </td>
-                                                    </form>
-                                                    <form action="{{ route('reps.delete',['id'=>$rep->id]) }}" method="POST">
-                                                        @csrf
-                                                        <td>
-                                                            <input type="hidden" value="{{$rep->email}}" name="rep_email">
-                                                            <button type="submit" onclick="return confirmDelete();" class="btn btn-outline-danger">Delete</button>
-                                                        </td>
-                                                    </form>
+                                                    <td>
+                                                        <label class="switch">
+                                                            <input form="accessForm{{ $loop->index }}" type="checkbox" name="access" {{$rep->access == 'on' ? 'checked' : ''}}>
+                                                            <span class="slider"></span>
+                                                        </label>
+                                                    </td>
+                                                    <td>
+                                                        <button form="accessForm{{ $loop->index }}" type="submit" class="btn btn-outline-primary">Update Access</button>
+                                                    </td>
+                                                    <td>
+                                                        <button form="deleteRepForm{{ $loop->index }}" type="submit" onclick="return confirmDelete();" class="btn btn-outline-danger">Delete</button>
+                                                    </td>
                                                 </tr>
                                                 @endforeach
                                                 <tr>

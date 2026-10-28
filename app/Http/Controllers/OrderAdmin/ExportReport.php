@@ -23,9 +23,6 @@ class ExportReport extends Controller
         if (!is_array($selectedRoutes)) {
             $selectedRoutes = $selectedRoutes ? [$selectedRoutes] : [];
         }
-        if (empty($selectedRoutes)) {
-            $selectedRoutes = ['ROUTE 1'];
-        }
 
         $state = $request->input('state') ?? 'Pending';
 
@@ -40,16 +37,18 @@ class ExportReport extends Controller
         // ================= SHOPS – FILTER BY SELECTED ROUTES =================
         $shopsQuery = DB::table('shops')->select('shops.*', DB::raw('shops.name as shop_name'));
 
-        $shopsQuery->where(function ($query) use ($selectedRoutes, $timePeriod) {
-            if ($timePeriod === 'Morning') {
-                $query->whereIn('morning_route', $selectedRoutes);
-            } elseif ($timePeriod === 'Evening') {
-                $query->whereIn('evening_route', $selectedRoutes);
-            } else {
-                $query->whereIn('morning_route', $selectedRoutes)
-                    ->orWhereIn('evening_route', $selectedRoutes);
-            }
-        });
+        if (!empty($selectedRoutes)) {
+            $shopsQuery->where(function ($query) use ($selectedRoutes, $timePeriod) {
+                if ($timePeriod === 'Morning') {
+                    $query->whereIn('morning_route', $selectedRoutes);
+                } elseif ($timePeriod === 'Evening') {
+                    $query->whereIn('evening_route', $selectedRoutes);
+                } else {
+                    $query->whereIn('morning_route', $selectedRoutes)
+                        ->orWhereIn('evening_route', $selectedRoutes);
+                }
+            });
+        }
 
         $allShops = $shopsQuery->get();
 

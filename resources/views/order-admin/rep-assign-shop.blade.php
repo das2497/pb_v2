@@ -159,6 +159,18 @@
                                 </div>
                                 @endif
                                 <div class="card-body p-0">
+                                    {{-- A <form> can't legally live inside a <tr>/<tbody> (browsers
+                                         foster-parent it out of the table, which silently orphaned the
+                                         select/Update button below from any form at all). Each row's form
+                                         is declared here instead and linked to its row's select/button via
+                                         the HTML5 form="" attribute - same fix as
+                                         rep/pending-orders-view.blade.php. --}}
+                                    @foreach ($datas as $data)
+                                    <form id="assignForm{{ $loop->index }}" action="/order-admin/rep-assign-update" method="POST" class="d-none">
+                                        @csrf
+                                        <input type="hidden" value="{{ $data->shop_id }}" name="shop_id">
+                                    </form>
+                                    @endforeach
                                     <div class="table-responsive">
                                         <table class="table">
                                             <thead class="bg-light">
@@ -174,20 +186,16 @@
                                                 <tr>
                                                     <td>{{$loop->iteration}}</td>
                                                     <td>{{$data->shop_name}}</td>
-                                                    <form action="/order-admin/rep-assign-update" method="POST">
-                                                        @csrf
-                                                        <td>
-                                                            <select class="form-control" id="assign_rep" name="rep_id">
-                                                                @foreach ($reps as $rep)
-                                                                <option value="{{$rep->id}}" @selected($rep->name == $data->rep_name)>{{$rep->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <input type="hidden" value="{{$data->shop_id}}" name="shop_id">
-                                                            <button class="btn btn-outline-info">Update</button>
-                                                        </td>
-                                                    </form>
+                                                    <td>
+                                                        <select form="assignForm{{ $loop->index }}" class="form-control" id="assign_rep" name="rep_id">
+                                                            @foreach ($reps as $rep)
+                                                            <option value="{{$rep->id}}" @selected($rep->name == $data->rep_name)>{{$rep->name}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <button form="assignForm{{ $loop->index }}" class="btn btn-outline-info">Update</button>
+                                                    </td>
                                                 </tr>
                                                 @endforeach
                                                 <tr>

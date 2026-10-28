@@ -1,6 +1,10 @@
 @extends('layouts.dashboard', ['headerView' => 'rep.components.header', 'menuView' => 'rep.components.menu'])
 
-@section('title', 'Order Admin | Cart')
+@section('title', 'Rep | Cart')
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('assets/css/rep-order-theme.css') }}">
+@endpush
 
 @section('content')
     <div class="dashboard-wrapper">
@@ -12,12 +16,17 @@
                 <div class="row">
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="page-header">
-                            <h2 class="pageheader-title"> Cart </h2>
+                            <h2 class="pageheader-title">
+                                Cart
+                                @if ($carts->isNotEmpty())
+                                <span class="rep-order-cart-count">{{ $carts->count() }} item{{ $carts->count() === 1 ? '' : 's' }}</span>
+                                @endif
+                            </h2>
                             <div class="page-breadcrumb">
                                 <nav aria-label="breadcrumb">
                                     <ol class="breadcrumb">
                                         <li class="breadcrumb-item"><a href="/rep/dashboard" class="breadcrumb-link">Dashboard</a></li>
-                                        <li class="breadcrumb-item"><a href="/rep/create-order?shop={{session('selected_shop')}}" class="breadcrumb-link">Create Order</a></li>
+                                        <li class="breadcrumb-item"><a href="/rep/create-order?shop={{ $branch_code }}" class="breadcrumb-link">Create Order</a></li>
                                         <li class="breadcrumb-item active" aria-current="page">Cart</li>
                                     </ol>
                                 </nav>
@@ -29,17 +38,11 @@
                 <!-- end pageheader  -->
                 <!-- ============================================================== -->
                 <div class="ecommerce-widget">
+                    @php $total = 0; @endphp
 
                     <div class="row">
-                        <!-- ============================================================== -->
-
-                        <!-- ============================================================== -->
-
-                        <!-- recent orders  -->
-                        <!-- ============================================================== -->
-
                         <div class="col-12 col-md-12">
-                            <div class="card">
+                            <div class="card rep-order-card">
                                 @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul>
@@ -53,133 +56,133 @@
                                 <div class="alert alert-success">
                                     {{ session('success') }}
                                 </div>
-                                @endif
-                                @if (session('error'))
+                                @elseif (session('error'))
                                 <div class="alert alert-danger">
                                     {{ session('error') }}
                                 </div>
                                 @endif
-                                <h5 class="card-header">{{$shop->name}}'s Cart
-                                    <a href="/rep/clear-cart?shop={{$branch_code}}" onclick="return confirmClear();" class="btn btn-outline-danger mx-2">Clear cart</a>
-                                    <a href="/rep/create-order?shop={{$branch_code}}" class="btn btn-outline-danger float-right">Go Back</a>
+                                <h5 class="card-header">
+                                    {{ $shop->name }}'s Cart
+                                    @if ($carts->isNotEmpty())
+                                    <a href="/rep/clear-cart?shop={{ $branch_code }}" onclick="return confirmClear();" class="btn btn-outline-danger mx-2"><i class="fa fa-trash"></i> Clear cart</a>
+                                    @endif
+                                    <a href="/rep/create-order?shop={{ $branch_code }}" class="btn btn-outline-primary float-right"><i class="fa fa-arrow-left"></i> Add More Items</a>
                                 </h5>
+
+                                @if ($carts->isEmpty())
+                                <div class="rep-order-empty-state">
+                                    <div class="rep-order-empty-state-icon">🛒</div>
+                                    <h4>This cart is empty</h4>
+                                    <p class="text-muted">Browse the menu and add some items to get started.</p>
+                                    <a href="/rep/create-order?shop={{ $branch_code }}" class="btn btn-outline-success"><i class="fa fa-cart-plus"></i> Start an Order</a>
+                                </div>
+                                @else
                                 <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead class="bg-light">
-                                                <tr class="border-0">
-                                                    <th class="border-0">#</th>
-                                                    <th class="border-0">Item image</th>
-                                                    <th class="border-0">Item Id</th>
-                                                    <th class="border-0">Item Name English</th>
-                                                    <th class="border-0">Price Range</th>
-                                                    <th class="border-0">Price</th>
-                                                    <th class="border-0">Quantity</th>
-                                                    <th class="border-0">Remarke</th>
-                                                    <th class="border-0">Total</th>
-                                                    <th class="border-0">Update</th>
-                                                    <th class="border-0">Delete</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @php
-                                                $total=0;
-                                                @endphp
-                                                @foreach ($carts as $cart)
-                                                <tr>
-                                                    <td>{{$loop->iteration}}</td>
-                                                    <td><img src="{{asset('assets/images/item-images/'.$cart->img)}}" class="img-thumbnail" alt="product image" style="height: 80px; width: 80px;"></td>
-                                                    <td>{{$cart->item_number}}</td>
-                                                    <td>{{$cart->name_english}}</td>
-                                                    <td>{{$cart->price_range}}</td>
-                                                    <td>රු. {{number_format($cart->price,2)}}</td>
-                                                    <form action="/rep/cart/update-qty" method="POST">
-                                                        @csrf
-                                                        <td><input type="number" name="qty" class="form-control" value="{{$cart->qty}}"></td>
-                                                        <td><input type="text" name="remarke" class="form-control" value="{{$cart->remarke}}"></td>
-                                                        <td>රු. {{number_format($cart->price*$cart->qty,2)}}</td>
-                                                        <input type="hidden" name="item_number" value="{{$cart->item_number}}" />
-                                                        <input type="hidden" name="branch_code" value="{{$cart->shop_bc_number}}">
-                                                        <td><button type="submit" class="btn btn-outline-primary">Update</button></td>
-                                                        <td><button type="submit" formaction="/rep/cart/delete-item" onclick="return confirmDelete();" class="btn btn-outline-danger">Delete</button></td>
-                                                    </form>
-                                                </tr>
-                                                @php
-                                                $total+=$cart->price*$cart->qty;
-                                                @endphp
-                                                @endforeach
-                                                <tr>
-                                                    <td colspan="6"></td>
-                                                    <th class="text-right">Total Price : </th>
-                                                    <th colspan="3">රු. {{number_format($total,2)}}</th>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    @if ($carts->first()->price_range)
+                                    <div class="rep-order-price-tier-note"><i class="fa fa-tag"></i> Pricing tier: <strong>{{ $carts->first()->price_range }}</strong></div>
+                                    @endif
+
+                                    <div class="rep-order-cart-list">
+                                        @foreach ($carts as $cart)
+                                        @php $total += $cart->price * $cart->qty; @endphp
+                                        <form action="/rep/cart/update-qty" method="POST" class="rep-order-cart-item">
+                                            @csrf
+                                            <img class="rep-order-cart-item-img" src="{{ asset('assets/images/item-images/' . $cart->img) }}" alt="" loading="lazy">
+                                            <div class="rep-order-cart-item-info">
+                                                <div class="rep-order-cart-item-name">{{ $cart->name_english }}</div>
+                                                <div class="rep-order-cart-item-id">#{{ $cart->item_number }} &middot; රු. {{ number_format($cart->price, 2) }} each</div>
+                                            </div>
+                                            <div class="rep-order-qty-stepper rep-order-qty-stepper-lg">
+                                                <button type="button" class="rep-order-qty-btn rep-order-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                <input type="number" name="qty" value="{{ $cart->qty }}" min="0" step="0.01" required pattern="[0-9]+(\.[0-9]+)?">
+                                                <button type="button" class="rep-order-qty-btn rep-order-qty-plus" aria-label="Increase quantity">+</button>
+                                            </div>
+                                            <input type="text" class="form-control rep-order-cart-item-note" name="remarke" value="{{ $cart->remarke }}" placeholder="Note (optional)">
+                                            <div class="rep-order-cart-item-total">රු. {{ number_format($cart->price * $cart->qty, 2) }}</div>
+                                            <input type="hidden" name="item_number" value="{{ $cart->item_number }}" />
+                                            <input type="hidden" name="branch_code" value="{{ $cart->shop_bc_number }}">
+                                            <div class="rep-order-cart-item-actions">
+                                                <button type="submit" class="btn btn-outline-primary btn-sm" title="Update this item"><i class="fa fa-check"></i> Update</button>
+                                                <button type="submit" formaction="/rep/cart/delete-item" onclick="return confirmDelete();" class="btn btn-outline-danger btn-sm" title="Remove this item"><i class="fa fa-trash"></i></button>
+                                            </div>
+                                        </form>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="rep-order-cart-total-row">
+                                        <span>Total Price</span>
+                                        <strong>රු. {{ number_format($total, 2) }}</strong>
                                     </div>
                                 </div>
+                                @endif
                             </div>
                         </div>
 
+                        @if ($carts->isNotEmpty())
                         <div class="col-12 cart-actions-card">
-                            <div class="card">
-                                <div class="card-body p-1">
-                                    <form action="/rep/cart/order-process" method="POST" class="row">
+                            <div class="card rep-order-card">
+                                <h5 class="card-header">Order Summary</h5>
+                                <div class="card-body">
+                                    <form action="/rep/cart/order-process" method="POST">
                                         @csrf
-                                        <div class="col-12 col-md-6 m-b-10">
-                                            <label for="order_note">Special Note</label>
-                                            <textarea class="form-control" name="note" cols="30" rows="4"></textarea>
+                                        <div class="row">
+                                            <div class="col-12 m-b-10">
+                                                <label for="order_note_field" class="rep-order-form-label">Special Note</label>
+                                                <textarea id="order_note_field" class="form-control" name="note" rows="2" placeholder="Anything we should know about this order? (optional)"></textarea>
+                                            </div>
+
+                                            @if ($period)
+                                            <input type="hidden" name="order_time" value="{{ $period }}">
+                                            @else
+                                            <div class="col-12 m-b-10">
+                                                <div class="alert alert-warning mb-0">Select an order time on the <a href="/rep/create-order?shop={{ $branch_code }}">Create Order</a> page first.</div>
+                                            </div>
+                                            @endif
                                         </div>
-                                        @if ($period)
-                                        <input type="hidden" name="order_time" value="{{ $period }}">
-                                        @else
-                                        <div class="col-12 m-b-10">
-                                            <div class="alert alert-warning mb-0">Select an order time on the <a href="/rep/create-order">Create Order</a> page first.</div>
+
+                                        <div class="rep-order-cart-total-row mt-3">
+                                            <span>Total Price</span>
+                                            <strong>රු. {{ number_format($total, 2) }}</strong>
                                         </div>
-                                        @endif
-                                        <div class="col-12 col-md-6 offset-md-3 m-b-10">
-                                            <input type="hidden" name="total" value="{{$total}}">
-                                            <input type="hidden" name="shop" value="{{$shop->branch_code}}">
-                                            <button id="proceedbtn" type="submit" class="btn btn-outline-success px-4 w-100">Proceed</button>
-                                        </div>
+
+                                        <input type="hidden" name="total" value="{{ $total }}">
+                                        <input type="hidden" name="shop" value="{{ $shop->branch_code }}">
+                                        <button id="proceedbtn" type="submit" class="btn btn-outline-success px-4 w-100 mt-3" @disabled(!$period)>
+                                            <i class="fa fa-check-circle"></i> Proceed
+                                        </button>
                                     </form>
                                 </div>
                             </div>
                         </div>
-                        <!-- ============================================================== -->
-                        <!-- end recent orders  -->
-
+                        @endif
                     </div>
 
                 </div>
             </div>
         </div>
 
+        @if ($carts->isNotEmpty())
         <div class="cart-sticky-bar">
             <div class="cart-sticky-bar-total">
                 <span class="cart-sticky-bar-label">Total</span>
-                <strong>රු. {{number_format($total,2)}}</strong>
+                <strong>රු. {{ number_format($total, 2) }}</strong>
             </div>
-            <button type="button" class="btn btn-outline-success px-4" onclick="document.getElementById('proceedbtn').click();">Proceed</button>
+            <button type="button" class="btn btn-outline-success px-4" onclick="document.getElementById('proceedbtn').click();" @disabled(!$period)>Proceed</button>
         </div>
+        @endif
     </div>
 
 @endsection
 
 @push('scripts')
+<script src="{{ asset('assets/js/rep-order-theme.js') }}"></script>
 <script>
-        function confirmDelete() {
-            return confirm('Are you sure you want to delete this item?');
-        }
+    function confirmDelete() {
+        return confirm('Are you sure you want to remove this item from the cart?');
+    }
 
-        function confirmClear() {
-            return confirm('Are you sure you want to clear the cart?');
-        }
-
-        document.getElementById('proceedbtn').addEventListener('', function() {
-            if (document.querySelector('select[name="order_time"]').value == '') {
-                alert('Please select the order time');
-                event.preventDefault();
-            }
-        });
-    </script>
+    function confirmClear() {
+        return confirm('Are you sure you want to clear the cart?');
+    }
+</script>
 @endpush

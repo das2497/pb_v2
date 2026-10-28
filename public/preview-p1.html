@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop | Create Order</title>
+    <link rel="icon" href="http://localhost:8765/assets/images/logo.png">
+
+    <!-- Bootstrap CSS -->
+    <link rel="preload" as="style" href="http://localhost:8765/build/assets/base-1-RQFheCF2.css" /><link rel="stylesheet" href="http://localhost:8765/build/assets/base-1-RQFheCF2.css" />    <link rel="stylesheet" href="http://localhost:8765/assets/vendor/fonts/circular-std/style.css">
+    <link rel="stylesheet" href="http://localhost:8765/assets/libs/css/style.css">
+    <link rel="stylesheet" href="http://localhost:8765/assets/vendor/fonts/fontawesome/css/fontawesome-all.css">
+    <link rel="preload" as="style" href="http://localhost:8765/build/assets/base-2-SVIyWwcY.css" /><link rel="stylesheet" href="http://localhost:8765/build/assets/base-2-SVIyWwcY.css" />    <link rel="stylesheet" href="http://localhost:8765/assets/vendor/fonts/material-design-iconic-font/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="http://localhost:8765/assets/vendor/fonts/flag-icon-css/flag-icon.min.css">
+    <link rel="stylesheet" href="http://localhost:8765/assets/css/shop-bakery-theme.css">
+</head>
+
+<body>
+
+    <!-- header  -->
+    <div class="dashboard-main-wrapper">
+    <div class="dashboard-header">
+        <nav class="navbar navbar-expand-lg fixed-top">
+            <button class="navbar-toggler sidebar-toggle" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+                </svg>
+            </button>
+            <a class="navbar-brand" href="/shop/dashboard"><img src="http://localhost:8765/assets/images/logo.png" width="32" alt=""> AGALAWAT</a>
+            <ul class="navbar-nav ml-auto navbar-right-top flex-row">
+                <li class="nav-item dropdown nav-user">
+                    <a class="nav-link nav-user-img" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="http://localhost:8765/assets/images/logo.png" alt="" class="user-avatar-md rounded-circle"></a>
+                    <div class="dropdown-menu dropdown-menu-right nav-user-dropdown" aria-labelledby="navbarDropdownMenuLink2">
+                        <div class="nav-user-info">
+                            <h5 class="mb-0 text-white nav-user-name">AGALAWAT</h5>
+                        </div>
+                        <a class="dropdown-item" href="/shop/profile"><i class="fas fa-user mr-2"></i>Account Settings</a>
+                        <div class="dropdown-item text-center">
+                            <form action="http://localhost:8765/logout" method="POST"><input type="hidden" name="_token" value="cE3fZclvY7bDXdKIajb8oApqETNtb7khsCPPK8KA" autocomplete="off">                                <button type="submit" class="btn btn-outline-danger">Logout</button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+    // Store the scroll position before the page unloads
+    window.addEventListener('beforeunload', function() {
+        sessionStorage.setItem('scrollPosition', window.scrollY);
+    });
+
+    // Restore the scroll position when the page loads
+    window.addEventListener('load', function() {
+        const scrollPosition = sessionStorage.getItem('scrollPosition');
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition, 10));
+            sessionStorage.removeItem('scrollPosition'); // Optionally clear the stored position
+        }
+    });
+</script>    <!-- /header  -->
+
+    <!-- menu -->
+    <div class="nav-left-sidebar sidebar-dark">
+    <div class="menu-list">
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav flex-column">
+                    <li class="nav-divider">
+                        Menu
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link " href="/shop/dashboard"><i class="fa fa-fw fa-chart-pie"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/shop/all-orders"><i class="fa fa-fw fa-list"></i>All Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/shop/pending-orders"><i class="fa fa-fw fa-clock"></i>Pending Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/shop/processing-orders"><i class="fa fa-fw fa-fire"></i>Procesing Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/shop/under-review-orders"><i class="fa fa-fw fa-search"></i>Under Review Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/shop/complete-orders"><i class="fa fa-fw fa-check-circle"></i>Completed Orders</a>
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link " href="/shop/default-orders"><i class="fa fa-fw fa-redo"></i>Default Order</a>
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link active" href="/shop/create-order"><i class="fa fa-fw fa-cart-plus"></i>Create Order</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</div>
+    <!-- /menu -->
+
+    <!-- mobile sidebar backdrop -->
+    <div class="sidebar-backdrop"></div>
+    <!-- /mobile sidebar backdrop -->
+
+    <!-- content -->
+        <div class="dashboard-wrapper">
+        <div class="dashboard-ecommerce">
+            <div class="container-fluid dashboard-content ">
+                <!-- ============================================================== -->
+                <!-- pageheader  -->
+                <!-- ============================================================== -->
+                <div class="row">
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                        <div class="page-header">
+                            <h2 class="pageheader-title"> 🧁 Create Order </h2>
+                            <div class="page-breadcrumb">
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb">
+                                        <li class="breadcrumb-item"><a href="/shop/dashboard" class="breadcrumb-link">Dashboard</a></li>
+                                        <li class="breadcrumb-item active" aria-current="page">Create Order</li>
+                                    </ol>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ============================================================== -->
+                <!-- end pageheader  -->
+                <!-- ============================================================== -->
+                <div class="ecommerce-widget">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                                                                                <h5 class="card-header">All Products <a href="/shop/cart?shop=00051" class="btn btn-outline-warning m-l-10 float-right cart-btn"><i class="bi bi-cart4"></i> Cart</a></h5>
+                                <form action="/shop/create-order" method="GET" class="row g-2 p-2 bakery-filters-bar">
+                                    <input type="hidden" name="_token" value="cE3fZclvY7bDXdKIajb8oApqETNtb7khsCPPK8KA" autocomplete="off">                                    <div class="col-6 col-xl-3">
+                                        <select class="form-control" id="order_time" name="order_time" onchange="this.form.submit()">
+                                                                                                                                    <option value="Morning" selected>Morning</option>
+                                                                                        <option value="Evening" >Evening</option>
+                                                                                        <option value="Beverage" >Beverage</option>
+                                                                                        <option value="Chips" >Chips</option>
+                                                                                    </select>
+                                    </div>
+                                    <div class="col-12 col-xl-4">
+                                        <input type="text" class="form-control" placeholder="Type To Search Products...." aria-describedby="addon-wrapping"
+                                            name="search" value="icing">
+                                    </div>
+                                    <div class="col-6 col-xl-3">
+                                        <select class="form-control" id="category" name="category">
+                                            <option value="" >All category</option>
+                                                                                        <option value="CAKE ITEMS" >CAKE ITEMS</option>
+                                                                                        <option value="SWEET &amp; PIECES ITEMS" >SWEET &amp; PIECES ITEMS</option>
+                                                                                        <option value="PB PACKET ITEMS" >PB PACKET ITEMS</option>
+                                                                                        <option value="BREAD &amp; BUN ITEMS" >BREAD &amp; BUN ITEMS</option>
+                                                                                        <option value="THIRD PARTY ITEMS" >THIRD PARTY ITEMS</option>
+                                                                                        <option value="RESTAURANT ITEMS" >RESTAURANT ITEMS</option>
+                                                                                        <option value="PB PREMIUN" >PB PREMIUN</option>
+                                                                                        <option value="OTHER ITEMS" >OTHER ITEMS</option>
+                                                                                        <option value="ORCHID PRODUCT" >ORCHID PRODUCT</option>
+                                                                                        <option value="SHORTEATS ITEMS" >SHORTEATS ITEMS</option>
+                                                                                        <option value="FORZEN ITEMS" >FORZEN ITEMS</option>
+                                                                                        <option value="DESSERTS &amp; BEVERAGES" >DESSERTS &amp; BEVERAGES</option>
+                                                                                        <option value="ICING DISPLAY CAKES" >ICING DISPLAY CAKES</option>
+                                                                                        <option value="GATEAU CAKES &amp; PCS" >GATEAU CAKES &amp; PCS</option>
+                                                                                        <option value="CHRISTMAS ICING CAKES" >CHRISTMAS ICING CAKES</option>
+                                                                                        <option value="NEW YEAR ICING CAKES" >NEW YEAR ICING CAKES</option>
+                                                                                        <option value="VALENTINE ICING CAKE" >VALENTINE ICING CAKE</option>
+                                                                                        <option value="ICING DISPLAY CAKES 1 KG" selected>ICING DISPLAY CAKES 1 KG</option>
+                                                                                        <option value="ICING DISPLAY CAKES 1.5 KG" >ICING DISPLAY CAKES 1.5 KG</option>
+                                                                                    </select>
+                                    </div>
+                                    <div class="col-6 col-xl-2">
+                                        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+                                    </div>
+                                </form>
+
+                                                                <div class="card-body p-0">
+                                    <form action="http://localhost:8765/shop/add-to-cart-all" method="POST" id="bakery-order-form">
+                                        <input type="hidden" name="_token" value="cE3fZclvY7bDXdKIajb8oApqETNtb7khsCPPK8KA" autocomplete="off">                                        <input type="hidden" name="branch_code" value="00051">
+
+                                                                                <div class="bakery-label-list">
+                                                                                                                                    <div class="bakery-label-chip " title="NOUGAT BUTTER ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436545.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">NOUGAT BUTTER ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,686.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5000.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5000.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="NOUGAT CHOCOLATE ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436453.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">NOUGAT CHOCOLATE ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 2,126.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5000.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5000.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="BUTTER SQUARE ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436603.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">BUTTER SQUARE ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,554.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5001.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5001.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="CHOCOLATE SQUARE ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436687.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">CHOCOLATE SQUARE ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,774.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5001.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5001.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="BUTTER ROUND ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1773985021.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">BUTTER ROUND ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,818.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5002.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5002.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="CHOCOLATE ROUND ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330386.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">CHOCOLATE ROUND ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,906.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5002.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5002.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="TIGER FACE BUTTER ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330403.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">TIGER FACE BUTTER ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,862.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5003.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5003.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="TIGER FACE CHOCOLATE ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330424.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">TIGER FACE CHOCOLATE ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 2,038.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5003.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5003.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="TEDDY BEAR BUTTER ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330445.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">TEDDY BEAR BUTTER ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,598.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5004.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5004.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="TEDDY BEAR CHOCO ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330465.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">TEDDY BEAR CHOCO ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,774.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5004.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5004.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="HEART SHAPE BUTTER ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436767.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">HEART SHAPE BUTTER ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,686.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5005.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5005.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="HEART SHAPE CHOCOLATE GANACHE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436821.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">HEART SHAPE CHOCOLATE GANACHE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 2,126.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5005.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5005.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="HEART SHAPE BUTTER ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330548.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">HEART SHAPE BUTTER ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,862.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5006.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5006.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="HEART SHAPE CHOCOLATE GANACHE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330571.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">HEART SHAPE CHOCOLATE GANACHE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 2,038.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5006.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5006.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="RECTANGLE BUTTER ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330598.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">RECTANGLE BUTTER ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,598.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5007.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5007.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="RECTANGLE CHOCOLATE ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1774330635.jpg" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">RECTANGLE CHOCOLATE ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,774.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5007.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5007.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="SQUARE BUTTER ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436890.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">SQUARE BUTTER ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,862.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5008.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5008.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="SQUARE CHOCOLATE ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783436945.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">SQUARE CHOCOLATE ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 2,214.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5008.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5008.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="BUTTER ROUND ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783437021.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">BUTTER ROUND ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,686.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5009.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5009.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="CHOCOLATE ROUND ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783437121.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">CHOCOLATE ROUND ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 2,038.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5009.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5009.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="BUTTER ICING ROUND CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783437240.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">BUTTER ICING ROUND CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,642.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5010.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5010.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="CHOCO ICING ROUND CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783437355.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">CHOCO ICING ROUND CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,950.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5010.2.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5010.2.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="ROUND BUTTER ICING 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783437413.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">ROUND BUTTER ICING 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,598.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5011.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5011.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                                                                    <div class="bakery-label-chip " title="BUTTER ROUND ICING CAKE 1KG">
+                                                <div class="bakery-label-top">
+                                                    <img class="bakery-label-img" src="http://localhost:8765/assets/images/item-images/1783437538.png" alt="" loading="lazy">
+                                                    <span class="bakery-label-name">BUTTER ROUND ICING CAKE 1KG</span>
+                                                </div>
+                                                <div class="bakery-label-bottom">
+                                                <span class="bakery-label-price">රු. 1,774.00</span>
+                                                                                                <div class="bakery-qty-stepper">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-minus" aria-label="Decrease quantity">&minus;</button>
+                                                    <input class="bakery-label-qty" type="number" name="qty[5012.1.1]" min="0" step="1" required pattern="[0-9]+" value="0">
+                                                    <button type="button" class="bakery-qty-btn bakery-qty-plus" aria-label="Increase quantity">+</button>
+                                                </div>
+                                                <label class="switch">
+                                                    <input type="checkbox" class="bakery-select-checkbox" name="selected_items[]" value="5012.1.1">
+                                                    <span class="slider"></span>
+                                                </label>
+                                                                                                </div>
+                                            </div>
+                                                                                    </div>
+
+                                        <div class="p-3">
+                                            <nav class="d-flex justify-items-center justify-content-between">
+        <div class="d-flex justify-content-between flex-fill d-sm-none">
+            <ul class="pagination">
+                
+                                    <li class="page-item disabled" aria-disabled="true">
+                        <span class="page-link">&laquo; Previous</span>
+                    </li>
+                
+                
+                                    <li class="page-item">
+                        <a class="page-link" href="http://localhost:8765/shop/create-order?order_time=Morning&amp;category=ICING%20DISPLAY%20CAKES%201%20KG&amp;search=icing&amp;page=2" rel="next">Next &raquo;</a>
+                    </li>
+                            </ul>
+        </div>
+
+        <div class="d-none flex-sm-fill d-sm-flex align-items-sm-center justify-content-sm-between">
+            <div>
+                <p class="small text-muted">
+                    Showing
+                    <span class="fw-semibold">1</span>
+                    to
+                    <span class="fw-semibold">24</span>
+                    of
+                    <span class="fw-semibold">58</span>
+                    results
+                </p>
+            </div>
+
+            <div>
+                <ul class="pagination">
+                    
+                                            <li class="page-item disabled" aria-disabled="true" aria-label="&laquo; Previous">
+                            <span class="page-link" aria-hidden="true">&lsaquo;</span>
+                        </li>
+                    
+                    
+                                            
+                        
+                        
+                                                                                                                        <li class="page-item active" aria-current="page"><span class="page-link">1</span></li>
+                                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/shop/create-order?order_time=Morning&amp;category=ICING%20DISPLAY%20CAKES%201%20KG&amp;search=icing&amp;page=2">2</a></li>
+                                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/shop/create-order?order_time=Morning&amp;category=ICING%20DISPLAY%20CAKES%201%20KG&amp;search=icing&amp;page=3">3</a></li>
+                                                                                                        
+                    
+                                            <li class="page-item">
+                            <a class="page-link" href="http://localhost:8765/shop/create-order?order_time=Morning&amp;category=ICING%20DISPLAY%20CAKES%201%20KG&amp;search=icing&amp;page=2" rel="next" aria-label="Next &raquo;">&rsaquo;</a>
+                        </li>
+                                    </ul>
+            </div>
+        </div>
+    </nav>
+
+                                        </div>
+
+                                        <div class="p-3 border-top">
+                                            <button type="submit" class="btn btn-outline-success"><i class="fa fa-cart-plus"></i> Add selected items to cart</button>
+                                        </div>
+                                                                            </form>
+                                </div>
+                                                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bakery-selection-bar" id="bakery-selection-bar">
+        <span><strong id="bakery-selection-count">0</strong> item(s) selected</span>
+        <button type="button" class="btn btn-outline-success" onclick="document.getElementById('bakery-order-form').requestSubmit();">
+            <i class="fa fa-cart-plus"></i> Add to Cart
+        </button>
+    </div>
+    <!-- /content -->
+
+    <!-- jQuery 3.3.1 -->
+    <script src="http://localhost:8765/build/assets/jquery-3.3.1.min-v4gFO2v3.js"></script>
+    <!-- Bootstrap bundle JS -->
+    <script src="http://localhost:8765/build/assets/bootstrap.bundle-KHWyy_bs.js"></script>
+    <!-- SlimScroll JS -->
+    <script src="http://localhost:8765/build/assets/jquery.slimscroll-CBTKbmkM.js"></script>
+    <!-- Main JS -->
+    <script src="http://localhost:8765/assets/libs/js/main-js.js"></script>
+    <!-- Chartist JS -->
+    <script src="http://localhost:8765/build/assets/chartist.min-IkpWgx3y.js"></script>
+    <!-- Sparkline JS -->
+    <script src="http://localhost:8765/build/assets/jquery.sparkline-D22cTjgw.js"></script>
+    <!-- Morris JS -->
+    <script src="http://localhost:8765/build/assets/raphael.min-B5zA8uFx.js"></script>
+    <script src="http://localhost:8765/build/assets/morris-B6LVvqoT.js"></script>
+    <!-- C3 Charts JS -->
+    <script src="http://localhost:8765/build/assets/c3.min-CT_CWkv_.js"></script>
+    <script src="http://localhost:8765/build/assets/d3-5.4.0.min-CuYg4NaM.js"></script>
+    <script src="http://localhost:8765/build/assets/C3chartjs-Z81cJDhO.js"></script>
+    <!-- Dashboard E-commerce JS -->
+    <script src="http://localhost:8765/assets/libs/js/dashboard-ecommerce.js"></script>
+    <!-- Chart Bundle JS -->
+    <script src="http://localhost:8765/build/assets/Chart.bundle-DQjS9Hs4.js"></script>
+    <script src="http://localhost:8765/build/assets/chartjs-demo-DoW6en45.js"></script>
+    <script>
+    (function () {
+        var checkboxes = document.querySelectorAll('.bakery-select-checkbox');
+        var bar = document.getElementById('bakery-selection-bar');
+        var countEl = document.getElementById('bakery-selection-count');
+
+        function updateSelectionBar() {
+            var selected = document.querySelectorAll('.bakery-select-checkbox:checked').length;
+            countEl.textContent = selected;
+            bar.classList.toggle('is-active', selected > 0);
+        }
+
+        checkboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', updateSelectionBar);
+        });
+
+        updateSelectionBar();
+        // Quantity stepper (+/-) buttons are wired up globally in
+        // assets/js/shop-bakery-theme.js, which also keeps the select
+        // toggle above in sync with the qty - triggering the 'change'
+        // listener registered here.
+    })();
+</script>
+<script src="http://localhost:8765/assets/js/shop-bakery-theme.js"></script>
+
+</body>
+
+</html>

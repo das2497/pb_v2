@@ -42,27 +42,6 @@
                         </div>
                     @endif
 
-                    <div class="row mb-2 g-2">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-12 col-lg-3 d-grid">
-                                            <button class="btn btn-success mb-2 w-100" onclick="loadDashboardData();">
-                                                <span style="display: block;" id="rfs">
-                                                    Refresh dashboard
-                                                </span>
-                                                <span style="display: none;" id="spn">
-                                                    Loading...
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     @if (Auth::user()->role === 'o_admin')
                         <div class="row mb-2 g-2">
                             <div class="col-12">
@@ -447,8 +426,6 @@
         }
 
         function loadDashboardData() {
-            document.getElementById('rfs').style.display = 'none';
-            document.getElementById('spn').style.display = 'block';
             axios.get('{{ route("api.order-admin.dashboard-data") }}')
                 .then(res => {
                     const d = res.data.stats; // shortcut for easier access
@@ -953,35 +930,19 @@
                 })
                 .catch(err => {
                     console.error('Error loading dashboard data:', err);
-                    alert('Failed to load dashboard data. Please try again.');
-                })
-                .finally(() => {
-                    document.getElementById('rfs').style.display = 'block';
-                    document.getElementById('spn').style.display = 'none';
                 });
         }
 
-        let intervalId;
-
-        // document.addEventListener('DOMContentLoaded', function () {
-        //     // Initial load
-        //     loadDashboardData();
-
-        //     // Refresh every 5 minutes (300000 milliseconds)
-        //     intervalId = setInterval(loadDashboardData, 20000);
-        // });
-
-        // document.addEventListener('beforeunload', function () {
-        //     clearInterval(intervalId);
-        // });
-
-        document.getElementById('refresh').addEventListener('click', function () {
+        document.getElementById('refresh')?.addEventListener('click', function () {
             // Disable the button
-            // loadDashboardData();
-
             this.disabled = true;
         });
 
+        // Both the quick stats (initialLoad) and the full charts/tables
+        // (loadDashboardData, previously only fetched when the "Refresh
+        // dashboard" button was clicked) now load automatically and
+        // asynchronously as soon as the page opens.
         initialLoad();
+        loadDashboardData();
     </script>
 @endpush

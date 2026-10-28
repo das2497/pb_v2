@@ -120,7 +120,28 @@
                                             <a href="/rep/shop-report-full-screen" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#morning_shop_wise_report">
                                                 Full Screen
                                             </a>
+                                            <button type="button" id="exportBtn" class="btn btn-success" onclick="exportFullReport()">
+                                                Export to Excel
+                                            </button>
                                         </h5>
+                                    </div>
+                                    <div class="col-12 col-lg-8 pt-3">
+                                        <form class="row g-2" action="/rep/shop-report-morning" method="GET">
+                                            @csrf
+                                            <div class="col-12 col-sm-4">
+                                                <input type="date" name="date" id="" class="form-control" value="{{ $currentDate }}">
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <select name="state" id="" class="form-control">
+                                                    <option value="Processing" @selected($state === 'Processing')>Processing</option>
+                                                    <option value="Pending" @selected($state === 'Pending')>Pending</option>
+                                                    <option value="Complete" @selected($state === 'Complete')>Complete</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <button class="btn btn-primary" type="submit">Search</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                                 <div class="card-body p-0">
@@ -165,21 +186,10 @@
                                                     </th>
                                                 </tr>
                                             </thead>
-                                            <tbody style="max-height: 400px;">
-                                                @php
-                                                $total_normal = 0;
-                                                $total_special = 0;
-                                                $total_pbd = 0;
-                                                $index = 0;
-                                                $timeZone = 'Asia/Colombo';
-                                                $currentDate = new DateTime();
-                                                @endphp
+                                            <tbody>
                                                 @foreach ($products as $product)
                                                 @php
-                                                // Reset the totals for each product
-                                                $total_normal = 0;
-                                                $total_special = 0;
-                                                $total_pbd = 0;
+                                                $total_normal = $total_special = $total_pbd = 0;
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $loop->iteration }}</td>
@@ -188,26 +198,15 @@
                                                     {{-- Normal Route --}}
                                                     @foreach ($header_normal as $head)
                                                     @php
-                                                    $order = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->where('orders.shop', '=', $head->branch_code)
-                                                    ->where('carts.item_number', '=', $product->item_number)
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->where('orders.status','=','Processing')
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->select('carts.*', 'orders.*')
-                                                    ->first();
-
-                                                    $orderQty = $order ? $order->qty : 0; // Check if $order exists
-                                                    if ($order) {
+                                                    $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                                    $orderQty = $order['qty'] ?? 0;
                                                     $total_normal += $orderQty;
-                                                    }
                                                     @endphp
                                                     <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
                                                         {{ $orderQty }}
                                                     </th>
                                                     <th style="max-width: 180px; overflow-x: scroll;">
-                                                        <span>{{ $order ? $order->remarke : '' }}</span>
+                                                        <span>{{ $order['remark'] ?? '' }}</span>
                                                     </th>
                                                     @endforeach
 
@@ -216,26 +215,15 @@
                                                     {{-- Special Route --}}
                                                     @foreach ($header_special as $head)
                                                     @php
-                                                    $order = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->where('orders.shop', '=', $head->branch_code)
-                                                    ->where('carts.item_number', '=', $product->item_number)
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->where('orders.status','=','Processing')
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->select('carts.*', 'orders.*')
-                                                    ->first();
-
-                                                    $orderQty = $order ? $order->qty : 0; // Check if $order exists
-                                                    if ($order) {
+                                                    $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                                    $orderQty = $order['qty'] ?? 0;
                                                     $total_special += $orderQty;
-                                                    }
                                                     @endphp
                                                     <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
                                                         {{ $orderQty }}
                                                     </th>
                                                     <th style="max-width: 180px; overflow-x: scroll;">
-                                                        <span>{{ $order ? $order->remarke : '' }}</span>
+                                                        <span>{{ $order['remark'] ?? '' }}</span>
                                                     </th>
                                                     @endforeach
 
@@ -244,26 +232,15 @@
                                                     {{-- PBD Route --}}
                                                     @foreach ($header_pbd as $head)
                                                     @php
-                                                    $order = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->where('orders.shop', '=', $head->branch_code)
-                                                    ->where('carts.item_number', '=', $product->item_number)
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->where('orders.status','=','Processing')
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->select('carts.*', 'orders.*')
-                                                    ->first();
-
-                                                    $orderQty = $order ? $order->qty : 0; // Check if $order exists
-                                                    if ($order) {
+                                                    $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                                    $orderQty = $order['qty'] ?? 0;
                                                     $total_pbd += $orderQty;
-                                                    }
                                                     @endphp
                                                     <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
                                                         {{ $orderQty }}
                                                     </th>
                                                     <th style="max-width: 180px; overflow-x: scroll;">
-                                                        <span>{{ $order ? $order->remarke : '' }}</span>
+                                                        <span>{{ $order['remark'] ?? '' }}</span>
                                                     </th>
                                                     @endforeach
 
@@ -272,16 +249,10 @@
                                                     {{-- Total for all routes --}}
                                                     <td class="table-warning">{{ $total_normal + $total_special + $total_pbd }}</td>
                                                 </tr>
-                                                @php
-                                                $index++;
-                                                @endphp
                                                 @endforeach
                                             </tbody>
 
                                         </table>
-                                    </div>
-                                    <div class="p-2">
-                                        {{ $products->links() }}
                                     </div>
                                 </div>
                             </div>
@@ -296,5 +267,74 @@
             </div>
         </div>
     </div>
-    
+
 @endsection
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+        async function exportFullReport() {
+            const btn = document.getElementById('exportBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Exporting...';
+
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const res = await fetch('/rep/shop-report-morning/export?' + params.toString());
+                if (!res.ok) throw new Error('Export request failed');
+
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const table = doc.getElementById('exportTable');
+                if (!table) throw new Error('Export table not found');
+
+                downloadTableAsExcel(table, 'Morning_Shop_Report');
+            } catch (e) {
+                alert('Export failed: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function downloadTableAsExcel(table, filenamePrefix) {
+            const wb = XLSX.utils.table_to_book(table, { sheet: 'Report' });
+            const ws = wb.Sheets['Report'];
+            const range = XLSX.utils.decode_range(ws['!ref']);
+
+            const borderStyle = {
+                top: { style: 'thin' },
+                bottom: { style: 'thin' },
+                left: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[addr]) ws[addr] = { v: '' };
+                    ws[addr].s = ws[addr].s || {};
+                    ws[addr].s.border = borderStyle;
+                    ws[addr].s.alignment = { horizontal: 'center', vertical: 'center' };
+                }
+            }
+
+            const colWidths = [];
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                let maxWidth = 10;
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+                    if (cell && cell.v !== undefined && cell.v.toString().length > maxWidth) {
+                        maxWidth = cell.v.toString().length;
+                    }
+                }
+                colWidths.push({ wch: Math.min(maxWidth + 4, 50) });
+            }
+            ws['!cols'] = colWidths;
+
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            XLSX.writeFile(wb, `${filenamePrefix}_${today}.xlsx`);
+        }
+    </script>
+@endpush

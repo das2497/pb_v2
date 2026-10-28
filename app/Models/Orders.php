@@ -23,6 +23,7 @@ class Orders extends Model
         'status',
         'default_name',
         'default_period',
+        'order_date',
     ];
 
     public function shopRecord(): BelongsTo

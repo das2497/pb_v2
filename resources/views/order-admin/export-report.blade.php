@@ -190,9 +190,9 @@
                                             @csrf
                                             <div class="col-12 col-lg-4 mb-3">
                                                 <label for="routeSelect" class="form-label">Routes</label>
-                                                <small class="float-right text-danger">Default: ROUTE 1</small>
+                                                <small class="float-right text-danger">Default: All Routes</small>
                                                 <select id="routeSelect" name="routes[]" class="form-control" multiple
-                                                    size="5">
+                                                    size="5" onchange="getRoutes();">
                                                     @foreach ($routes as $routeItem)
                                                         <option value="{{ $routeItem->name }}" @if(is_array($route) && in_array($routeItem->name, $route)) selected @endif>
                                                             {{ $routeItem->name }}
@@ -213,7 +213,7 @@
                                                 <select name="categories[]" class="form-control" id="categorySelect"
                                                     multiple size="5" onchange="getCategories();">
                                                     @foreach ($categories as $category)
-                                                        <option value="{{$category->category}}" )>{{ $category->category }}
+                                                        <option value="{{$category->category}}" @if(in_array($category->category, $selectedCategories)) selected @endif>{{ $category->category }}
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -476,6 +476,26 @@
     // Initial call and event listener
     rmkManage();
     document.querySelector('input[name="access"]').addEventListener('change', rmkManage);
+
+    // Show which routes/categories are currently selected
+    function updateSelectedDisplay(selectId, displayId, emptyText) {
+        const select = document.getElementById(selectId);
+        const display = document.getElementById(displayId);
+        const selected = Array.from(select.selectedOptions).map(o => o.text.trim());
+        display.innerHTML = selected.length ? selected.join(', ') : `<em>${emptyText}</em>`;
+    }
+
+    function getRoutes() {
+        updateSelectedDisplay('routeSelect', 'selectedRoutesDisplay', 'No routes selected');
+    }
+
+    function getCategories() {
+        updateSelectedDisplay('categorySelect', 'selectedDisplay', 'No categories selected');
+    }
+
+    // Initial call so a reload after Search reflects what's actually selected
+    getRoutes();
+    getCategories();
 
     // Export to Excel with proper handling of remarks and column widths
     function exportToExcel() {

@@ -123,6 +123,9 @@
                                             <a href="/order-admin/shop-report-normal-full-screen" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#morning_shop_wise_report">
                                                 Full Screen
                                             </a>
+                                            <button type="button" id="exportBtn" class="btn btn-success" onclick="exportFullReport()">
+                                                Export to Excel
+                                            </button>
                                         </h5>
                                     </div>
                                 </div>
@@ -147,8 +150,6 @@
                                                 $total_normal = 0;
                                                 $total_special = 0;
                                                 $index = 0;
-                                                $timeZone = 'Asia/Colombo';
-                                                $currentDate = new DateTime();
                                                 @endphp
                                                 @foreach ($products as $product)
                                                 @php
@@ -159,33 +160,16 @@
                                                     <td>{{ $product->item_number }} | {{ $product->name_english }}</td>
                                                     @foreach ($header_normal as $head)
                                                     @php
-
-                                                    $order = DB::table('orders')
-                                                    ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-                                                    ->where('orders.shop', '=', $head->branch_code)
-                                                    ->where('carts.item_number', '=', $product->item_number)
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->where('orders.status','=','Complete')
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->select('carts.*', 'orders.*')
-                                                    ->first();
-
-                                                    $order_note = DB::table('orders')
-                                                    ->where('shop','=',$head->branch_code)
-                                                    ->where('orders.status','=','Complete')
-                                                    ->where('orders.time_period', '=', 'Morning')
-                                                    ->whereDate('orders.created_at', $currentDate)
-                                                    ->first();
-
-                                                    $words = explode(" ", $order_note->note ?? '');
+                                                    $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
+                                                    $words = $noteWords[$head->branch_code] ?? [];
                                                     @endphp
 
                                                     @if ($order)
                                                     @php
-                                                    $total_normal += $order->qty;
+                                                    $total_normal += $order['qty'];
                                                     @endphp
-                                                    <th class="{{ $order->qty != 0 ? 'table-success' : 'table-danger' }}">
-                                                        {{ $order->qty }} | {{ $words[$index] ?? '' }}
+                                                    <th class="{{ $order['qty'] != 0 ? 'table-success' : 'table-danger' }}">
+                                                        {{ $order['qty'] }} | {{ $words[$index] ?? '' }}
                                                     </th>
                                                     @else
                                                     <td>0 | {{ $words[$index] ?? '' }}</td>
@@ -219,9 +203,73 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
         function confirmDelete() {
             return confirm('Are you sure you want to delete this item?');
+        }
+
+        async function exportFullReport() {
+            const btn = document.getElementById('exportBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Exporting...';
+
+            try {
+                const res = await fetch('/order-admin/shop-normal-report/export');
+                if (!res.ok) throw new Error('Export request failed');
+
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const table = doc.getElementById('exportTable');
+                if (!table) throw new Error('Export table not found');
+
+                downloadTableAsExcel(table, 'Morning_Normal_Shop_Report');
+            } catch (e) {
+                alert('Export failed: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function downloadTableAsExcel(table, filenamePrefix) {
+            const wb = XLSX.utils.table_to_book(table, { sheet: 'Report' });
+            const ws = wb.Sheets['Report'];
+            const range = XLSX.utils.decode_range(ws['!ref']);
+
+            const borderStyle = {
+                top: { style: 'thin' },
+                bottom: { style: 'thin' },
+                left: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[addr]) ws[addr] = { v: '' };
+                    ws[addr].s = ws[addr].s || {};
+                    ws[addr].s.border = borderStyle;
+                    ws[addr].s.alignment = { horizontal: 'center', vertical: 'center' };
+                }
+            }
+
+            const colWidths = [];
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                let maxWidth = 10;
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+                    if (cell && cell.v !== undefined && cell.v.toString().length > maxWidth) {
+                        maxWidth = cell.v.toString().length;
+                    }
+                }
+                colWidths.push({ wch: Math.min(maxWidth + 4, 50) });
+            }
+            ws['!cols'] = colWidths;
+
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            XLSX.writeFile(wb, `${filenamePrefix}_${today}.xlsx`);
         }
     </script>
 @endpush

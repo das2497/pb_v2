@@ -62,7 +62,7 @@ public function updateGoogleSheet()
     // Build a lookup matrix: [item_number][route_name] => qty
     $matrix = [];
     foreach ($aggregates as $row) {
-        $matrix[$row->item_number][$row->route_name] = (int) $row->qty;
+        $matrix[$row->item_number][$row->route_name] = (float) $row->qty;
     }    
 
     // Build header

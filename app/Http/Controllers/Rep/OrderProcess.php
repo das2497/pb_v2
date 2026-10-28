@@ -37,8 +37,9 @@ class OrderProcess extends Controller
         $form_token = Str::random(40);
         session()->put('form_token', $form_token);
 
-        $selectedShop = $Shops->contains('branch_code', $request->shop)
-            ? Shops::where('branch_code', $request->shop)->first()
+        $my_shop = $request->input('shop');
+        $selectedShop = $Shops->contains('branch_code', $my_shop)
+            ? Shops::where('branch_code', $my_shop)->first()
             : null;
         $allowed_times = $selectedShop
             ? $selectedShop->allowedOrderTimes()
@@ -48,14 +49,16 @@ class OrderProcess extends Controller
             $period = ($selectedShop && count($allowed_times) === 1) ? $allowed_times[0] : null;
         }
 
-        if ($period === null) {
-            return view('rep.create-order', [
-                'category' => session('category'),
+        if (!$selectedShop || $period === null) {
+            return $this->respond($request, [
+                'category' => $request->input('category', session('category', '')),
+                'search' => (string) $request->input('search', ''),
                 'shops' => $Shops,
+                'selected_shop' => $selectedShop,
                 'products' => collect(),
                 'cart_item' => collect(),
                 'categories' => $categories,
-                'my_shop' => $request->shop,
+                'my_shop' => $my_shop,
                 'form_token' => $form_token,
                 'period' => null,
                 'allowed_times' => $allowed_times,
@@ -64,85 +67,55 @@ class OrderProcess extends Controller
 
         $request->session()->put('order_time', $period);
 
+        $category = $request->has('category') ? (string) $request->category : 'CAKE ITEMS';
+        $request->session()->put('category', $category);
+        $search = trim((string) $request->input('search', ''));
 
-        if (isset($request) && $request->has('category')) {
-
-            $request->session()->put('category', $request->category);
-
-            if ($request->category == '') {
-
-                $Products = Products::forPeriod($period)->where(function ($query) use ($request) {
-                    $query->where('item_number', 'like', '%' . $request->search . '%')
-                        ->orWhere('category', 'like', '%' . $request->search . '%')
-                        ->orWhere('name_english', 'like', '%' . $request->search . '%')
-                        ->orWhere('name_sinhala', 'like', '%' . $request->search . '%');
-                })
-                    ->orderBy('item_number', 'asc')
-                    ->get();
-
-                $cart_item = Cart::where('shop_bc_number', '=', $request->shop)
-                    ->whereNull('order_number')
-                    ->get();
-            } else {
-
-                $Products = Products::forPeriod($period)->where('category', '=', $request->category)
-                    ->where(function ($query) use ($request) {
-                        $query->where('item_number', 'like', '%' . $request->search . '%')
-                            ->orWhere('category', 'like', '%' . $request->search . '%')
-                            ->orWhere('name_english', 'like', '%' . $request->search . '%')
-                            ->orWhere('name_sinhala', 'like', '%' . $request->search . '%');
-                    })
-                    ->orderBy('item_number', 'asc')
-                    ->get();
-
-                $cart_item = DB::table('products')
-                    ->join('carts', 'products.item_number', '=', 'carts.item_number')
-                    ->where('products.category', $request->category)
-                    ->where('carts.shop_bc_number', '=', $request->shop)
-                    ->whereNull('order_number')
-                    ->select('carts.*', 'products.*')
-                    ->get();
-            }
-
-            return view('rep.create-order', [
-                'category' => session('category'),
-                'shops' => $Shops,
-                'products' => $Products,
-                'cart_item' => $cart_item,
-                'input' => $request->all(),
-                'categories' => $categories,
-                'my_shop' => $request->shop,
-                'form_token' => $form_token,
-                'period' => $period,
-                'allowed_times' => $allowed_times,
-            ]);
-        }
-
-        $request->session()->put('category', 'CAKE ITEMS');
-
-        $Products = Products::forPeriod($period)->where('category', '=', 'CAKE ITEMS')
+        $Products = Products::forPeriod($period)
+            ->when($category !== '', fn ($query) => $query->where('category', $category))
+            ->when($search !== '', fn ($query) => $query->where(function ($q) use ($search) {
+                $q->where('item_number', 'like', "%{$search}%")
+                    ->orWhere('name_english', 'like', "%{$search}%")
+                    ->orWhere('name_sinhala', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
+            }))
             ->orderBy('item_number', 'asc')
             ->get();
 
         $cart_item = DB::table('products')
             ->join('carts', 'products.item_number', '=', 'carts.item_number')
-            ->where('products.category', 'CAKE ITEMS')
-            ->where('carts.shop_bc_number', '=', $request->shop)
+            ->when($category !== '', fn ($query) => $query->where('products.category', $category))
+            ->where('carts.shop_bc_number', '=', $my_shop)
             ->whereNull('order_number')
             ->select('carts.*', 'products.*')
             ->get();
 
-        return view('rep.create-order', [
-            'category' =>  session('category'),
+        return $this->respond($request, [
+            'category' => $category,
+            'search' => $search,
             'shops' => $Shops,
-            'cart_item' => $cart_item,
+            'selected_shop' => $selectedShop,
             'products' => $Products,
+            'cart_item' => $cart_item,
             'categories' => $categories,
-            'my_shop' => $request->shop,
+            'my_shop' => $my_shop,
             'form_token' => $form_token,
             'period' => $period,
             'allowed_times' => $allowed_times,
         ]);
+    }
+
+    private function respond(Request $request, array $viewData)
+    {
+        if ($request->ajax()) {
+            return response()->json([
+                'header_html' => view('rep.partials.create-order-header', $viewData)->render(),
+                'order_time_options_html' => view('rep.partials.order-time-options', $viewData)->render(),
+                'results_html' => view('rep.partials.create-order-results', $viewData)->render(),
+            ]);
+        }
+
+        return view('rep.create-order', $viewData);
     }
 
     public function add_to_cart(Request $request)
@@ -153,7 +126,7 @@ class OrderProcess extends Controller
         $product = Products::where('item_number', '=', $request->item_number)->first();
 
         try {
-            $this->cartService->addItemToCart($shop, $product, (int) $request->qty);
+            $this->cartService->addItemToCart($shop, $product, round((float) $request->qty, 2));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -178,7 +151,7 @@ class OrderProcess extends Controller
         $shop = Shops::where('branch_code', '=', $branchCode)->first();
 
         $items = array_map(
-            fn ($itemNumber) => ['item_number' => $itemNumber, 'qty' => (int) ($quantities[$itemNumber] ?? 0)],
+            fn ($itemNumber) => ['item_number' => $itemNumber, 'qty' => round((float) ($quantities[$itemNumber] ?? 0), 2)],
             $selectedItems
         );
 

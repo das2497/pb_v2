@@ -23,67 +23,16 @@ class PendingOrdersAddItems extends Controller
 
     public function index(Request $request)
     {
-
         $categories = Product_category::all();
-        $period = Orders::where('unique_id', '=', $request->order_number)->value('time_period');
-        $shop = Orders::where('unique_id', '=', $request->order_number)->select('shop')->first();
 
-        $products = null;
+        $order = Orders::where('unique_id', '=', $request->order_number)
+            ->select('time_period', 'shop')
+            ->first();
 
-        if (isset($request) && $request->has('category')) {
+        $category = $request->has('category') ? (string) $request->input('category') : 'CAKE ITEMS';
+        $request->session()->put('category', $category);
 
-            $request->session()->put('category', $request->category);
-
-            $cart_item = DB::table('carts')
-                ->join('products', 'carts.item_number', '=', 'products.item_number')
-                ->where('carts.order_number', '=', $request->order_number)
-                ->select('products.*', 'carts.*')
-                ->get();
-
-            if ($request->category == '') {
-                if ($request->search != '') {
-                    $products = Products::forPeriod($period)->where(function ($query) use ($request) {
-                        $query->where('item_number', 'like', '%' . $request->search . '%')
-                            ->orWhere('name_english', 'like', '%' . $request->search . '%');
-                    })
-                        ->orderBy('item_number')
-                        ->get();
-
-                    // dd($products);
-                } else {
-                    $products = Products::forPeriod($period)->orderBy('item_number')
-                        ->get();
-                }
-            } else {
-                if ($request->search != '') {
-                    // dd('category : '.$request->category.'. search : '.$request->search);
-                    $products = Products::forPeriod($period)->where('category', '=', $request->category)
-                        ->where(function ($query) use ($request) {
-                            $query->where('item_number', 'like', '%' . $request->search . '%')
-                                ->orWhere('name_english', 'like', '%' . $request->search . '%');
-                        })
-                        ->orderBy('item_number')
-                        ->get();
-
-                    // dd($products);
-                } else {
-                    $products = Products::forPeriod($period)->where('category', '=', $request->category)
-                        ->orderBy('item_number')
-                        ->get();
-                }
-            }
-
-            // dd($products);
-
-            return view('rep.pending-orders-add-items', [
-                'category' => session('category'),
-                'products' => $products,
-                'cart_items' => $cart_item,
-                'order_number' => $request->order_number,
-                'shop' => $shop->shop,
-                'categories' => $categories,
-            ]);
-        }
+        $search = trim((string) $request->input('search'));
 
         $cart_item = DB::table('carts')
             ->join('products', 'carts.item_number', '=', 'products.item_number')
@@ -91,20 +40,25 @@ class PendingOrdersAddItems extends Controller
             ->select('products.*', 'carts.*')
             ->get();
 
-        $products = Products::forPeriod($period)->where('category', '=', 'CAKE ITEMS')
+        $products = Products::forPeriod($order->time_period)
+            ->when($category !== '', function ($query) use ($category) {
+                $query->where('category', '=', $category);
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('item_number', 'like', '%' . $search . '%')
+                        ->orWhere('name_english', 'like', '%' . $search . '%');
+                });
+            })
             ->orderBy('item_number')
             ->get();
 
-        $request->session()->put('category', 'CAKE ITEMS');
-
-        // dd($products);
-
         return view('rep.pending-orders-add-items', [
-            'category' => session('category'),
+            'category' => $category,
             'products' => $products,
             'cart_items' => $cart_item,
             'order_number' => $request->order_number,
-            'shop' => $shop->shop,
+            'shop' => $order->shop,
             'categories' => $categories,
         ]);
     }

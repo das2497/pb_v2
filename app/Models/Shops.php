@@ -31,7 +31,7 @@ class Shops extends Model
 
     public function allowedOrderTimes(): array
     {
-        if (is_string($this->order_time) && $this->order_time !== '' && $this->order_time !== 'All') {
+        if (is_string($this->order_time) && $this->order_time !== '' && $this->order_time !== 'All' && $this->order_time !== 'Both') {
             return [$this->order_time];
         }
 

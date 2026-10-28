@@ -25,7 +25,7 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
-                                <h5 class="card-header">Pending Orders</h5>
+                                <h5 class="card-header">Pending Orders <span class="badge bg-secondary">{{ $Orders->count() }}</span></h5>
                                 @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul>
@@ -49,11 +49,23 @@
                                     @csrf
                                     <div class="input-group flex-nowrap p-2">
                                         <input type="text" class="form-control" id="ordering_admin_all_items_srch"
-                                            placeholder="Type shop name" aria-describedby="addon-wrapping" name="search">
+                                            placeholder="Type shop name or order id" aria-describedby="addon-wrapping" name="search" value="{{ $search }}">
                                         <button type="submit" class="input-group-text btn" id="addon-wrapping">Search</button>
+                                        @if ($search !== '')
+                                        <a href="/rep/pending-order" class="input-group-text btn btn-outline-secondary">Clear</a>
+                                        @endif
                                     </div>
                                 </form>
                                 <div class="card-body p-0">
+                                    @if ($Orders->isEmpty())
+                                    <p class="text-center text-muted p-4 mb-0">
+                                        @if ($search !== '')
+                                            No pending orders match "{{ $search }}".
+                                        @else
+                                            No pending orders right now.
+                                        @endif
+                                    </p>
+                                    @else
                                     <div class="table-responsive">
                                         <table class="table">
                                             <thead class="bg-light">
@@ -75,13 +87,13 @@
                                                     <td>{{ $order->unique_id }}</td>
                                                     <td>{{ $order->shop_name }}</td>
                                                     <td>{{ $order->time_period }}</td>
-                                                    <td>{{ $order->created_at }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($order->created_at)->format('M j, Y g:i A') }}</td>
                                                     <td>
                                                         <form action="/rep/pending-order-note-update" method="POST" class="input-group">
                                                             @csrf
                                                             <input class="form-control" type="text" value="{{ $order->note }}" name="note">
                                                             <input type="hidden" name="order_number" value="{{ $order->unique_id }}">
-                                                            <button type="submit" class="btn btn-link"><i class="fa fa-refresh" aria-hidden="true"></i></button>
+                                                            <button type="submit" class="btn btn-outline-primary" title="Save note">Save</button>
                                                         </form>
                                                     </td>
                                                     <td>රු. {{ number_format($order->total_price,2) }}</td>
@@ -97,6 +109,7 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
