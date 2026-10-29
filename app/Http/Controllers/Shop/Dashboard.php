@@ -28,11 +28,14 @@ class Dashboard extends Controller
     {
         $shop = DB::table('shops')->where('email', Auth::user()->email)->first();
 
+        // Scoped directly by the shop's own branch_code (already resolved
+        // above) - this used to join rep_assign_shops/reps as well, which
+        // this query never needed (no rep-related column is read or
+        // filtered on), and those two extra joins alone cost ~180ms at
+        // real data volume versus the ~5-10ms a single-shop `orders` lookup
+        // takes.
         $statusCounts = DB::table('orders')
-            ->join('shops', 'orders.shop', '=', 'shops.branch_code')
-            ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
-            ->join('reps', 'rep_assign_shops.rep_id', '=', 'reps.id')
-            ->where('shops.email', '=', Auth::user()->email)
+            ->where('orders.shop', $shop->branch_code)
             ->selectRaw("
                 SUM(CASE WHEN orders.status = 'Pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN orders.status = 'Processing' THEN 1 ELSE 0 END) as processing,

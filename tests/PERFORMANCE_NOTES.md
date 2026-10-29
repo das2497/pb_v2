@@ -142,3 +142,58 @@ different problems in the same family: joins on unindexed columns one hop
 away from the ones Phase 1 did index, a `whereDate()` that accidentally
 defeated an index that already existed, a lost join/sort plan, and a few
 widgets with no bound on the data they aggregate. All are now fixed.
+
+## Phase 7: Rep and Shop dashboards
+
+The work above only covered `OrderAdmin\Dashboard`. A follow-up pass timed
+`Rep\Dashboard` and `Shop\Dashboard` the same way (real dev data, worst-case
+shop/rep by order volume: shop `00093` with 1,410 orders, rep with 10,640
+orders across 18 assigned shops) and found three more issues:
+
+**1. Shop dashboard's "best selling categories" widget:** ~27.4 **seconds**
+uncached. Root cause (confirmed via `EXPLAIN`): neither `products.category`
+nor `product_categories.category` - the actual join column - had an index
+on either side, so MySQL drove the join from the 19-row `product_categories`
+table and, for each category, re-scanned every one of the shop's ~43k cart
+rows filtering by category with no index to narrow it. Fixed with a
+migration adding both indexes - **27,440 ms → 1,459 ms** (19x), confirmed via
+`EXPLAIN ANALYZE` to now be a clean indexed nested-loop plan (the remaining
+~1.5s is genuinely reading ~43k cart rows for one shop; already behind the
+existing 10-minute `Cache::remember`, same as the admin-side unbounded
+aggregates above).
+
+**2. Shop dashboard's `firstLoading()` status-count query unnecessarily
+joined `rep_assign_shops`/`reps`** - copy-paste from the rep version; the
+query only ever filtered on the shop's own `branch_code` (already resolved
+earlier in the same method) and never read anything rep-related. Removing
+the two dead joins: **~190-220 ms → ~7 ms** (verified identical results
+before/after).
+
+**3. Rep dashboard's `firstLoading()`/`getDashboardData()` re-ran the full
+`orders ⋈ shops ⋈ rep_assign_shops ⋈ reps` join from scratch in every one of
+7 separate queries**, just to find which shops belong to the logged-in rep -
+at real volume that join alone cost ~370-490 ms, confirmed via
+`EXPLAIN ANALYZE` to already be using its indexes correctly (the cost is
+genuinely proportional to the rep's real order volume, not a bad plan).
+Resolved the rep's shop list **once** (branch codes + names, cached 10 min -
+a rep's assignments change rarely), and rewrote every query to filter with
+`whereIn('orders.shop', $shopCodes)` directly instead of repeating the join.
+Also merged `firstLoading()`'s two queries (status counts + revenue sums)
+into one, and added a short (30s) cache to `firstLoading()` and
+`latest_orders`/`top_orders` - these read real per-rep order history so a
+cache is the honest fix, same reasoning as the admin-side unbounded
+aggregates, just scoped and much shorter-lived since it's not literally
+unbounded. Verified byte-for-byte identical results against the original
+queries for the busiest real rep (aside from ~1e-9-level floating point
+`SUM()` summation-order noise, same category of non-change documented
+above). End-to-end, via the real controller with real auth:
+**firstLoading: 530 ms cold → 2.8 ms warm. getDashboardData: 812 ms cold →
+3.85 ms warm.**
+
+None of this touched `rep_assign_shops.rep_id`/`shop_id` (still the
+unindexed-by-type `varchar` columns, not the indexed `_int` ones) -
+confirmed via `SHOW COLUMNS` that 129/341 `rep_id_int` and 189/341
+`shop_id_int` rows are still `NULL` (same incomplete backfill noted in
+Phase 6), so switching the join would still silently drop rows. The
+`shopsForRep()` cache only reads from this join once every 10 minutes per
+rep now, rather than fixing the underlying type mismatch.
