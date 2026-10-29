@@ -65,13 +65,22 @@
                                         <input type="text" class="form-control" id="search" placeholder="Type a product name...." aria-describedby="addon-wrapping"
                                             name="search" value="{{ request('search') }}">
                                     </div>
-                                    <div class="col-6 col-xl-4">
+                                    <div class="col-6 col-xl-3">
                                         <label for="category" class="bakery-form-label"><i class="fa fa-tags"></i> Category</label>
                                         <select class="form-control" id="category" name="category">
                                             <option value="" @selected($category === '')>All category</option>
                                             @foreach ( $categories as $cat )
                                             <option value="{{$cat->category}}" @selected($category===$cat->category)>{{$cat->category}}</option>
                                             @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-xl-1">
+                                        <label for="bakery-grid-cols" class="bakery-form-label"><i class="fa fa-th-large"></i> Per row</label>
+                                        <select class="form-control" id="bakery-grid-cols">
+                                            <option value="">Auto</option>
+                                            @for ($i = 1; $i <= 6; $i++)
+                                            <option value="{{ $i }}">{{ $i }}</option>
+                                            @endfor
                                         </select>
                                     </div>
                                 </form>
@@ -116,6 +125,8 @@
         var filtersForm = document.getElementById('bakery-filters-form');
         var searchInput = document.getElementById('search');
         var categorySelect = document.getElementById('category');
+        var gridColsSelect = document.getElementById('bakery-grid-cols');
+        var GRID_COLS_KEY = 'bakery-grid-cols';
 
         function readStore() {
             try {
@@ -137,6 +148,23 @@
             labelEl.textContent = selected === 1 ? 'item' : 'items';
             bar.classList.toggle('is-active', selected > 0);
         }
+
+        function applyGridCols() {
+            var list = resultsEl.querySelector('.bakery-label-list');
+            if (!list) return;
+            var cols = parseInt(gridColsSelect.value, 10) || 0;
+            list.style.gridTemplateColumns = cols > 0 ? 'repeat(' + cols + ', 1fr)' : '';
+        }
+
+        try {
+            var savedCols = localStorage.getItem(GRID_COLS_KEY);
+            if (savedCols) gridColsSelect.value = savedCols;
+        } catch (e) {}
+
+        gridColsSelect.addEventListener('change', function () {
+            try { localStorage.setItem(GRID_COLS_KEY, gridColsSelect.value); } catch (e) {}
+            applyGridCols();
+        });
 
         function qtyInputFor(checkbox) {
             var stepper = checkbox.closest('.bakery-label-bottom')?.querySelector('.bakery-qty-stepper');
@@ -208,6 +236,7 @@
             if (window.BakeryTheme) window.BakeryTheme.initQtySteppers(resultsEl);
             bindForm();
             updateSelectionBar();
+            applyGridCols();
         }
 
         initResults();
