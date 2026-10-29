@@ -22,6 +22,7 @@ class ExportReport extends Controller
         return view('rep.export-report', [
             'routes' => DB::table('routes')->distinct()->select('name')->get(),
             'categories' => DB::table('product_categories')->distinct()->select('category')->get(),
+            'orderTimes' => DB::table('order_times')->orderBy('id')->pluck('name'),
             'currentDate' => $currentDate,
             'fromDate' => $request->input('start_date') ?? $currentDate,
             'toDate' => $request->input('end_date') ?? $currentDate,

@@ -248,10 +248,10 @@
                                                             class="float-right text-danger">Default Morning</small>
                                                         <select id="time_period" name="time_period"
                                                             class="form-control">
-                                                            <option value="Morning" @selected($timePeriod == 'Morning')>
-                                                                Morning</option>
-                                                            <option value="Evening" @selected($timePeriod == 'Evening')>
-                                                                Evening</option>
+                                                            @foreach ($orderTimes as $time)
+                                                            <option value="{{ $time }}" @selected($timePeriod == $time)>
+                                                                {{ $time }}</option>
+                                                            @endforeach
                                                         </select>
                                                     </div>
                                                     <div class="col-12 pt-2">

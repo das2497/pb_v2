@@ -63,6 +63,8 @@ class ExportReport extends Controller
             ->select('name')
             ->get();
 
+        $orderTimes = DB::table('order_times')->orderBy('id')->pluck('name');
+
         // ================= PRODUCTS =================
         $productsQuery = DB::table('products');
         if (!empty($selectedCategories)) {
@@ -146,6 +148,7 @@ class ExportReport extends Controller
             'state' => $state,
             'routes' => $routes,
             'categories' => $categories,
+            'orderTimes' => $orderTimes,
             'selectedCategories' => $selectedCategories,
             'currentDate' => $currentDate,
             'timePeriod' => $timePeriod,
