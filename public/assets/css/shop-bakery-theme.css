@@ -304,6 +304,10 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 10px;
     padding: 16px;
+    /* A forced "items per row" count (see bakery-grid-cols in create-order.blade.php)
+       can ask for more columns than the viewport can fit at a readable width; scroll
+       the grid itself rather than letting its content push past the page layout. */
+    overflow-x: auto;
 }
 
 .bakery-label-chip {
@@ -317,6 +321,8 @@ body {
     box-shadow: 0 2px 6px rgba(107, 66, 38, 0.06);
     transition: box-shadow .15s ease, border-color .15s ease;
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .bakery-label-chip:hover {
@@ -333,10 +339,12 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
 }
 
 .bakery-label-bottom {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 6px;

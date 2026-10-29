@@ -153,7 +153,11 @@
             var list = resultsEl.querySelector('.bakery-label-list');
             if (!list) return;
             var cols = parseInt(gridColsSelect.value, 10) || 0;
-            list.style.gridTemplateColumns = cols > 0 ? 'repeat(' + cols + ', 1fr)' : '';
+            // 220px matches the card's own minimum comfortable width (see
+            // .bakery-label-list in shop-bakery-theme.css) so the price/qty
+            // controls never get clipped; .bakery-label-list scrolls
+            // horizontally instead if that doesn't fit the viewport.
+            list.style.gridTemplateColumns = cols > 0 ? 'repeat(' + cols + ', minmax(220px, 1fr))' : '';
         }
 
         try {
