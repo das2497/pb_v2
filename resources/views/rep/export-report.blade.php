@@ -186,11 +186,13 @@
                                                 </div>
                                                 <div class="col-12 col-md-6 mt-2">
                                                     <label for="time_period" class="rep-order-form-label"><i class="fa fa-clock"></i> Time Period</label>
-                                                    <select id="time_period" name="time_period" class="form-control">
+                                                    <select id="time_period" name="time_period[]" class="form-control" multiple size="4">
                                                         @foreach ($orderTimes as $time)
-                                                        <option value="{{ $time }}" @selected($timePeriod === $time)>{{ $time }}</option>
+                                                        <option value="{{ $time }}" @selected(in_array($time, $selectedTimePeriods, true))>{{ $time }}</option>
                                                         @endforeach
                                                     </select>
+                                                    <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple time periods.</div>
+                                                    <div id="selectedTimePeriodsDisplay" class="mt-1"><em>No time periods selected</em></div>
                                                 </div>
                                                 <div class="col-12 col-md-6 mt-2">
                                                     <label for="state" class="rep-order-form-label"><i class="fa fa-flag"></i> State</label>
@@ -262,6 +264,7 @@
         function refreshSelectedDisplays() {
             updateSelectedDisplay('routeSelect', 'selectedRoutesDisplay', 'No routes selected');
             updateSelectedDisplay('categorySelect', 'selectedCategoriesDisplay', 'No categories selected');
+            updateSelectedDisplay('time_period', 'selectedTimePeriodsDisplay', 'No time periods selected');
         }
 
         function rmkManage() {
@@ -314,7 +317,8 @@
 
             document.getElementById('report-summary-routes-date').textContent = routeText + '   ' + dateText;
 
-            var details = 'Time Period: ' + params.get('time_period') + '  |  Status: ' + params.get('state');
+            var timePeriods = params.getAll('time_period[]');
+            var details = 'Time Period: ' + (timePeriods.length ? timePeriods.join(', ') : 'Morning') + '  |  Status: ' + params.get('state');
             if (categories.length) {
                 details += '  |  Categories: ' + categories.join(', ');
             }
@@ -355,6 +359,7 @@
         document.getElementById('remarkToggle').addEventListener('change', rmkManage);
         document.getElementById('routeSelect').addEventListener('change', refreshSelectedDisplays);
         document.getElementById('categorySelect').addEventListener('change', refreshSelectedDisplays);
+        document.getElementById('time_period').addEventListener('change', refreshSelectedDisplays);
 
         refreshSelectedDisplays();
         loadReport(false);

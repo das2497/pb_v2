@@ -26,7 +26,7 @@ class ExportReport extends Controller
             'currentDate' => $currentDate,
             'fromDate' => $request->input('start_date') ?? $currentDate,
             'toDate' => $request->input('end_date') ?? $currentDate,
-            'timePeriod' => $request->input('time_period') ?? 'Morning',
+            'selectedTimePeriods' => $this->normalizeTimePeriods($request->input('time_period', [])),
             'state' => $request->input('state') ?? 'Pending',
             'selectedRoutes' => $this->normalizeArray($request->input('routes', [])),
             'selectedCategories' => $this->normalizeArray($request->input('categories', [])),
@@ -44,18 +44,28 @@ class ExportReport extends Controller
         $fromDate = $request->input('start_date') ?? $currentDate;
         $toDate = $request->input('end_date') ?? $currentDate;
         $state = $request->input('state') ?? 'Pending';
-        $timePeriod = $request->input('time_period') ?? 'Morning';
+        $selectedTimePeriods = $this->normalizeTimePeriods($request->input('time_period', []));
 
         $selectedRoutes = $this->normalizeArray($request->input('routes', []));
         $selectedCategories = $this->normalizeArray($request->input('categories', []));
 
+        // Shops only have a morning_route / evening_route column each (no
+        // per-time-period route), so route matching stays the same as
+        // before: an exclusively-Morning selection matches morning_route,
+        // an exclusively-Evening selection matches evening_route, and any
+        // other selection (mixed, or a period like Beverage/Chips that has
+        // no route of its own) matches either - same fallback the single
+        // -select version used for every non-Morning/Evening value.
+        $isMorningOnly = $selectedTimePeriods === ['Morning'];
+        $isEveningOnly = $selectedTimePeriods === ['Evening'];
+
         $shopsQuery = DB::table('shops')->select('shops.*', DB::raw('shops.name as shop_name'));
 
         if (!empty($selectedRoutes)) {
-            $shopsQuery->where(function ($query) use ($selectedRoutes, $timePeriod) {
-                if ($timePeriod === 'Morning') {
+            $shopsQuery->where(function ($query) use ($selectedRoutes, $isMorningOnly, $isEveningOnly) {
+                if ($isMorningOnly) {
                     $query->whereIn('morning_route', $selectedRoutes);
-                } elseif ($timePeriod === 'Evening') {
+                } elseif ($isEveningOnly) {
                     $query->whereIn('evening_route', $selectedRoutes);
                 } else {
                     $query->whereIn('morning_route', $selectedRoutes)
@@ -80,7 +90,7 @@ class ExportReport extends Controller
 
         $ordersQuery = DB::table('orders')
             ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-            ->where('orders.time_period', $timePeriod)
+            ->whereIn('orders.time_period', $selectedTimePeriods)
             ->where('orders.status', $state)
             ->whereBetween('orders.created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
             ->whereIn('orders.shop', $shopCodes);
@@ -126,8 +136,8 @@ class ExportReport extends Controller
             return false;
         })->values();
 
-        $shopsGroupedByRoute = $filteredShops->groupBy(function ($shop) use ($timePeriod) {
-            return $timePeriod === 'Morning' ? $shop->morning_route : $shop->evening_route;
+        $shopsGroupedByRoute = $filteredShops->groupBy(function ($shop) use ($isMorningOnly) {
+            return $isMorningOnly ? $shop->morning_route : $shop->evening_route;
         })->sortKeys();
 
         return view('rep.partials.export-report-table', [
@@ -146,5 +156,18 @@ class ExportReport extends Controller
         }
 
         return $value ? [$value] : [];
+    }
+
+    /**
+     * Same as normalizeArray(), but time_period always needs at least one
+     * value (every order has exactly one), so an empty selection - a fresh
+     * page load with no query string yet - falls back to the historical
+     * default of ['Morning'] rather than matching nothing.
+     */
+    private function normalizeTimePeriods($value): array
+    {
+        $periods = $this->normalizeArray($value);
+
+        return empty($periods) ? ['Morning'] : $periods;
     }
 }

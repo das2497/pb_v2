@@ -246,13 +246,20 @@
                                                     <div class="col-12">
                                                         <label for="time_period">Time period</label><small
                                                             class="float-right text-danger">Default Morning</small>
-                                                        <select id="time_period" name="time_period"
-                                                            class="form-control">
+                                                        <select id="time_period" name="time_period[]"
+                                                            class="form-control" multiple size="4" onchange="getTimePeriods();">
                                                             @foreach ($orderTimes as $time)
-                                                            <option value="{{ $time }}" @selected($timePeriod == $time)>
+                                                            <option value="{{ $time }}" @if(in_array($time, $selectedTimePeriods)) selected @endif>
                                                                 {{ $time }}</option>
                                                             @endforeach
                                                         </select>
+                                                        <div class="tip-text">
+                                                            <strong>Tip:</strong> Hold Ctrl (Cmd on Mac) to select
+                                                            multiple time periods
+                                                        </div>
+                                                        <div id="selectedTimePeriodsDisplay" class="selected-display mt-2">
+                                                            <em>No time periods selected</em>
+                                                        </div>
                                                     </div>
                                                     <div class="col-12 pt-2">
                                                         <label for="state">State</label><small
@@ -316,7 +323,7 @@
                                             </span>
                                         </h4>
                                         <p class="text-center text-muted mb-0">
-                                            Time Period: <strong>{{ ucfirst($timePeriod) }}</strong>
+                                            Time Period: <strong>{{ implode(', ', array_map('ucfirst', $selectedTimePeriods)) }}</strong>
                                             &nbsp;&nbsp;|&nbsp;&nbsp;
                                             Status: <strong>{{ ucfirst($state) }}</strong>
                                             @if(!empty($selectedCategories))
@@ -493,9 +500,14 @@
         updateSelectedDisplay('categorySelect', 'selectedDisplay', 'No categories selected');
     }
 
+    function getTimePeriods() {
+        updateSelectedDisplay('time_period', 'selectedTimePeriodsDisplay', 'No time periods selected');
+    }
+
     // Initial call so a reload after Search reflects what's actually selected
     getRoutes();
     getCategories();
+    getTimePeriods();
 
     // Export to Excel with proper handling of remarks and column widths
     function exportToExcel() {
@@ -579,7 +591,7 @@
             $jsState = $state;
             $jsFromDate = $fromDate;
             $jsToDate = $toDate;
-            $jsTimePeriod = $timePeriod ?? 'Morning';
+            $jsTimePeriod = implode('_', $selectedTimePeriods);
         @endphp
 
         const routes = @json($jsRoutes);

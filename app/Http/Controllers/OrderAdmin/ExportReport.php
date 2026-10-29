@@ -32,16 +32,32 @@ class ExportReport extends Controller
             $selectedCategories = $selectedCategories ? [$selectedCategories] : [];
         }
 
-        $timePeriod = $request->input('time_period') ?? 'Morning';
+        // === HANDLE MULTIPLE TIME PERIODS ===
+        $selectedTimePeriods = $request->input('time_period', []);
+        if (!is_array($selectedTimePeriods)) {
+            $selectedTimePeriods = $selectedTimePeriods ? [$selectedTimePeriods] : [];
+        }
+        if (empty($selectedTimePeriods)) {
+            $selectedTimePeriods = ['Morning'];
+        }
+        // Shops only have a morning_route / evening_route column each (no
+        // per-time-period route), so route matching stays the same as
+        // before: an exclusively-Morning selection matches morning_route,
+        // an exclusively-Evening selection matches evening_route, and any
+        // other selection (mixed, or a period like Beverage/Chips that has
+        // no route of its own) matches either - same fallback the single
+        // -select version used for every non-Morning/Evening value.
+        $isMorningOnly = $selectedTimePeriods === ['Morning'];
+        $isEveningOnly = $selectedTimePeriods === ['Evening'];
 
         // ================= SHOPS – FILTER BY SELECTED ROUTES =================
         $shopsQuery = DB::table('shops')->select('shops.*', DB::raw('shops.name as shop_name'));
 
         if (!empty($selectedRoutes)) {
-            $shopsQuery->where(function ($query) use ($selectedRoutes, $timePeriod) {
-                if ($timePeriod === 'Morning') {
+            $shopsQuery->where(function ($query) use ($selectedRoutes, $isMorningOnly, $isEveningOnly) {
+                if ($isMorningOnly) {
                     $query->whereIn('morning_route', $selectedRoutes);
-                } elseif ($timePeriod === 'Evening') {
+                } elseif ($isEveningOnly) {
                     $query->whereIn('evening_route', $selectedRoutes);
                 } else {
                     $query->whereIn('morning_route', $selectedRoutes)
@@ -80,7 +96,7 @@ class ExportReport extends Controller
         // ================= ORDERS =================
         $ordersQuery = DB::table('orders')
             ->join('carts', 'orders.unique_id', '=', 'carts.order_number')
-            ->where('orders.time_period', $timePeriod)
+            ->whereIn('orders.time_period', $selectedTimePeriods)
             ->where('orders.status', $state)
             ->whereBetween('orders.created_at', [
                 $fromDate . ' 00:00:00',
@@ -134,8 +150,8 @@ class ExportReport extends Controller
         })->values();
 
         // ================= GROUP SHOPS BY ROUTE =================
-        $shopsGroupedByRoute = $filteredShops->groupBy(function ($shop) use ($timePeriod) {
-            return $timePeriod === 'Morning' ? $shop->morning_route : $shop->evening_route;
+        $shopsGroupedByRoute = $filteredShops->groupBy(function ($shop) use ($isMorningOnly) {
+            return $isMorningOnly ? $shop->morning_route : $shop->evening_route;
         })->sortKeys();
 
         return view('order-admin.export-report', [
@@ -151,7 +167,7 @@ class ExportReport extends Controller
             'orderTimes' => $orderTimes,
             'selectedCategories' => $selectedCategories,
             'currentDate' => $currentDate,
-            'timePeriod' => $timePeriod,
+            'selectedTimePeriods' => $selectedTimePeriods,
             'fromDate' => $fromDate,
             'toDate' => $toDate,
         ]);
