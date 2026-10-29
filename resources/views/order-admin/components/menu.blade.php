@@ -79,6 +79,9 @@
                         <a class="nav-link {{ request()->is('order-admin/shop-report*', 'order-admin/shop-normal-report*') ? 'active' : '' }}" href="/order-admin/shop-report" aria-expanded="false" data-target="#submenu-5" aria-controls="submenu-5"><i class="fas fa-fw fa-table"></i>Shop Report</a>
                         <a class="nav-link {{ request()->is('order-admin/final-report*') ? 'active' : '' }}" href="/order-admin/final-report" aria-expanded="false" data-target="#submenu-5" aria-controls="submenu-5"><i class="fas fa-fw fa-table"></i>Final Report</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('order-admin/scheduled-production-report*') ? 'active' : '' }}" href="/order-admin/scheduled-production-report"><i class="fas fa-fw fa-calendar-alt"></i>Scheduled Production</a>
+                    </li>
                 </ul>
             </div>
         </nav>

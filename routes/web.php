@@ -23,6 +23,7 @@ use App\Http\Controllers\OrderAdmin\RepAssignProcess;
 use App\Http\Controllers\OrderAdmin\RepCreateOrder;
 use App\Http\Controllers\OrderAdmin\RepProcess;
 use App\Http\Controllers\OrderAdmin\RouteProcess;
+use App\Http\Controllers\OrderAdmin\ScheduledProductionReport;
 use App\Http\Controllers\OrderAdmin\ShopProcess;
 use App\Http\Controllers\OrderAdmin\ShopReport;
 use App\Http\Controllers\OrderAdmin\Under_review_orders;
@@ -40,6 +41,7 @@ use App\Http\Controllers\Rep\PendingOrdersAddItems;
 use App\Http\Controllers\Rep\ProcessingOrders;
 use App\Http\Controllers\Rep\ProcessingOrdersAddItems;
 use App\Http\Controllers\Rep\Profile as RepProfile;
+use App\Http\Controllers\Rep\ScheduledProductionReport as RepScheduledProductionReport;
 use App\Http\Controllers\Rep\ShopReport as RepShopReport;
 use App\Http\Controllers\Rep\Shops;
 use App\Http\Controllers\Rep\UnderReviewOrders;
@@ -183,6 +185,8 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::get('/order-admin/final-report/export', [FinalReport::class, 'exportMorning']);
     Route::get('/order-admin/final-report-evening/export', [FinalReport::class, 'exportEvening']);
 
+    Route::get('/order-admin/scheduled-production-report', [ScheduledProductionReport::class, 'index'])->name('order-admin.scheduled-production-report');
+
     Route::get('/order-admin/refresh-morning-summary', [OrderAdminGoogleSheetController::class, 'updateGoogleSheet'])->name('morning-summary');
     Route::get('/order-admin/refresh-evening-summary', [OrderAdminGoogleSheetController2::class, 'updateGoogleSheet'])->name('evening-summary');
     Route::get('/order-admin/refresh-morning-shop-report', [OrderAdminGoogleSheetController3::class, 'updateGoogleSheet'])->name('morning-shop-report');
@@ -259,6 +263,8 @@ Route::middleware('role:rep')->group(function () {
     Route::get('/rep/final-report-evening-full-screen', [RepFinalReport::class, 'fullScreen_evening']);
     Route::get('/rep/final-report-morning/export', [RepFinalReport::class, 'exportMorning']);
     Route::get('/rep/final-report-evening/export', [RepFinalReport::class, 'exportEvening']);
+
+    Route::get('/rep/scheduled-production-report', [RepScheduledProductionReport::class, 'index'])->name('rep.scheduled-production-report');
 
     Route::get('/rep/profile', [RepProfile::class, 'view'])->name('rep.profile');
     Route::post('/rep/profile-update', [RepProfile::class, 'update'])->name('rep.profile-update');

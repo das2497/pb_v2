@@ -52,6 +52,9 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('rep/final-report*') ? 'active' : '' }}" href="{{route('rep.final-report-morning')}}"><i class="fas fa-fw fa-table"></i>Final Report</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('rep/scheduled-production-report*') ? 'active' : '' }}" href="{{route('rep.scheduled-production-report')}}"><i class="fas fa-fw fa-calendar-alt"></i>Scheduled Production</a>
+                    </li>
                 </ul>
             </div>
         </nav>
