@@ -1,7 +1,9 @@
 // Shared behaviour for the shop role's bakery-themed pages.
 // Wires up every ".bakery-qty-stepper" (+/- buttons around a number input)
 // found on the page - used on both the create-order label list and the
-// cart table. Respects the input's own min/step via native stepUp/stepDown.
+// cart table. The +/- buttons always move the quantity by a whole number,
+// even though the input itself (step="0.01") still accepts decimal values
+// when typed directly.
 //
 // Exposed on window so the create-order page can re-run it on the product
 // grid after an AJAX filter refresh swaps that markup back in.
@@ -28,18 +30,20 @@ window.BakeryTheme.initQtySteppers = function (root) {
             checkbox.dispatchEvent(new Event('change'));
         }
 
+        var min = parseFloat(input.getAttribute('min')) || 0;
+
         if (minus) {
             minus.addEventListener('click', function () {
-                if (!input.value) input.value = 0;
-                input.stepDown();
+                var qty = parseFloat(input.value) || 0;
+                input.value = Math.max(min, Math.round(qty) - 1);
                 syncSelectCheckbox();
             });
         }
 
         if (plus) {
             plus.addEventListener('click', function () {
-                if (!input.value) input.value = 0;
-                input.stepUp();
+                var qty = parseFloat(input.value) || 0;
+                input.value = Math.round(qty) + 1;
                 syncSelectCheckbox();
             });
         }
