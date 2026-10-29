@@ -14,7 +14,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('morning_route');
+        $shops = $this->shopsByRouteAndType('morning_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -60,7 +60,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('morning_route');
+        $shops = $this->shopsByRouteAndType('morning_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -168,11 +168,11 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('morning_route');
+        $shops = $this->shopsByRouteAndType('morning_route');
         $products = DB::table('products')->orderBy('item_number', 'asc')->get();
         $orderMap = $this->buildOrderMap('Morning', $state, $currentDate);
 
-        return view('order-admin.partials.shop-report-export-table', [
+        return view('order-admin.partials.shop-report-morning-export-table', [
             'products' => $products,
             'header_normal' => $shops['Normal'] ?? collect(),
             'header_special' => $shops['Special'] ?? collect(),
@@ -243,6 +243,31 @@ class ShopReport extends Controller
             ->select('shops.*', 'shops.name as shop_name', 'routes.type as route_type')
             ->get()
             ->groupBy('route_type');
+    }
+
+    /**
+     * Same as shopsByRouteType(), but grouped a second level deeper by
+     * individual route (route_id) - the same two-level grouping
+     * GoogleSheetController3/4 already use to build this exact report's
+     * Google Sheet export, so each route gets its own "{route name} Total"
+     * column instead of only one combined total per type. Not filtered by
+     * routes.time: a route's type/shops apply regardless of which time
+     * period it happens to be tagged with (Special/PBD routes are only ever
+     * tagged 'Morning' in this data, but their shops still belong in both
+     * the morning and evening reports). Used by the morning report only for
+     * now; shopsByRouteType() above still backs the evening/normal-only
+     * variants until they're updated the same way.
+     */
+    private function shopsByRouteAndType(string $routeColumn)
+    {
+        return DB::table('shops')
+            ->join('routes', 'routes.name', '=', "shops.$routeColumn")
+            ->whereIn('routes.type', ['Normal', 'Special', 'PBD'])
+            ->select('shops.*', 'shops.name as shop_name', 'routes.id as route_id', 'routes.name as route_name', 'routes.type as route_type')
+            ->orderBy('routes.id')
+            ->get()
+            ->groupBy('route_type')
+            ->map(fn ($group) => $group->groupBy('route_id'));
     }
 
     /**
