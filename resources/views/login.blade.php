@@ -15,18 +15,19 @@
 
     <style>
         :root {
-            --bakery-brown: #6b4226;
-            --bakery-brown-dark: #3c2414;
-            --bakery-brown-light: #8a5a37;
-            --bakery-cream: #fdfaf6;
-            --bakery-cream-soft: #f6efe4;
-            --bakery-orange: #e07b1a;
-            --bakery-orange-dark: #c2660f;
-            --bakery-gold: #d4a017;
-            --bakery-red: #c1443c;
-            --bakery-text: #2a2017;
-            --bakery-text-muted: #7a6d5f;
-            --bakery-border: #e6ddd0;
+            /* Same palette as the Rep role's theme (rep-order-theme.css):
+               --rep-order-primary/-dark/-accent, kept under shorter names
+               here since this page has no other rep-order-* rules to
+               share them with. */
+            --rep-primary: #2a6f97;
+            --rep-primary-dark: #1d4e6b;
+            --rep-accent: #e0a458;
+            --rep-bg: #fdfeff;
+            --rep-bg-soft: #f3f8fb;
+            --rep-red: #c1443c;
+            --rep-text: #1d3a4a;
+            --rep-text-muted: #5b7183;
+            --rep-border: #d7e4ec;
         }
 
         * {
@@ -35,14 +36,14 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bakery-cream-soft);
+            background: var(--rep-bg-soft);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             padding: 24px;
-            color: var(--bakery-text);
+            color: var(--rep-text);
         }
 
         .login-shell {
@@ -59,7 +60,7 @@
 
         /* ---------- Brand panel ---------- */
         .brand-panel {
-            background: linear-gradient(160deg, var(--bakery-brown-dark) 0%, var(--bakery-brown) 100%);
+            background: linear-gradient(160deg, var(--rep-primary-dark) 0%, var(--rep-primary) 100%);
             position: relative;
             display: flex;
             flex-direction: column;
@@ -75,7 +76,7 @@
             position: absolute;
             inset: 0 0 auto 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--bakery-gold), var(--bakery-orange));
+            background: linear-gradient(90deg, var(--rep-accent), var(--rep-primary));
         }
 
         .brand-logo {
@@ -132,7 +133,7 @@
         .mobile-brand span {
             font-weight: 800;
             font-size: 1.05rem;
-            color: var(--bakery-text);
+            color: var(--rep-text);
             letter-spacing: 0.02em;
         }
 
@@ -140,27 +141,27 @@
             font-weight: 800;
             font-size: 1.6rem;
             margin-bottom: 0.3rem;
-            color: var(--bakery-text);
+            color: var(--rep-text);
         }
 
         .form-subtitle {
             display: block;
             margin-bottom: 1.75rem;
-            color: var(--bakery-text-muted);
+            color: var(--rep-text-muted);
             font-size: 0.95rem;
         }
 
         .form-label {
-            color: var(--bakery-text);
+            color: var(--rep-text);
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 6px;
         }
 
         .form-control {
-            background: var(--bakery-cream);
-            border: 1.5px solid var(--bakery-border);
-            color: var(--bakery-text);
+            background: var(--rep-bg);
+            border: 1.5px solid var(--rep-border);
+            color: var(--rep-text);
             padding: 12px 14px;
             border-radius: 10px;
             font-size: 0.97rem;
@@ -168,13 +169,13 @@
 
         .form-control:focus {
             background: #fff;
-            border-color: var(--bakery-orange);
-            color: var(--bakery-text);
-            box-shadow: 0 0 0 3px rgba(224, 123, 26, 0.15);
+            border-color: var(--rep-primary);
+            color: var(--rep-text);
+            box-shadow: 0 0 0 3px rgba(42, 111, 151, 0.15);
         }
 
         .form-control.is-invalid {
-            border-color: var(--bakery-red);
+            border-color: var(--rep-red);
         }
 
         .form-control::placeholder {
@@ -192,7 +193,7 @@
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: var(--bakery-text-muted);
+            color: var(--rep-text-muted);
             font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
@@ -200,11 +201,11 @@
         }
 
         .password-toggle:hover {
-            color: var(--bakery-orange-dark);
+            color: var(--rep-primary-dark);
         }
 
         .btn-login {
-            background: linear-gradient(135deg, var(--bakery-orange), var(--bakery-gold));
+            background: linear-gradient(135deg, var(--rep-primary), var(--rep-primary-dark));
             border: none;
             padding: 13px;
             font-size: 1rem;
@@ -216,7 +217,7 @@
 
         .btn-login:hover:not(:disabled) {
             transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(224, 123, 26, 0.3);
+            box-shadow: 0 10px 20px rgba(42, 111, 151, 0.3);
             color: #fff;
         }
 
@@ -233,7 +234,7 @@
             margin-bottom: 0.75rem;
             font-size: 0.88rem;
             text-align: left;
-            color: var(--bakery-red);
+            color: var(--rep-red);
             font-weight: 500;
         }
 
@@ -241,7 +242,7 @@
             text-align: center;
             margin-top: 28px;
             font-size: 0.82rem;
-            color: var(--bakery-text-muted);
+            color: var(--rep-text-muted);
         }
 
         @media (max-width: 820px) {
