@@ -313,7 +313,7 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
         function confirmDelete() {
             return confirm('Are you sure you want to delete this item?');
@@ -335,7 +335,7 @@
                 const table = doc.getElementById('exportTable');
                 if (!table) throw new Error('Export table not found');
 
-                downloadTableAsExcel(table, 'Evening_Shop_Report');
+                await downloadTableAsExcel(table, 'Evening_Shop_Report');
             } catch (e) {
                 alert('Export failed: ' + e.message);
             } finally {
@@ -344,43 +344,100 @@
             }
         }
 
-        function downloadTableAsExcel(table, filenamePrefix) {
-            const wb = XLSX.utils.table_to_book(table, { sheet: 'Report' });
-            const ws = wb.Sheets['Report'];
-            const range = XLSX.utils.decode_range(ws['!ref']);
-
-            const borderStyle = {
-                top: { style: 'thin' },
-                bottom: { style: 'thin' },
-                left: { style: 'thin' },
-                right: { style: 'thin' }
+        // Colors the exported cells to match the report's on-screen look
+        // (header/route-total/type-total/grand-total fills) - the "rpt-*"
+        // classes are set on the export partial's <th>/<td> cells purely
+        // for this, and mean nothing on screen. Switched from SheetJS
+        // (xlsx.full.min.js) to ExcelJS here: SheetJS's free/community
+        // build silently drops any cell style (fill/font/border) on write -
+        // confirmed by round-tripping a styled cell through it and finding
+        // the style gone - so the old code's border/alignment styling never
+        // actually reached the downloaded file either. ExcelJS's styles
+        // survive a write→read round-trip.
+        async function downloadTableAsExcel(table, filenamePrefix) {
+            const FILL_MAP = {
+                'rpt-header': 'FFF2CC',
+                'rpt-qty-filled': 'D9EAD3',
+                'rpt-route-total': 'D9EAD3',
+                'rpt-type-total-normal': 'B6D7A8',
+                'rpt-type-total-special': 'CFE2F3',
+                'rpt-type-total-pbd': 'FCE5CD',
+                'rpt-grand-total': 'EA9999',
             };
+            const WHITE_TEXT_CLASSES = new Set(['rpt-grand-total']);
+            const THIN_BORDER = { style: 'thin', color: { argb: 'FF999999' } };
 
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                for (let C = range.s.c; C <= range.e.c; ++C) {
-                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (!ws[addr]) ws[addr] = { v: '' };
-                    ws[addr].s = ws[addr].s || {};
-                    ws[addr].s.border = borderStyle;
-                    ws[addr].s.alignment = { horizontal: 'center', vertical: 'center' };
-                }
+            // Resolves the table's cells (value + class) into a plain,
+            // colspan-aware grid - e.g. a <th colspan="2"> only occupies
+            // its own first column with text; the column(s) it spans over
+            // still carry its class (so the fill color continues across
+            // them) but with an empty value, mirroring how the on-screen
+            // table reads visually without actually merging cells (the
+            // source report file this mirrors has no merged cells either).
+            function buildGrid(tbl) {
+                const grid = [];
+                Array.from(tbl.rows).forEach((row, r) => {
+                    grid[r] = grid[r] || [];
+                    let c = 0;
+                    Array.from(row.cells).forEach((cell) => {
+                        while (grid[r][c] !== undefined) c++;
+                        const span = cell.colSpan || 1;
+                        const className = cell.className || '';
+                        const text = cell.textContent.trim();
+                        for (let i = 0; i < span; i++) {
+                            grid[r][c + i] = { value: i === 0 ? text : '', className };
+                        }
+                        c += span;
+                    });
+                });
+                return grid;
             }
 
-            const colWidths = [];
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                let maxWidth = 10;
-                for (let R = range.s.r; R <= range.e.r; ++R) {
-                    const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
-                    if (cell && cell.v !== undefined && cell.v.toString().length > maxWidth) {
-                        maxWidth = cell.v.toString().length;
+            const grid = buildGrid(table);
+            const rowCount = grid.length;
+            const colCount = grid.reduce((max, row) => Math.max(max, row.length), 0);
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet('Report');
+            const colWidths = new Array(colCount).fill(10);
+
+            for (let r = 0; r < rowCount; r++) {
+                for (let c = 0; c < colCount; c++) {
+                    const info = grid[r] && grid[r][c];
+                    const value = info ? info.value : '';
+                    const className = info ? info.className : '';
+
+                    // Kept as plain text throughout (never Number(value)):
+                    // item codes like "0001" would lose their leading
+                    // zero if converted to a number.
+                    const xlsxCell = ws.getCell(r + 1, c + 1);
+                    xlsxCell.value = value;
+                    xlsxCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    xlsxCell.border = { top: THIN_BORDER, bottom: THIN_BORDER, left: THIN_BORDER, right: THIN_BORDER };
+
+                    const fillClass = className.split(/\s+/).find((cls) => FILL_MAP[cls]);
+                    if (fillClass) {
+                        xlsxCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + FILL_MAP[fillClass] } };
+                        xlsxCell.font = { bold: true, color: { argb: WHITE_TEXT_CLASSES.has(fillClass) ? 'FFFFFFFF' : 'FF000000' } };
                     }
-                }
-                colWidths.push({ wch: Math.min(maxWidth + 4, 50) });
-            }
-            ws['!cols'] = colWidths;
 
+                    colWidths[c] = Math.max(colWidths[c], Math.min(value.length + 4, 50));
+                }
+            }
+
+            colWidths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+
+            const buffer = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            XLSX.writeFile(wb, `${filenamePrefix}_${today}.xlsx`);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filenamePrefix}_${today}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
         }
     </script>
 @endpush
