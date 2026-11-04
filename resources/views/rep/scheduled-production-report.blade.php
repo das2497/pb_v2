@@ -46,7 +46,16 @@
                                                 <label class="form-label mb-1">To</label>
                                                 <input type="date" name="to" class="form-control" value="{{ $to }}">
                                             </div>
-                                            <div class="col-12 col-sm-4 d-flex align-items-end">
+                                            <div class="col-12 col-sm-4">
+                                                <label class="form-label mb-1">Order Time</label>
+                                                <select name="time_periods[]" id="timePeriodSelect" class="form-control" multiple size="3">
+                                                    @foreach ($orderTimes as $time)
+                                                    <option value="{{ $time }}" @selected(in_array($time, $selectedTimePeriods, true))>{{ $time }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div id="selectedTimePeriodsDisplay" class="small text-muted mt-1"><em>All order times</em></div>
+                                            </div>
+                                            <div class="col-12 d-flex align-items-end">
                                                 <button class="btn btn-primary w-100" type="submit">Search</button>
                                             </div>
                                         </form>
@@ -58,6 +67,9 @@
                                         <div class="card bg-light p-3 mb-0">
                                             <small class="text-muted">Date range</small>
                                             <strong>{{ \Carbon\Carbon::parse($from)->format('M d') }} - {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}</strong>
+                                            <small class="text-muted d-block mt-1">
+                                                {{ !empty($selectedTimePeriods) ? implode(', ', $selectedTimePeriods) : 'All order times' }}
+                                            </small>
                                         </div>
                                     </div>
                                     <div class="col-6 col-lg-3">
@@ -126,6 +138,19 @@
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+    (function () {
+        var select = document.getElementById('timePeriodSelect');
+        var display = document.getElementById('selectedTimePeriodsDisplay');
+
+        function updateSelectedTimePeriods() {
+            var selected = Array.from(select.selectedOptions).map(function (o) { return o.text.trim(); });
+            display.innerHTML = selected.length ? selected.join(', ') : '<em>All order times</em>';
+        }
+
+        select.addEventListener('change', updateSelectedTimePeriods);
+        updateSelectedTimePeriods();
+    })();
+
     function exportReport() {
         const btn = document.getElementById('exportBtn');
         const originalText = btn.innerHTML;
