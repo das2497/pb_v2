@@ -114,7 +114,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('evening_route');
+        $shops = $this->shopsByRouteAndType('evening_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -136,7 +136,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('evening_route');
+        $shops = $this->shopsByRouteAndType('evening_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -192,11 +192,11 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('evening_route');
+        $shops = $this->shopsByRouteAndType('evening_route');
         $products = DB::table('products')->orderBy('item_number', 'asc')->get();
         $orderMap = $this->buildOrderMap('Evening', $state, $currentDate);
 
-        return view('order-admin.partials.shop-report-export-table', [
+        return view('order-admin.partials.shop-report-evening-export-table', [
             'products' => $products,
             'header_normal' => $shops['Normal'] ?? collect(),
             'header_special' => $shops['Special'] ?? collect(),
@@ -254,9 +254,10 @@ class ShopReport extends Controller
      * routes.time: a route's type/shops apply regardless of which time
      * period it happens to be tagged with (Special/PBD routes are only ever
      * tagged 'Morning' in this data, but their shops still belong in both
-     * the morning and evening reports). Used by the morning report only for
-     * now; shopsByRouteType() above still backs the evening/normal-only
-     * variants until they're updated the same way.
+     * the morning and evening reports). Used by the morning and evening
+     * reports; shopsByRouteType() above still backs the normal-only
+     * variants (index_normal()/fullScreen_normal()/exportMorningNormal())
+     * until they're updated the same way.
      */
     private function shopsByRouteAndType(string $routeColumn)
     {

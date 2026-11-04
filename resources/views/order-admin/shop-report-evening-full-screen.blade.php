@@ -115,30 +115,45 @@
                                     <tr>
                                         <th>#</th>
                                         <th style="min-width: 280px;">Item Code | Item</th>
-                                        @foreach ($header_normal as $head)
+                                        @foreach ($header_normal as $route)
+                                        @foreach ($route as $head)
                                         <th style="min-width: 200px;" colspan="2">
                                             <h6>{{$head->shop_name}}</h6>
                                             <h6>{{$head->branch_code}}</h6>
+                                        </th>
+                                        @endforeach
+                                        <th class="table-secondary">
+                                            <h6>{{ $route->first()->route_name }} Total</h6>
                                         </th>
                                         @endforeach
                                         <th class="table-primary">
                                             <h6>Normal Route Total</h6>
                                         </th>
 
-                                        @foreach ($header_special as $head)
+                                        @foreach ($header_special as $route)
+                                        @foreach ($route as $head)
                                         <th style="min-width: 200px;" colspan="2">
                                             <h6>{{$head->shop_name}}</h6>
                                             <h6>{{$head->branch_code}}</h6>
+                                        </th>
+                                        @endforeach
+                                        <th class="table-secondary">
+                                            <h6>{{ $route->first()->route_name }} Total</h6>
                                         </th>
                                         @endforeach
                                         <th class="table-danger">
                                             <h6>Special Route Total</h6>
                                         </th>
 
-                                        @foreach ($header_pbd as $head)
+                                        @foreach ($header_pbd as $route)
+                                        @foreach ($route as $head)
                                         <th style="min-width: 200px;" colspan="2">
                                             <h6>{{$head->shop_name}}</h6>
                                             <h6>{{$head->branch_code}}</h6>
+                                        </th>
+                                        @endforeach
+                                        <th class="table-secondary">
+                                            <h6>{{ $route->first()->route_name }} Total</h6>
                                         </th>
                                         @endforeach
                                         <th class="table-danger">
@@ -169,10 +184,13 @@
                                         <td>{{ $product->item_number }} | {{ $product->name_english }}</td>
 
                                         {{-- Normal Route --}}
-                                        @foreach ($header_normal as $head)
+                                        @foreach ($header_normal as $route)
+                                        @php $route_total = 0; @endphp
+                                        @foreach ($route as $head)
                                         @php
                                         $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
                                         $orderQty = $order['qty'] ?? 0;
+                                        $route_total += $orderQty;
                                         $total_normal += $orderQty;
                                         @endphp
                                         <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
@@ -182,14 +200,19 @@
                                             <span>{{ $order['remark'] ?? '' }}</span>
                                         </th>
                                         @endforeach
+                                        <td class="table-secondary">{{ $route_total }}</td>
+                                        @endforeach
 
                                         <td class="table-primary">{{ $total_normal }}</td>
 
                                         {{-- Special Route --}}
-                                        @foreach ($header_special as $head)
+                                        @foreach ($header_special as $route)
+                                        @php $route_total = 0; @endphp
+                                        @foreach ($route as $head)
                                         @php
                                         $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
                                         $orderQty = $order['qty'] ?? 0;
+                                        $route_total += $orderQty;
                                         $total_special += $orderQty;
                                         @endphp
                                         <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
@@ -199,14 +222,19 @@
                                             <span>{{ $order['remark'] ?? '' }}</span>
                                         </th>
                                         @endforeach
+                                        <td class="table-secondary">{{ $route_total }}</td>
+                                        @endforeach
 
                                         <td class="table-danger">{{ $total_special }}</td>
 
                                         {{-- PBD Route --}}
-                                        @foreach ($header_pbd as $head)
+                                        @foreach ($header_pbd as $route)
+                                        @php $route_total = 0; @endphp
+                                        @foreach ($route as $head)
                                         @php
                                         $order = $orderMap[$head->branch_code][$product->item_number] ?? null;
                                         $orderQty = $order['qty'] ?? 0;
+                                        $route_total += $orderQty;
                                         $total_pbd += $orderQty;
                                         @endphp
                                         <th class="{{ $orderQty != 0 ? 'table-success' : '' }}">
@@ -215,6 +243,8 @@
                                         <th style="max-width: 180px; overflow-x: scroll;">
                                             <span>{{ $order['remark'] ?? '' }}</span>
                                         </th>
+                                        @endforeach
+                                        <td class="table-secondary">{{ $route_total }}</td>
                                         @endforeach
 
                                         <td class="table-danger">{{ $total_pbd }}</td>

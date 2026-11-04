@@ -5,10 +5,10 @@
 {{-- Full, unpaginated report table consumed only by the "Export to Excel"
      JS on shop-report-morning via fetch(); never meant to be viewed
      directly. Same normal/special/pbd + qty/remark layout as
-     shop-report-export-table.blade.php, but with an extra per-route total
-     column within each type (see ShopReport::shopsByRouteAndType()) -
-     kept as its own file rather than sharing that partial since
-     exportEvening() still passes the flatter, route-less shape. --}}
+     shop-report-evening-export-table.blade.php, with an extra per-route
+     total column within each type (see ShopReport::shopsByRouteAndType()).
+     Kept as its own file so exportMorning()/exportEvening() can evolve
+     independently. --}}
 <table id="exportTable">
     <thead>
         <tr>
