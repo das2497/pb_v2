@@ -10,21 +10,21 @@
 <table id="exportTable">
     <thead>
         <tr>
-            <th>#</th>
-            <th>Item Code | Item</th>
+            <th class="rpt-header">#</th>
+            <th class="rpt-header">Item Code | Item</th>
             @foreach ($routes_normal as $route)
-                <th>{{ $route->name }}</th>
+                <th class="rpt-header">{{ $route->name }}</th>
             @endforeach
-            <th>Normal Route Total</th>
+            <th class="rpt-type-total-normal">Normal Route Total</th>
             @foreach ($routes_special as $route)
-                <th>{{ $route->name }}</th>
+                <th class="rpt-header">{{ $route->name }}</th>
             @endforeach
-            <th>Special Route Total</th>
+            <th class="rpt-type-total-special">Special Route Total</th>
             @foreach ($routes_pbd as $route)
-                <th>{{ $route->name }}</th>
+                <th class="rpt-header">{{ $route->name }}</th>
             @endforeach
-            <th>PBD Total</th>
-            <th>Total</th>
+            <th class="rpt-type-total-pbd">PBD Total</th>
+            <th class="rpt-grand-total">Total</th>
         </tr>
     </thead>
     <tbody>
@@ -45,7 +45,7 @@
                     @endphp
                     <td>{{ $qty }}</td>
                 @endforeach
-                <td>{{ $normal_total }}</td>
+                <td class="rpt-type-total-normal">{{ $normal_total }}</td>
 
                 @foreach ($routes_special as $route)
                     @php
@@ -54,7 +54,7 @@
                     @endphp
                     <td>{{ $qty }}</td>
                 @endforeach
-                <td>{{ $special_total }}</td>
+                <td class="rpt-type-total-special">{{ $special_total }}</td>
 
                 @foreach ($routes_pbd as $route)
                     @php
@@ -63,9 +63,9 @@
                     @endphp
                     <td>{{ $qty }}</td>
                 @endforeach
-                <td>{{ $pbd_total }}</td>
+                <td class="rpt-type-total-pbd">{{ $pbd_total }}</td>
 
-                <td>{{ $normal_total + $special_total + $pbd_total }}</td>
+                <td class="rpt-grand-total">{{ $normal_total + $special_total + $pbd_total }}</td>
             </tr>
         @endforeach
     </tbody>

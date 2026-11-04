@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/charts/c3charts/c3.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/flag-icon-css/flag-icon.min.css') }}">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
 <style>
     .table-wrapper {
@@ -283,7 +283,7 @@
 
                                     <div class="row border p-2 m-2">
                                         <div class="col-12 col-lg-6">
-                                            <button class="btn btn-success" onclick="exportToExcel()">Export to Excel</button>
+                                            <button class="btn btn-success" id="exportBtn" onclick="exportToExcel()">Export to Excel</button>
                                         </div>
                                         <div class="col-12 col-lg-6">
                                             <div class="row">
@@ -509,81 +509,142 @@
     getCategories();
     getTimePeriods();
 
-    // Export to Excel with proper handling of remarks and column widths
-    function exportToExcel() {
+    // Export to Excel with proper handling of remarks and column widths.
+    // Colors the cells to match the on-screen Bootstrap classes already on
+    // this table (table-info = route total, table-warning = grand total,
+    // thead/tfoot = header/total-row tint) - same "rpt-*"-class idea used
+    // on the Shop Report exports, just reading the classes this table
+    // already has instead of adding new ones. Built with ExcelJS rather
+    // than SheetJS: SheetJS's free/community build silently drops any cell
+    // style (fill/font/border) on write - confirmed by round-tripping a
+    // styled cell through it and finding the style gone - so this export's
+    // old border/alignment styling never actually reached the downloaded
+    // file either. ExcelJS's styles survive a write→read round-trip.
+    async function exportToExcel() {
         const table = document.getElementById('ordersTable');
         if (!table) {
             alert('Table not found!');
             return;
         }
 
-        // Clone table for export
-        const clonedTable = table.cloneNode(true);
-        const checkBox = document.querySelector('input[name="access"]');
-        const isRemarkVisible = checkBox.checked;
+        const btn = document.getElementById('exportBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Exporting...';
 
-        // Get all remark and qty cells in cloned table
-        const rmkCells = clonedTable.querySelectorAll('#rmk');
-        const qtyCells = clonedTable.querySelectorAll('#qty');
+        try {
+            // Clone table for export
+            const clonedTable = table.cloneNode(true);
+            const checkBox = document.querySelector('input[name="access"]');
+            const isRemarkVisible = checkBox.checked;
 
-        if (!isRemarkVisible) {
-            // Completely remove remark columns (headers, body, footer)
-            rmkCells.forEach(cell => {
-                if (cell.parentNode) {
-                    cell.parentNode.removeChild(cell);
-                }
+            // Get all remark and qty cells in cloned table
+            const rmkCells = clonedTable.querySelectorAll('#rmk');
+            const qtyCells = clonedTable.querySelectorAll('#qty');
+
+            if (!isRemarkVisible) {
+                // Completely remove remark columns (headers, body, footer)
+                rmkCells.forEach(cell => {
+                    if (cell.parentNode) {
+                        cell.parentNode.removeChild(cell);
+                    }
+                });
+                // Make Qty span 2 columns
+                qtyCells.forEach(cell => cell.colSpan = 2);
+            } else {
+                // Ensure Qty spans only 1 column
+                qtyCells.forEach(cell => cell.colSpan = 1);
+            }
+
+            await downloadTableAsExcel(clonedTable);
+        } catch (e) {
+            alert('Export failed: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    async function downloadTableAsExcel(table) {
+        const FILL_MAP = { info: 'D9EAD3', warning: 'EA9999', thead: 'FFF2CC', tfoot: 'D9EAD3' };
+        const WHITE_TEXT = new Set(['warning']);
+        const THIN_BORDER = { style: 'thin', color: { argb: 'FF999999' } };
+
+        function classify(cls, inThead, inTfoot) {
+            if (/\btable-warning\b/.test(cls)) return 'warning';
+            if (/\btable-info\b/.test(cls)) return 'info';
+            if (inThead) return 'thead';
+            if (inTfoot) return 'tfoot';
+            return null;
+        }
+
+        // Colspan/rowspan-aware walk of the table into a plain grid - this
+        // table's header uses both (route-group cells span multiple shop
+        // columns, and #/Item Code/Item/Route Total/Grand Total span both
+        // header rows), so a rowspan'd cell's class/fill needs to carry
+        // down into the row(s) below it too.
+        function buildGrid(tbl) {
+            const grid = [];
+            Array.from(tbl.rows).forEach((row, r) => {
+                grid[r] = grid[r] || [];
+                let c = 0;
+                const inThead = !!row.closest('thead');
+                const inTfoot = !!row.closest('tfoot');
+                Array.from(row.cells).forEach((cell) => {
+                    while (grid[r][c] !== undefined) c++;
+                    const colSpan = cell.colSpan || 1;
+                    const rowSpan = cell.rowSpan || 1;
+                    const className = cell.className || '';
+                    const text = cell.textContent.replace(/\s+/g, ' ').trim();
+                    for (let dr = 0; dr < rowSpan; dr++) {
+                        grid[r + dr] = grid[r + dr] || [];
+                        for (let dc = 0; dc < colSpan; dc++) {
+                            grid[r + dr][c + dc] = {
+                                value: (dr === 0 && dc === 0) ? text : '',
+                                className,
+                                inThead,
+                                inTfoot,
+                            };
+                        }
+                    }
+                    c += colSpan;
+                });
             });
-            // Make Qty span 2 columns
-            qtyCells.forEach(cell => cell.colSpan = 2);
-        } else {
-            // Ensure Qty spans only 1 column
-            qtyCells.forEach(cell => cell.colSpan = 1);
+            return grid;
         }
 
-        // Generate workbook
-        const wb = XLSX.utils.table_to_book(clonedTable, { sheet: "Orders" });
-        const ws = wb.Sheets["Orders"];
+        const grid = buildGrid(table);
+        const rowCount = grid.length;
+        const colCount = grid.reduce((max, row) => Math.max(max, row.length), 0);
 
-        // Get range
-        const range = XLSX.utils.decode_range(ws['!ref']);
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet('Orders');
+        const colWidths = new Array(colCount).fill(10);
 
-        // Apply borders and center alignment to all cells
-        const borderStyle = {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" }
-        };
+        for (let r = 0; r < rowCount; r++) {
+            for (let c = 0; c < colCount; c++) {
+                const info = grid[r] && grid[r][c];
+                const value = info ? info.value : '';
+                const role = info ? classify(info.className, info.inThead, info.inTfoot) : null;
 
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                if (!ws[cellAddress]) ws[cellAddress] = { v: "" };
-                if (!ws[cellAddress].s) ws[cellAddress].s = {};
+                const xlsxCell = ws.getCell(r + 1, c + 1);
+                // Kept as plain text throughout (never Number(value)): an
+                // item code like "0001" would lose its leading zero if
+                // converted to a number.
+                xlsxCell.value = value;
+                xlsxCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                xlsxCell.border = { top: THIN_BORDER, bottom: THIN_BORDER, left: THIN_BORDER, right: THIN_BORDER };
 
-                ws[cellAddress].s.border = borderStyle;
-                ws[cellAddress].s.alignment = {
-                    horizontal: "center",
-                    vertical: "center"
-                };
-            }
-        }
-
-        // Auto-size columns based on content length
-        const colWidths = [];
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-            let maxWidth = 10; // minimum width
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
-                if (cell && cell.v !== undefined) {
-                    const text = cell.v.toString();
-                    const len = text.length;
-                    if (len > maxWidth) maxWidth = len;
+                if (role) {
+                    xlsxCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + FILL_MAP[role] } };
+                    xlsxCell.font = { bold: true, color: { argb: WHITE_TEXT.has(role) ? 'FFFFFFFF' : 'FF000000' } };
                 }
+
+                colWidths[c] = Math.max(colWidths[c], Math.min(value.length + 4, 50));
             }
-            colWidths.push({ wch: Math.min(maxWidth + 4, 50) }); // cap at 50 chars
         }
-        ws['!cols'] = colWidths;
+
+        colWidths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
         // Generate safe filename
         @php
@@ -591,7 +652,6 @@
             $jsState = $state;
             $jsFromDate = $fromDate;
             $jsToDate = $toDate;
-            $jsTimePeriod = implode('_', $selectedTimePeriods);
         @endphp
 
         const routes = @json($jsRoutes);
@@ -611,8 +671,16 @@
 
         const filename = `${routePart}_${status}_Orders_${from}_to_${to}.xlsx`;
 
-        // Download file
-        XLSX.writeFile(wb, filename);
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
     }
 </script>
 </body>
