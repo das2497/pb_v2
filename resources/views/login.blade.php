@@ -11,99 +11,166 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Google Fonts (Inter - Modern & Clean) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --bakery-brown: #6b4226;
-            --bakery-brown-dark: #4a2c17;
+            --bakery-brown-dark: #3c2414;
             --bakery-brown-light: #8a5a37;
-            --bakery-cream: #fff8f0;
-            --bakery-cream-soft: #fdf1e2;
+            --bakery-cream: #fdfaf6;
+            --bakery-cream-soft: #f6efe4;
             --bakery-orange: #e07b1a;
             --bakery-orange-dark: #c2660f;
             --bakery-gold: #d4a017;
             --bakery-red: #c1443c;
-            --bakery-text: #4a2c17;
+            --bakery-text: #2a2017;
+            --bakery-text-muted: #7a6d5f;
+            --bakery-border: #e6ddd0;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bakery-brown-dark) 0%, var(--bakery-brown) 100%);
+            background: var(--bakery-cream-soft);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
-            padding: 16px;
-            color: #fff;
+            padding: 24px;
+            color: var(--bakery-text);
         }
 
-        .login-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(212, 160, 23, 0.35);
-            border-top: 4px solid var(--bakery-gold);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            max-width: 420px;
+        .login-shell {
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            max-width: 920px;
             width: 100%;
-            padding: 2.5rem;
-            transition: all 0.3s ease;
+            min-height: 580px;
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(42, 32, 23, 0.06), 0 24px 48px -12px rgba(42, 32, 23, 0.18);
         }
 
-        .login-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-        }
-
-        .logo-img {
-            width: 160px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-            margin-bottom: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        h2 {
-            font-weight: 700;
+        /* ---------- Brand panel ---------- */
+        .brand-panel {
+            background: linear-gradient(160deg, var(--bakery-brown-dark) 0%, var(--bakery-brown) 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            margin-bottom: 0.5rem;
+            padding: 48px 40px;
             color: #fff;
         }
 
-        .splash-description {
-            text-align: center;
-            display: block;
-            margin-bottom: 2rem;
-            color: rgba(255, 255, 255, 0.7);
+        .brand-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--bakery-gold), var(--bakery-orange));
+        }
+
+        .brand-logo {
+            width: 112px;
+            height: 112px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            margin-bottom: 24px;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            margin: 0 0 10px;
+        }
+
+        .brand-subtitle {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.75);
+            max-width: 260px;
+            margin: 0;
+        }
+
+        /* ---------- Form panel ---------- */
+        .form-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 40px;
+        }
+
+        .form-panel-inner {
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .mobile-brand {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .mobile-brand img {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .mobile-brand span {
+            font-weight: 800;
             font-size: 1.05rem;
+            color: var(--bakery-text);
+            letter-spacing: 0.02em;
+        }
+
+        h2.form-heading {
+            font-weight: 800;
+            font-size: 1.6rem;
+            margin-bottom: 0.3rem;
+            color: var(--bakery-text);
+        }
+
+        .form-subtitle {
+            display: block;
+            margin-bottom: 1.75rem;
+            color: var(--bakery-text-muted);
+            font-size: 0.95rem;
         }
 
         .form-label {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.9rem;
-            font-weight: 500;
+            color: var(--bakery-text);
+            font-size: 0.85rem;
+            font-weight: 600;
             margin-bottom: 6px;
         }
 
         .form-control {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 14px 16px;
-            border-radius: 12px;
-            font-size: 1.05rem;
-            transition: all 0.3s ease;
+            background: var(--bakery-cream);
+            border: 1.5px solid var(--bakery-border);
+            color: var(--bakery-text);
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.97rem;
         }
 
         .form-control:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--bakery-gold);
-            color: #fff;
-            box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.25);
+            background: #fff;
+            border-color: var(--bakery-orange);
+            color: var(--bakery-text);
+            box-shadow: 0 0 0 3px rgba(224, 123, 26, 0.15);
         }
 
         .form-control.is-invalid {
@@ -111,7 +178,7 @@
         }
 
         .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.5);
+            color: #a89a89;
         }
 
         .password-wrapper {
@@ -120,106 +187,145 @@
 
         .password-toggle {
             position: absolute;
-            right: 14px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
+            color: var(--bakery-text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
             padding: 4px 6px;
         }
 
         .password-toggle:hover {
-            color: #fff;
+            color: var(--bakery-orange-dark);
         }
 
         .btn-login {
             background: linear-gradient(135deg, var(--bakery-orange), var(--bakery-gold));
             border: none;
-            padding: 14px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 12px;
+            padding: 13px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 10px;
             color: #fff;
-            transition: all 0.3s ease;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
         }
 
         .btn-login:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(224, 123, 26, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(224, 123, 26, 0.3);
             color: #fff;
         }
 
+        .btn-login:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
         .btn-login:disabled {
-            opacity: 0.75;
+            opacity: 0.7;
         }
 
         .lg-warn {
-            min-height: 24px;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-            text-align: center;
-            color: #ffb4ae;
+            min-height: 20px;
+            margin-bottom: 0.75rem;
+            font-size: 0.88rem;
+            text-align: left;
+            color: var(--bakery-red);
+            font-weight: 500;
         }
 
         .footer-text {
             text-align: center;
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.5);
+            margin-top: 28px;
+            font-size: 0.82rem;
+            color: var(--bakery-text-muted);
+        }
+
+        @media (max-width: 820px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .brand-panel {
+                display: none;
+            }
+
+            .mobile-brand {
+                display: flex;
+            }
+
+            .form-panel {
+                padding: 40px 28px;
+            }
         }
 
         @media (max-width: 400px) {
-            .login-card {
-                padding: 1.75rem 1.25rem;
+            body {
+                padding: 12px;
+            }
+
+            .form-panel {
+                padding: 32px 20px;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="login-card mx-auto">
-            <!-- Logo -->
-            <img src="{{ asset('assets/images/logo.png') }}" alt="Peoples Bakers Logo" class="logo-img">
+    <div class="login-shell">
+        <div class="brand-panel">
+            <img src="{{ asset('assets/images/logo.png') }}" alt="Peoples Bakers Logo" class="brand-logo">
+            <h1 class="brand-title">Peoples Bakers</h1>
+            <p class="brand-subtitle">Order management portal for shops, representatives and admins.</p>
+        </div>
 
-            <h2>Welcome Back</h2>
-            <span class="splash-description">Please sign in to continue</span>
-
-            @if ($errors->any())
-            <p class="lg-warn" id="lg_warn">{{ $errors->first() }}</p>
-            @else
-            <p class="lg-warn" id="lg_warn"></p>
-            @endif
-
-            <form action="{{ route('login') }}" method="POST" id="loginForm">
-                @csrf
-
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control form-control-lg @error('email') is-invalid @enderror"
-                        placeholder="you@example.com" id="email" name="email" value="{{ old('email') }}"
-                        autocomplete="username" autofocus required>
+        <div class="form-panel">
+            <div class="form-panel-inner">
+                <div class="mobile-brand">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="Peoples Bakers Logo">
+                    <span>Peoples Bakers</span>
                 </div>
 
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" class="form-control form-control-lg" placeholder="Your password"
-                            id="password" name="password" autocomplete="current-password" required>
-                        <button type="button" class="password-toggle" id="togglePassword">Show</button>
+                <h2 class="form-heading">Welcome back</h2>
+                <span class="form-subtitle">Sign in to your account to continue</span>
+
+                @if ($errors->any())
+                <p class="lg-warn" id="lg_warn">{{ $errors->first() }}</p>
+                @else
+                <p class="lg-warn" id="lg_warn"></p>
+                @endif
+
+                <form action="{{ route('login') }}" method="POST" id="loginForm">
+                    @csrf
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control form-control-lg @error('email') is-invalid @enderror"
+                            placeholder="you@example.com" id="email" name="email" value="{{ old('email') }}"
+                            autocomplete="username" autofocus required>
                     </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control form-control-lg" placeholder="Your password"
+                                id="password" name="password" autocomplete="current-password" required>
+                            <button type="button" class="password-toggle" id="togglePassword">Show</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-login btn-lg w-100" id="loginbtn">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="footer-text">
+                    &copy; {{ date('Y') }} Peoples Bakers
                 </div>
-
-                <button type="submit" class="btn btn-login btn-lg w-100" id="loginbtn">
-                    Sign In
-                </button>
-            </form>
-
-            <div class="footer-text">
-                &copy; {{ date('Y') }} Peoples Bakers
             </div>
         </div>
     </div>
