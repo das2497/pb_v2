@@ -14,7 +14,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('morning_route');
+        $shops = $this->shopsByRouteAndType('morning_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -36,7 +36,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('morning_route');
+        $shops = $this->shopsByRouteAndType('morning_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -63,7 +63,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('evening_route');
+        $shops = $this->shopsByRouteAndType('evening_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -85,7 +85,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('evening_route');
+        $shops = $this->shopsByRouteAndType('evening_route');
         $products = DB::table('products')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -117,11 +117,11 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('morning_route');
+        $shops = $this->shopsByRouteAndType('morning_route');
         $products = DB::table('products')->orderBy('item_number', 'asc')->get();
         $orderMap = $this->buildOrderMap('Morning', $state, $currentDate);
 
-        return view('rep.partials.shop-report-export-table', [
+        return view('rep.partials.shop-report-morning-export-table', [
             'products' => $products,
             'header_normal' => $shops['Normal'] ?? collect(),
             'header_special' => $shops['Special'] ?? collect(),
@@ -141,11 +141,11 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteType('evening_route');
+        $shops = $this->shopsByRouteAndType('evening_route');
         $products = DB::table('products')->orderBy('item_number', 'asc')->get();
         $orderMap = $this->buildOrderMap('Evening', $state, $currentDate);
 
-        return view('rep.partials.shop-report-export-table', [
+        return view('rep.partials.shop-report-evening-export-table', [
             'products' => $products,
             'header_normal' => $shops['Normal'] ?? collect(),
             'header_special' => $shops['Special'] ?? collect(),
@@ -157,19 +157,29 @@ class ShopReport extends Controller
     /**
      * Shops assigned to the logged-in rep, joined to their route for the
      * given route-time column (morning_route / evening_route), grouped by
-     * route type (Normal / Special / PBD) in one query instead of one query
-     * per route type.
+     * route type (Normal / Special / PBD) and then by individual route
+     * (route_id) - the same two-level grouping
+     * OrderAdmin\ShopReport::shopsByRouteAndType() uses, so each route gets
+     * its own "{route name} Total" column instead of only one combined
+     * total per type. The rep-scoping (rep_assign_shops/reps join) is what
+     * keeps this to only the logged-in rep's own shops - not filtered by
+     * routes.time, for the same reason as the admin version: a route's
+     * type/shops apply regardless of which time period it happens to be
+     * tagged with.
      */
-    private function shopsByRouteType(string $routeColumn)
+    private function shopsByRouteAndType(string $routeColumn)
     {
         return DB::table('shops')
             ->join('routes', 'routes.name', '=', "shops.$routeColumn")
             ->join('rep_assign_shops', 'shops.id', '=', 'rep_assign_shops.shop_id')
             ->join('reps', 'reps.id', '=', 'rep_assign_shops.rep_id')
             ->where('reps.email', '=', Auth::user()->email)
-            ->select('shops.*', 'shops.name as shop_name', 'routes.type as route_type')
+            ->whereIn('routes.type', ['Normal', 'Special', 'PBD'])
+            ->select('shops.*', 'shops.name as shop_name', 'routes.id as route_id', 'routes.name as route_name', 'routes.type as route_type')
+            ->orderBy('routes.id')
             ->get()
-            ->groupBy('route_type');
+            ->groupBy('route_type')
+            ->map(fn ($group) => $group->groupBy('route_id'));
     }
 
     /**
