@@ -1,75 +1,60 @@
 /* ==========================================================================
-   Shop role "bakery" theme
-   Loaded only on /shop/* pages (pushed from resources/views/shop/components/
-   header.blade.php into the shared layout's @stack('styles')), so none of
-   this touches the order-admin/rep/super-admin screens that reuse the same
-   layouts.dashboard + style.css.
+   Shop role theme
+   Loaded only on /shop/* pages (pushed from layouts/shop-dashboard.blade.php
+   into the shared layout's @stack('styles')), so none of this touches the
+   order-admin/rep/super-admin screens that reuse layouts.dashboard +
+   style.css.
+
+   Colours here follow the shared style.css palette, so the shop chrome looks
+   the same as order-admin/rep; this file only adds the shop-only components
+   (product labels, qty steppers, cart list, stat cards, ...).
    ========================================================================== */
 
 :root {
-    --bakery-brown: #6b4226;
-    --bakery-brown-dark: #4a2c17;
-    --bakery-brown-light: #8a5a37;
-    --bakery-cream: #fff8f0;
-    --bakery-cream-soft: #fdf1e2;
-    --bakery-orange: #e07b1a;
-    --bakery-orange-dark: #c2660f;
-    --bakery-gold: #d4a017;
-    --bakery-green: #6a994e;
-    --bakery-red: #c1443c;
-    --bakery-text: #4a2c17;
-    --bakery-shadow: 0 6px 18px rgba(107, 66, 38, 0.12);
+    /* The shop screens now use the same palette the order-admin / rep
+       screens get from assets/libs/css/style.css. The --bakery-* names are
+       kept so the shop-only components below need no renaming. */
+    --bakery-brown: #3d405c;
+    --bakery-brown-dark: #2e2f39;
+    --bakery-brown-light: #71748d;
+    --bakery-cream: #ffffff;
+    --bakery-cream-soft: #f9f9ff;
+    --bakery-orange: #5969ff;
+    --bakery-orange-dark: #4857e0;
+    --bakery-gold: #ffc108;
+    --bakery-green: #2ec551;
+    --bakery-red: #ef172c;
+    --bakery-text: #71748d;
+    --bakery-shadow: 0px 1px 2px 1px rgba(154, 154, 204, 0.22);
 }
 
 body {
-    background: linear-gradient(180deg, var(--bakery-cream) 0%, #fcefe0 100%);
+    background-color: #efeff6;
 }
 
 /* ----------------------------- Header / brand ---------------------------- */
-
-.dashboard-header .navbar {
-    background: linear-gradient(90deg, var(--bakery-brown-dark) 0%, var(--bakery-brown) 100%);
-    border-bottom: 3px solid var(--bakery-gold);
-    box-shadow: 0 2px 10px rgba(74, 44, 23, 0.25);
-}
+/* The navbar's own colours are left to style.css (white bar, same as
+   order-admin/rep) - only the brand mark and the avatar ring are set here. */
 
 .dashboard-header .navbar-brand {
-    color: var(--bakery-cream) !important;
     font-weight: 700;
 }
 
 .dashboard-header .navbar-brand::before {
-    content: "🥐";
+    content: "F950";
     margin-right: 6px;
 }
 
-.dashboard-header .sidebar-toggle {
-    color: var(--bakery-cream);
-}
-
-.dashboard-header .sidebar-toggle:hover {
-    color: var(--bakery-gold);
-}
-
-.dashboard-header .navbar-right-top .nav-item {
-    border-right-color: rgba(255, 248, 240, 0.15);
-}
-
 .dashboard-header .nav-user-img img {
-    border: 2px solid var(--bakery-gold);
+    border: 2px solid var(--bakery-orange);
     border-radius: 50%;
-}
-
-.nav-user-info {
-    background: linear-gradient(120deg, var(--bakery-brown) 0%, var(--bakery-orange) 100%) !important;
-    border-radius: 12px 12px 0 0;
 }
 
 .nav-user-dropdown {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: var(--bakery-shadow);
-    border: 1px solid rgba(107, 66, 38, 0.1);
+    border: 1px solid rgba(154, 154, 204, 0.25);
 }
 
 .nav-user-dropdown .dropdown-item {
@@ -81,44 +66,17 @@ body {
 }
 
 /* ----------------------------- Sidebar menu ------------------------------ */
-
-.nav-left-sidebar {
-    background: linear-gradient(180deg, var(--bakery-brown-dark) 0%, var(--bakery-brown) 100%);
-}
-
-.nav-left-sidebar .nav-divider {
-    color: rgba(255, 255, 255, 0.55);
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 1px;
-    padding: 14px 20px 6px;
-}
+/* Colours left to style.css (white sidebar, grey-blue links, same as
+   order-admin/rep) - only the rounded highlight shape is kept. */
 
 .nav-left-sidebar .nav-link {
-    color: rgba(255, 248, 240, 0.85);
     border-radius: 10px;
     margin: 2px 10px;
     transition: background-color .15s ease, color .15s ease;
 }
 
 .nav-left-sidebar .nav-link i {
-    color: var(--bakery-gold);
     width: 20px;
-}
-
-.nav-left-sidebar .nav-link:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-}
-
-.nav-left-sidebar .nav-link.active {
-    background: var(--bakery-orange);
-    color: #fff;
-    box-shadow: var(--bakery-shadow);
-}
-
-.nav-left-sidebar .nav-link.active i {
-    color: #fff;
 }
 
 /* --------------------------------- Cards --------------------------------- */
@@ -138,7 +96,7 @@ body {
     color: var(--bakery-brown);
     font-weight: 700;
     border-radius: 16px 16px 0 0 !important;
-    border-bottom: 1px solid rgba(107, 66, 38, 0.08);
+    border-bottom: 1px solid rgba(154, 154, 204, 0.08);
 }
 
 .pageheader-title {
@@ -218,10 +176,10 @@ body {
     color: #fff;
 }
 
-.bakery-stat-icon.is-pending { background: linear-gradient(135deg, #e8a33d, #d4a017); }
-.bakery-stat-icon.is-processing { background: linear-gradient(135deg, #e07b1a, #c2660f); }
-.bakery-stat-icon.is-complete { background: linear-gradient(135deg, #6a994e, #4f7a37); }
-.bakery-stat-icon.is-review { background: linear-gradient(135deg, #8a5a37, #6b4226); }
+.bakery-stat-icon.is-pending { background: linear-gradient(135deg, #ffc750, #ffc108); }
+.bakery-stat-icon.is-processing { background: linear-gradient(135deg, #25d5f2, #0bb8d4); }
+.bakery-stat-icon.is-complete { background: linear-gradient(135deg, #2ec551, #23a541); }
+.bakery-stat-icon.is-review { background: linear-gradient(135deg, #5969ff, #4857e0); }
 
 .bakery-stat-card h5 {
     font-size: 13px;
@@ -235,12 +193,12 @@ body {
 
 .bakery-stat-caption {
     font-size: 12px;
-    color: #a1876b;
+    color: #a3a5b8;
 }
 
 .bakery-chart-empty-msg {
     text-align: center;
-    color: #a1876b;
+    color: #a3a5b8;
     padding: 40px 10px;
     margin: 0;
 }
@@ -269,7 +227,7 @@ body {
 
 .bakery-welcome-banner p {
     margin: 2px 0 0;
-    color: rgba(255, 248, 240, 0.85);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 14px;
 }
 
@@ -278,13 +236,13 @@ body {
 .bakery-filters-bar select.form-control,
 .bakery-filters-bar input.form-control {
     border-radius: 999px;
-    border: 1px solid rgba(107, 66, 38, 0.2);
+    border: 1px solid rgba(154, 154, 204, 0.2);
 }
 
 .bakery-filters-bar select.form-control:focus,
 .bakery-filters-bar input.form-control:focus {
     border-color: var(--bakery-orange);
-    box-shadow: 0 0 0 .2rem rgba(224, 123, 26, .15);
+    box-shadow: 0 0 0 .2rem rgba(89, 105, 255, .15);
 }
 
 .bakery-filters-bar .bakery-form-label {
@@ -315,10 +273,10 @@ body {
     flex-direction: column;
     gap: 6px;
     background: #fff;
-    border: 1px solid rgba(107, 66, 38, 0.15);
+    border: 1px solid rgba(154, 154, 204, 0.15);
     border-radius: 14px;
     padding: 8px 10px;
-    box-shadow: 0 2px 6px rgba(107, 66, 38, 0.06);
+    box-shadow: 0 2px 6px rgba(154, 154, 204, 0.06);
     transition: box-shadow .15s ease, border-color .15s ease;
     width: 100%;
     min-width: 0;
@@ -327,7 +285,7 @@ body {
 
 .bakery-label-chip:hover {
     border-color: var(--bakery-orange);
-    box-shadow: 0 4px 10px rgba(107, 66, 38, 0.14);
+    box-shadow: 0 4px 10px rgba(154, 154, 204, 0.14);
 }
 
 .bakery-label-chip.in-cart {
@@ -389,7 +347,7 @@ body {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
-    border: 1px solid rgba(107, 66, 38, 0.2);
+    border: 1px solid rgba(154, 154, 204, 0.2);
     border-radius: 50%;
     background: var(--bakery-cream-soft);
     color: var(--bakery-brown);
@@ -424,7 +382,7 @@ body {
     width: 64px;
     border-radius: 999px;
     text-align: center;
-    border: 1px solid rgba(107, 66, 38, 0.2);
+    border: 1px solid rgba(154, 154, 204, 0.2);
     font-size: 13px;
     padding: 4px;
     -moz-appearance: textfield;
@@ -440,7 +398,7 @@ body {
     width: 36px;
     border-radius: 999px;
     text-align: center;
-    border: 1px solid rgba(107, 66, 38, 0.2);
+    border: 1px solid rgba(154, 154, 204, 0.2);
     font-size: 11px;
     padding: 2px 2px;
     flex-shrink: 0;
@@ -506,7 +464,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #e3d4c4;
+    background-color: #d4d5e3;
     transition: .3s;
     border-radius: 999px;
 }
@@ -528,7 +486,7 @@ body {
 }
 
 .switch input:focus + .slider {
-    box-shadow: 0 0 0 2px rgba(106, 153, 78, .25);
+    box-shadow: 0 0 0 2px rgba(46, 197, 81, .25);
 }
 
 .switch input:checked + .slider:before {
@@ -554,7 +512,7 @@ body {
         z-index: 1020;
         background: #fff;
         padding: 12px 16px;
-        box-shadow: 0 -2px 8px rgba(107, 66, 38, 0.18);
+        box-shadow: 0 -2px 8px rgba(154, 154, 204, 0.18);
     }
 
     body.sidebar-open .bakery-selection-bar {
@@ -622,7 +580,7 @@ reproducing Bootstrap's breakpoint logic.
 }
 
 .dashboard-content .pagination .disabled .page-link {
-    color: #c9b7a6;
+    color: #c3c4d3;
 }
 
 /* ------------------------------- Skeleton loader ---------------------------- */
@@ -633,7 +591,7 @@ reproducing Bootstrap's breakpoint logic.
     min-height: 1em;
     border-radius: 6px;
     color: transparent !important;
-    background: linear-gradient(90deg, var(--bakery-cream-soft) 25%, #f3e2cc 37%, var(--bakery-cream-soft) 63%);
+    background: linear-gradient(90deg, var(--bakery-cream-soft) 25%, #ecedf5 37%, var(--bakery-cream-soft) 63%);
     background-size: 400% 100%;
     animation: bakery-skeleton-shimmer 1.4s ease infinite;
 }
@@ -670,7 +628,7 @@ reproducing Bootstrap's breakpoint logic.
     font-size: 13px;
     color: var(--bakery-brown);
     background: var(--bakery-cream-soft);
-    border-bottom: 1px solid rgba(107, 66, 38, 0.08);
+    border-bottom: 1px solid rgba(154, 154, 204, 0.08);
 }
 
 .bakery-cart-list {
@@ -686,7 +644,7 @@ reproducing Bootstrap's breakpoint logic.
     flex-wrap: wrap;
     gap: 12px;
     background: #fff;
-    border: 1px solid rgba(107, 66, 38, 0.1);
+    border: 1px solid rgba(154, 154, 204, 0.1);
     border-radius: 14px;
     padding: 12px;
 }
@@ -713,7 +671,7 @@ reproducing Bootstrap's breakpoint logic.
 
 .bakery-cart-item-id {
     font-size: 12px;
-    color: #a1876b;
+    color: #a3a5b8;
 }
 
 .bakery-cart-item-note {
@@ -743,7 +701,7 @@ reproducing Bootstrap's breakpoint logic.
     background: var(--bakery-cream-soft);
     font-size: 16px;
     color: var(--bakery-brown);
-    border-top: 1px solid rgba(107, 66, 38, 0.08);
+    border-top: 1px solid rgba(154, 154, 204, 0.08);
     border-radius: 0 0 14px 14px;
 }
 
