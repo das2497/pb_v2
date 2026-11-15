@@ -40,11 +40,6 @@ body {
     font-weight: 700;
 }
 
-.dashboard-header .navbar-brand::before {
-    content: "🥐";
-    margin-right: 6px;
-}
-
 .dashboard-header .nav-user-img img {
     border: 2px solid var(--bakery-orange);
     border-radius: 50%;

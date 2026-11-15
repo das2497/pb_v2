@@ -30,7 +30,7 @@
 
                     <div class="bakery-welcome-banner">
                         <div>
-                            <h2>Welcome back, {{ Auth::user()->name }} 🥐</h2>
+                            <h2>Welcome back, {{ Auth::user()->name }}</h2>
                             <p>Here's how your bakery orders are doing today.</p>
                         </div>
                         <a href="/shop/create-order" class="btn btn-light btn-sm"><i class="fa fa-cart-plus"></i> Create Order</a>
