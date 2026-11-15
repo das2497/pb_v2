@@ -60,23 +60,23 @@
                                                     <th class="border-0">#</th>
                                                     <th class="border-0">
                                                         <a href="{{ route('shop.scheduled-orders', ['sort' => 'order_date', 'direction' => $sort === 'order_date' && $direction === 'asc' ? 'desc' : 'asc']) }}"
-                                                            class="text-decoration-none text-reset">
+                                                            style="color: inherit; text-decoration: none;">
                                                             Order Date
                                                             @if ($sort === 'order_date')
-                                                                <span class="bi bi-caret-{{ $direction === 'asc' ? 'up' : 'down' }}-fill"></span>
+                                                                <i class="fas fa-sort-{{ $direction === 'asc' ? 'up' : 'down' }} ml-1"></i>
                                                             @else
-                                                                <span class="bi bi-arrow-down-up text-muted"></span>
+                                                                <i class="fas fa-sort ml-1 text-muted"></i>
                                                             @endif
                                                         </a>
                                                     </th>
                                                     <th class="border-0">
                                                         <a href="{{ route('shop.scheduled-orders', ['sort' => 'order_time', 'direction' => $sort === 'order_time' && $direction === 'asc' ? 'desc' : 'asc']) }}"
-                                                            class="text-decoration-none text-reset">
+                                                            style="color: inherit; text-decoration: none;">
                                                             Order Time
                                                             @if ($sort === 'order_time')
-                                                                <span class="bi bi-caret-{{ $direction === 'asc' ? 'up' : 'down' }}-fill"></span>
+                                                                <i class="fas fa-sort-{{ $direction === 'asc' ? 'up' : 'down' }} ml-1"></i>
                                                             @else
-                                                                <span class="bi bi-arrow-down-up text-muted"></span>
+                                                                <i class="fas fa-sort ml-1 text-muted"></i>
                                                             @endif
                                                         </a>
                                                     </th>
