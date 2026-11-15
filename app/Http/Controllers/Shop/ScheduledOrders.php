@@ -12,6 +12,7 @@ use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ScheduledOrders extends Controller
 {
@@ -47,8 +48,10 @@ class ScheduledOrders extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'order_date' => 'required|date|after:today',
+            'order_date' => 'required|date|after:' . Carbon::today()->toDateString(),
             'order_time' => 'required|string',
+        ], [
+            'order_date.after' => 'Scheduled order එකක් හෙට හෝ ඉන් පසු දිනයකට පමණක් සෑදිය හැක. අද දිනයට හෝ ඊට පෙර දිනයකට schedule කළ නොහැක.',
         ]);
 
         $shop = Shops::where('email', '=', Auth::user()->email)->first();

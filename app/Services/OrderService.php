@@ -134,6 +134,23 @@ class OrderService
         return $order;
     }
 
+    /**
+     * A scheduled order may only be placed for a future date — today or
+     * any past date is rejected, since those can no longer be scheduled.
+     */
+    public function assertScheduledDateIsFuture(string $date): void
+    {
+        try {
+            $orderDate = Carbon::parse($date)->startOfDay();
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Invalid order date.');
+        }
+
+        if ($orderDate->lessThanOrEqualTo(Carbon::today())) {
+            throw new \RuntimeException('Scheduled order එකක් හෙට හෝ ඉන් පසු දිනයකට පමණක් සෑදිය හැක. අද දිනයට හෝ ඊට පෙර දිනයකට schedule කළ නොහැක.');
+        }
+    }
+
     public function assertNoDuplicateScheduledOrder(Shops $shop, string $period, string $date): void
     {
         $exists = Orders::where('status', 'Scheduled')
@@ -154,6 +171,7 @@ class OrderService
      */
     public function createScheduledOrder(Shops $shop, string $period, string $date): Orders
     {
+        $this->assertScheduledDateIsFuture($date);
         $this->assertPeriodAllowed($shop, $period);
         $this->assertNoDuplicateScheduledOrder($shop, $period, $date);
 
