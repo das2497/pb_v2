@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateOrderItemQuantityRequest;
+use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Shops;
@@ -22,18 +23,50 @@ class ScheduledOrders extends Controller
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $shop = Shops::where('email', '=', Auth::user()->email)->first();
 
-        $orders = Orders::where('status', '=', 'Scheduled')
-            ->where('shop', '=', $shop->branch_code)
-            ->orderBy('order_date')
-            ->get();
+        $sort = in_array($request->query('sort'), ['order_date', 'order_time'], true)
+            ? $request->query('sort')
+            : 'order_date';
+        $direction = $request->query('direction') === 'desc' ? 'desc' : 'asc';
+
+        $query = Orders::where('status', '=', 'Scheduled')
+            ->where('shop', '=', $shop->branch_code);
+
+        if ($sort === 'order_time') {
+            $this->orderByTimePeriod($query, $direction);
+            $query->orderBy('order_date');
+        } else {
+            $query->orderBy('order_date', $direction);
+            $this->orderByTimePeriod($query, 'asc');
+        }
 
         return view('shop.scheduled-orders', [
-            'orders' => $orders,
+            'orders' => $query->get(),
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
+    }
+
+    /**
+     * Orders by time period chronologically (Morning before Evening)
+     * rather than alphabetically, using the order_times table's own id
+     * sequence as the chronological order.
+     */
+    private function orderByTimePeriod($query, string $direction): void
+    {
+        $periods = OrderTime::orderBy('id')->pluck('name')->all();
+
+        if ($periods === []) {
+            $query->orderBy('time_period', $direction);
+
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($periods), '?'));
+        $query->orderByRaw("FIELD(time_period, {$placeholders}) {$direction}", $periods);
     }
 
     public function create()

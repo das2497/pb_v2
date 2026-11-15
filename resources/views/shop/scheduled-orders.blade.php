@@ -58,8 +58,28 @@
                                             <thead class="bg-light">
                                                 <tr class="border-0">
                                                     <th class="border-0">#</th>
-                                                    <th class="border-0">Order Date</th>
-                                                    <th class="border-0">Order Time</th>
+                                                    <th class="border-0">
+                                                        <a href="{{ route('shop.scheduled-orders', ['sort' => 'order_date', 'direction' => $sort === 'order_date' && $direction === 'asc' ? 'desc' : 'asc']) }}"
+                                                            class="text-decoration-none text-reset">
+                                                            Order Date
+                                                            @if ($sort === 'order_date')
+                                                                <span class="bi bi-caret-{{ $direction === 'asc' ? 'up' : 'down' }}-fill"></span>
+                                                            @else
+                                                                <span class="bi bi-arrow-down-up text-muted"></span>
+                                                            @endif
+                                                        </a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ route('shop.scheduled-orders', ['sort' => 'order_time', 'direction' => $sort === 'order_time' && $direction === 'asc' ? 'desc' : 'asc']) }}"
+                                                            class="text-decoration-none text-reset">
+                                                            Order Time
+                                                            @if ($sort === 'order_time')
+                                                                <span class="bi bi-caret-{{ $direction === 'asc' ? 'up' : 'down' }}-fill"></span>
+                                                            @else
+                                                                <span class="bi bi-arrow-down-up text-muted"></span>
+                                                            @endif
+                                                        </a>
+                                                    </th>
                                                     <th class="border-0">Estimate full amount</th>
                                                     <th class="border-0"></th>
                                                     <th class="border-0"></th>
