@@ -47,7 +47,7 @@ class ScheduledOrders extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'order_date' => 'required|date|after_or_equal:today',
+            'order_date' => 'required|date|after:today',
             'order_time' => 'required|string',
         ]);
 

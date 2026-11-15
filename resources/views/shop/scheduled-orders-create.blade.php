@@ -47,7 +47,7 @@
                                         <div class="form-group mb-3">
                                             <label for="order_date">Order Date</label>
                                             <input type="date" class="form-control" id="order_date" name="order_date"
-                                                min="{{ now()->toDateString() }}" value="{{ old('order_date') }}" required>
+                                                min="{{ now()->addDay()->toDateString() }}" value="{{ old('order_date') }}" required>
                                         </div>
                                         <div class="form-group mb-3">
                                             <label for="order_time">Order Time</label>
