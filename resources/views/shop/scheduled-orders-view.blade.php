@@ -53,7 +53,7 @@
                                 </div>
                                 <div class="input-group flex-nowrap p-2">
                                     <a class="btn btn-outline-success m-l-10" href="{{ route('shop.scheduled-orders-add-items', ['order_number' => $order->unique_id]) }}">
-                                        <span class="bi bi-plus-square fs-4"></span> Add product
+                                        <i class="fas fa-plus-square"></i> Add product
                                     </a>
                                     <a href="{{ route('shop.scheduled-orders') }}" class="btn btn-outline-danger m-l-10">Go Back</a>
                                 </div>

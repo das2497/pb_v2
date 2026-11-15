@@ -57,7 +57,7 @@
                                     <input type="text" class="form-control" id="" placeholder="Search Orders" aria-describedby="addon-wrapping">
                                     <span class="input-group-text btn" id="addon-wrapping" onclick="">Search</span>
                                     <a class="btn btn-outline-success m-l-10" href="{{route('shop.pending-orders-add-items',['order_number'=>$order_number])}}">
-                                        <span class="bi bi-plus-square fs-4"></span> Add product
+                                        <i class="fas fa-plus-square"></i> Add product
                                     </a>
                                     <a href="/shop/pending-orders" class="btn btn-outline-danger m-l-10">Go Back</a>
                                 </div>

@@ -46,7 +46,7 @@
                                 <h5 class="card-header">
                                     Scheduled Orders
                                     <a href="{{ route('shop.scheduled-orders-create') }}" class="btn btn-outline-success m-l-10 float-right">
-                                        <span class="bi bi-plus-square fs-4"></span> Schedule a new order
+                                        <i class="fas fa-plus-square"></i> Schedule a new order
                                     </a>
                                 </h5>
                                 <div class="alert alert-info m-2 mb-0">

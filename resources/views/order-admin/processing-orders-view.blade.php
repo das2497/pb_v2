@@ -75,7 +75,7 @@
                                     <span class="input-group-text btn" id="addon-wrapping" onclick="">Search</span>
                                     @if (Auth::user()->role != 'view')
                                     <a class="btn btn-outline-success m-l-10" href="{{route('order-admin-processing-orders-add-items',['order_number'=>$order_number])}}">
-                                        <span class="bi bi-plus-square fs-4"></span> Add product
+                                        <i class="fas fa-plus-square"></i> Add product
                                     </a>
                                     @endif
                                     <a href="/order-admin/processing-orders" class="btn btn-outline-danger m-l-10">Go Back</a>
