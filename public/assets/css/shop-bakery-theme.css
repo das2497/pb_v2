@@ -41,7 +41,7 @@ body {
 }
 
 .dashboard-header .navbar-brand::before {
-    content: "F950";
+    content: "🥐";
     margin-right: 6px;
 }
 
