@@ -177,6 +177,11 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::get('/order-admin/shop-report-back-to-report', [ShopReport::class, 'back_to_report']);
     Route::get('/order-admin/shop-report-back-to-report-evening', [ShopReport::class, 'back_to_report_evening']);
 
+    Route::get('/order-admin/shop-report-beverage', [ShopReport::class, 'index_beverage']);
+    Route::get('/order-admin/shop-report-beverage/export', [ShopReport::class, 'exportBeverage']);
+    Route::get('/order-admin/shop-report-full-screen-beverage', [ShopReport::class, 'fullScreen_beverage']);
+    Route::get('/order-admin/shop-report-back-to-report-beverage', [ShopReport::class, 'back_to_report_beverage']);
+
     Route::get('/order-admin/final-report', [FinalReport::class, 'index']);
     Route::get('/order-admin/final-report-full-screen', [FinalReport::class, 'fullScreen']);
     Route::get('/order-admin/final-report-evening', [FinalReport::class, 'index_evening']);

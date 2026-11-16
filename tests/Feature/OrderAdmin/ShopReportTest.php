@@ -3,6 +3,7 @@
 namespace Tests\Feature\OrderAdmin;
 
 use App\Models\Cart;
+use App\Models\OrderTime;
 use App\Models\Orders;
 use App\Models\Products;
 use App\Models\Routes;
@@ -139,6 +140,52 @@ class ShopReportTest extends TestCase
         $exportFiltered = $this->get('/order-admin/shop-report-evening/export?date=' . now()->toDateString() . '&state=Complete');
         $exportFiltered->assertOk();
         $exportFiltered->assertSeeText('7461');
+    }
+
+    /**
+     * The Beverage shop report: same layout as morning/evening, but over
+     * time_period = 'Beverage', with shops grouped by their morning_route
+     * (shops have no beverage_route column) and the product rows limited
+     * to items available for the Beverage period.
+     */
+    public function test_beverage_report_shows_beverage_orders_and_filters_by_date_and_state(): void
+    {
+        $this->actingAsAdmin();
+        OrderTime::create(['name' => 'Beverage']);
+        [, $shops] = $this->makeRouteAndShops('Morning', 'Normal', 1);
+        $beverageItem = Products::factory()->create(['order_time' => 'Beverage', 'name_english' => 'Bottled Water']);
+        $eveningOnlyItem = Products::factory()->create(['order_time' => 'Evening', 'name_english' => 'Evening Only Item']);
+
+        $this->placeOrder($shops[0], $beverageItem, 5129, 'Beverage', 'Complete');
+
+        // Default state is Processing, so a Complete order stays hidden
+        // until the admin filters for it - same as the other reports.
+        $default = $this->get('/order-admin/shop-report-beverage');
+        $default->assertOk();
+        $default->assertSeeText('Bottled Water');
+        $default->assertDontSeeText('Evening Only Item');
+        $default->assertDontSeeText('5129');
+
+        $filtered = $this->get('/order-admin/shop-report-beverage?date=' . now()->toDateString() . '&state=Complete');
+        $filtered->assertOk();
+        $filtered->assertSeeText('5129');
+        $filtered->assertSee('value="Complete" selected', false);
+
+        $fullScreen = $this->get('/order-admin/shop-report-full-screen-beverage?date=' . now()->toDateString() . '&state=Complete');
+        $fullScreen->assertOk();
+        $fullScreen->assertSeeText('5129');
+
+        // The export endpoint behind "Export to Excel" reads the same filters.
+        $exportDefault = $this->get('/order-admin/shop-report-beverage/export');
+        $exportDefault->assertOk();
+        $exportDefault->assertDontSeeText('5129');
+
+        $exportFiltered = $this->get('/order-admin/shop-report-beverage/export?date=' . now()->toDateString() . '&state=Complete');
+        $exportFiltered->assertOk();
+        $exportFiltered->assertSeeText('5129');
+
+        $this->get('/order-admin/shop-report-back-to-report-beverage')
+            ->assertRedirect('/order-admin/shop-report-beverage');
     }
 
     public function test_morning_report_shows_correct_quantities_with_bounded_queries(): void

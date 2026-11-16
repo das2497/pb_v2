@@ -106,6 +106,9 @@
                         <div class="col-12 col-lg-4 d-grid">
                             <a class="btn btn-outline-primary mb-4" href="/order-admin/shop-report">Morning Report</a>
                         </div>
+                        <div class="col-12 col-lg-4 d-grid">
+                            <a class="btn btn-outline-primary mb-4" href="/order-admin/shop-report-beverage">Beverage Report</a>
+                        </div>
                         <!-- ============================================================== -->
 
                         <!-- ============================================================== -->

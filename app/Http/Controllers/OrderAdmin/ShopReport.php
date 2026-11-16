@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OrderAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Products;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -156,6 +157,69 @@ class ShopReport extends Controller
     public function back_to_report_evening()
     {
         return redirect('/order-admin/shop-report-evening');
+    }
+
+    /**
+     * Beverage shop report. Beverage is one of the dynamic order_times
+     * (order_times table) rather than a hard-coded period, so this mirrors
+     * the morning/evening reports with time_period = 'Beverage'.
+     *
+     * Two differences from those two:
+     *  - shops are grouped by their morning_route, since shops have no
+     *    beverage_route column - beverage goes out on the morning run.
+     *  - the product rows are limited to items available for the Beverage
+     *    period (Products::forPeriod), so the report doesn't list every
+     *    item in the catalogue. Products tagged 'All' still appear.
+     */
+    public function index_beverage(Request $request)
+    {
+        return view('order-admin.shop-report-beverage', $this->beverageReportData($request));
+    }
+
+    public function fullScreen_beverage(Request $request)
+    {
+        return view('order-admin.shop-report-beverage-full-screen', $this->beverageReportData($request));
+    }
+
+    public function back_to_report_beverage()
+    {
+        return redirect('/order-admin/shop-report-beverage');
+    }
+
+    /**
+     * Full (unpaginated) beverage report table, for "Export to Excel" on the
+     * beverage shop-report page. Honors the same date/state filters as
+     * index_beverage().
+     */
+    public function exportBeverage(Request $request)
+    {
+        return view('order-admin.partials.shop-report-beverage-export-table', $this->beverageReportData($request));
+    }
+
+    /**
+     * Shared payload for the beverage report's page, full-screen and export
+     * views - identical data, three different tables around it.
+     */
+    private function beverageReportData(Request $request): array
+    {
+        $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
+        $state = $request->filled('state') ? $request->input('state') : 'Processing';
+
+        $shops = $this->shopsByRouteAndType('morning_route');
+        $products = Products::forPeriod('Beverage')
+            ->orderBy('item_number', 'asc')
+            ->get();
+        $orderMap = $this->buildOrderMap('Beverage', $state, $currentDate);
+
+        return [
+            'products' => $products,
+            'header_normal' => $shops['Normal'] ?? collect(),
+            'header_special' => $shops['Special'] ?? collect(),
+            'header_pbd' => $shops['PBD'] ?? collect(),
+            'orderMap' => $orderMap,
+            'currentDate' => $currentDate,
+            'state' => $state,
+        ];
     }
 
     /**
