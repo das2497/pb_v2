@@ -3,6 +3,26 @@
 @section('title', 'Order Admin | Add Shop')
 
 @section('content')
+    @php
+        $currentSort = $sort ?? null;
+        $currentDirection = $direction ?? 'asc';
+
+        $sortLink = function ($column) use ($currentSort, $currentDirection) {
+            $nextDirection = ($currentSort === $column && $currentDirection === 'asc') ? 'desc' : 'asc';
+            return request()->fullUrlWithQuery([
+                'sort' => $column,
+                'direction' => $nextDirection,
+                'page' => null,
+            ]);
+        };
+
+        $sortIcon = function ($column) use ($currentSort, $currentDirection) {
+            if ($currentSort !== $column) {
+                return '<span class="text-muted">&#8645;</span>';
+            }
+            return $currentDirection === 'asc' ? '&#9650;' : '&#9660;';
+        };
+    @endphp
     <div class="dashboard-wrapper">
         <div class="dashboard-ecommerce">
             <div class="container-fluid dashboard-content ">
@@ -41,10 +61,14 @@
                             <div class="card">
                                 <h5 class="card-header">All Routs</h5>
                                 <form action="/order-admin/routes" method="GET">
-                                    @csrf
+                                    @if ($currentSort)
+                                    <input type="hidden" name="sort" value="{{ $currentSort }}">
+                                    <input type="hidden" name="direction" value="{{ $currentDirection }}">
+                                    @endif
                                     <div class="input-group flex-nowrap p-2">
                                         <input type="text" class="form-control" id="ordering_admin_all_items_srch"
-                                            placeholder="Search Routes" aria-describedby="addon-wrapping" name="search">
+                                            placeholder="Search Routes" aria-describedby="addon-wrapping" name="search"
+                                            value="{{ request('search') }}">
                                         <button type="submit" class="input-group-text btn" id="addon-wrapping">Search</button>
                                     </div>
                                 </form>
@@ -54,10 +78,18 @@
                                             <thead class="bg-light">
                                                 <tr class="border-0">
                                                     <th class="border-0">#</th>
-                                                    <th class="border-0">Route Index</th>
-                                                    <th class="border-0">Route Name</th>
-                                                    <th class="border-0">Route Type</th>
-                                                    <th class="border-0">Route Time</th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('index') }}" class="text-dark" style="text-decoration: none;">Route Index {!! $sortIcon('index') !!}</a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('name') }}" class="text-dark" style="text-decoration: none;">Route Name {!! $sortIcon('name') !!}</a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('type') }}" class="text-dark" style="text-decoration: none;">Route Type {!! $sortIcon('type') !!}</a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('time') }}" class="text-dark" style="text-decoration: none;">Route Time {!! $sortIcon('time') !!}</a>
+                                                    </th>
                                                     <th class="border-0">Shops</th>
                                                 </tr>
                                             </thead>
@@ -161,10 +193,14 @@
                             <div class="card">
                                 <h5 class="card-header">All Routs</h5>
                                 <form action="/order-admin/routes" method="GET">
-                                    @csrf
+                                    @if ($currentSort)
+                                    <input type="hidden" name="sort" value="{{ $currentSort }}">
+                                    <input type="hidden" name="direction" value="{{ $currentDirection }}">
+                                    @endif
                                     <div class="input-group flex-nowrap p-2">
                                         <input type="text" class="form-control" id="ordering_admin_all_items_srch"
-                                            placeholder="Search Routes" aria-describedby="addon-wrapping" name="search">
+                                            placeholder="Search Routes" aria-describedby="addon-wrapping" name="search"
+                                            value="{{ request('search') }}">
                                         <button type="submit" class="input-group-text btn" id="addon-wrapping">Search</button>
                                     </div>
                                 </form>
@@ -174,10 +210,18 @@
                                             <thead class="bg-light">
                                                 <tr class="border-0">
                                                     <th class="border-0">#</th>
-                                                    <th class="border-0">Route Index</th>
-                                                    <th class="border-0">Route Name</th>
-                                                    <th class="border-0">Route Type</th>
-                                                    <th class="border-0">Route Time</th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('index') }}" class="text-dark" style="text-decoration: none;">Route Index {!! $sortIcon('index') !!}</a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('name') }}" class="text-dark" style="text-decoration: none;">Route Name {!! $sortIcon('name') !!}</a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('type') }}" class="text-dark" style="text-decoration: none;">Route Type {!! $sortIcon('type') !!}</a>
+                                                    </th>
+                                                    <th class="border-0">
+                                                        <a href="{{ $sortLink('time') }}" class="text-dark" style="text-decoration: none;">Route Time {!! $sortIcon('time') !!}</a>
+                                                    </th>
                                                     <th class="border-0">Shops</th>
                                                     <th class="border-0"></th>
                                                     <th class="border-0"></th>

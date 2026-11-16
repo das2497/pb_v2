@@ -14,21 +14,27 @@ class RouteProcess extends Controller
     {
         $route_times = OrderTime::orderBy('id')->pluck('name');
 
-        if ($request->has('search')) {
-            $routes = Routes::where('name', 'like', '%' . $request->search . '%')
-            ->paginate(10);
+        $sortable = ['index', 'name', 'type', 'time'];
+        $sort = in_array($request->query('sort'), $sortable, true) ? $request->query('sort') : null;
+        $direction = $request->query('direction') === 'desc' ? 'desc' : 'asc';
 
-            return view('order-admin.routes', [
-                'routes' => $routes,
-                'route_times' => $route_times,
-            ]);
+        $query = Routes::query();
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $routes = Routes::paginate(10);
+        if ($sort) {
+            $query->orderBy($sort, $direction);
+        }
+
+        $routes = $query->paginate(10)->withQueryString();
 
         return view('order-admin.routes', [
             'routes' => $routes,
             'route_times' => $route_times,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 
