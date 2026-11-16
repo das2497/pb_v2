@@ -10,6 +10,8 @@ use App\Http\Controllers\OrderAdmin\GoogleSheetController as OrderAdminGoogleShe
 use App\Http\Controllers\OrderAdmin\GoogleSheetController2 as OrderAdminGoogleSheetController2;
 use App\Http\Controllers\OrderAdmin\GoogleSheetController3 as OrderAdminGoogleSheetController3;
 use App\Http\Controllers\OrderAdmin\GoogleSheetController4 as OrderAdminGoogleSheetController4;
+use App\Http\Controllers\OrderAdmin\GoogleSheetController5 as OrderAdminGoogleSheetController5;
+use App\Http\Controllers\OrderAdmin\GoogleSheetSettingsController as OrderAdminGoogleSheetSettingsController;
 use App\Http\Controllers\OrderAdmin\LogProccess;
 use App\Http\Controllers\OrderAdmin\Pending_orders;
 use App\Http\Controllers\OrderAdmin\Pending_orders_add_item;
@@ -196,6 +198,14 @@ Route::middleware('role:o_admin,admin,view,sales_admin')->group(function () {
     Route::get('/order-admin/refresh-evening-summary', [OrderAdminGoogleSheetController2::class, 'updateGoogleSheet'])->name('evening-summary');
     Route::get('/order-admin/refresh-morning-shop-report', [OrderAdminGoogleSheetController3::class, 'updateGoogleSheet'])->name('morning-shop-report');
     Route::get('/order-admin/refresh-evening-shop-report', [OrderAdminGoogleSheetController4::class, 'updateGoogleSheet'])->name('evening-shop-report');
+    Route::get('/order-admin/refresh-beverage-shop-report', [OrderAdminGoogleSheetController5::class, 'updateGoogleSheet'])->name('beverage-shop-report');
+
+    // Google Sheets setup: credentials + one spreadsheet per report, so the
+    // refresh routes above can be configured without editing .env.
+    Route::get('/order-admin/google-sheets', [OrderAdminGoogleSheetSettingsController::class, 'index'])->name('order-admin.google-sheets');
+    Route::post('/order-admin/google-sheets', [OrderAdminGoogleSheetSettingsController::class, 'update'])->name('order-admin.google-sheets.update');
+    Route::post('/order-admin/google-sheets/credentials', [OrderAdminGoogleSheetSettingsController::class, 'uploadCredentials'])->name('order-admin.google-sheets.credentials');
+    Route::post('/order-admin/google-sheets/test', [OrderAdminGoogleSheetSettingsController::class, 'test'])->name('order-admin.google-sheets.test');
 
     Route::get('/order-admin/processing-transfer', [Processing_to_complete::class, 'index']);
 

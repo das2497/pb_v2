@@ -88,6 +88,15 @@
                                                     class="btn btn-primary mb-2 w-100">Refresh Evening Shop Report</a>
                                                 <!-- Added w-100 -->
                                             </div>
+                                            <div class="col-12 col-lg-3 d-grid">
+                                                <a href="{{route('beverage-shop-report')}}" id="refresh"
+                                                    class="btn btn-primary mb-2 w-100">Refresh Beverage Shop Report</a>
+                                                <!-- Added w-100 -->
+                                            </div>
+                                            <div class="col-12 col-lg-3 d-grid">
+                                                <a href="{{route('order-admin.google-sheets')}}"
+                                                    class="btn btn-outline-secondary mb-2 w-100">Google Sheets Setup</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

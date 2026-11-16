@@ -40,7 +40,7 @@ return [
     | Google Sheets export (app/Services/GoogleSheetExportService.php)
     |--------------------------------------------------------------------------
     |
-    | The service-account credentials file and the 4 report spreadsheet IDs
+    | The service-account credentials file and the report spreadsheet IDs
     | used by the OrderAdmin "refresh" buttons. Defaults match what was
     | hardcoded before Phase 4 — unset env vars reproduce the exact same
     | behavior.
@@ -54,6 +54,10 @@ return [
             'evening_summary' => env('GOOGLE_SHEET_EVENING_SUMMARY_ID', '1g9ESoKgqdPfs5yr0SnlQ7YLa31CiraDFaYxfGPv4lBg'),
             'morning_shop_report' => env('GOOGLE_SHEET_MORNING_SHOP_REPORT_ID', '18Kco3OHVB3hwciOiEs7a4gAmcRq9slgFWZdOo0wSSCU'),
             'evening_shop_report' => env('GOOGLE_SHEET_EVENING_SHOP_REPORT_ID', '1iVIHkI8PXjRnChGexPw2dagdDcmLB064z7D7LvPMJ8A'),
+            // No production default: the beverage report's spreadsheet is new,
+            // so it must be supplied via env. Unset = the refresh button
+            // reports "not configured" instead of writing to a wrong sheet.
+            'beverage_shop_report' => env('GOOGLE_SHEET_BEVERAGE_SHOP_REPORT_ID'),
         ],
     ],
 

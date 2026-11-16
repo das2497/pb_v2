@@ -82,6 +82,9 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('order-admin/scheduled-production-report*') ? 'active' : '' }}" href="/order-admin/scheduled-production-report"><i class="fas fa-fw fa-calendar-alt"></i>Scheduled Production</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('order-admin/google-sheets*') ? 'active' : '' }}" href="/order-admin/google-sheets"><i class="fas fa-fw fa-cogs"></i>Google Sheets</a>
+                    </li>
                 </ul>
             </div>
         </nav>

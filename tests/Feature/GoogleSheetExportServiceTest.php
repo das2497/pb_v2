@@ -31,6 +31,20 @@ class GoogleSheetExportServiceTest extends TestCase
         ];
     }
 
+    /**
+     * The beverage report's ID comes only from env, so an unset one has
+     * to fail loudly here rather than reaching the Google API with an
+     * empty spreadsheet ID.
+     */
+    public function test_a_known_report_type_with_no_configured_id_is_rejected(): void
+    {
+        config(['services.google_sheets.spreadsheets.beverage_shop_report' => null]);
+
+        $this->expectException(\RuntimeException::class);
+
+        new GoogleSheetExportService(GoogleSheetExportService::BEVERAGE_SHOP_REPORT);
+    }
+
     public function test_an_unknown_report_type_is_rejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -42,7 +56,7 @@ class GoogleSheetExportServiceTest extends TestCase
      * Phase 4 moved the spreadsheet IDs and credentials path from
      * hardcoded constants into config/services.php (env-overridable).
      * Locks in that with no env vars set, the defaults still resolve to
-     * the exact same 4 spreadsheet IDs as before.
+     * the exact same 4 original spreadsheet IDs as before.
      */
     public function test_config_defaults_match_the_original_hardcoded_spreadsheet_ids(): void
     {
@@ -51,6 +65,9 @@ class GoogleSheetExportServiceTest extends TestCase
             'evening_summary' => '1g9ESoKgqdPfs5yr0SnlQ7YLa31CiraDFaYxfGPv4lBg',
             'morning_shop_report' => '18Kco3OHVB3hwciOiEs7a4gAmcRq9slgFWZdOo0wSSCU',
             'evening_shop_report' => '1iVIHkI8PXjRnChGexPw2dagdDcmLB064z7D7LvPMJ8A',
+            // The beverage shop report was added later and has no
+            // hardcoded production sheet: env-only, null until set.
+            'beverage_shop_report' => null,
         ], config('services.google_sheets.spreadsheets'));
 
         $this->assertSame(storage_path('credentials.json'), config('services.google_sheets.credentials_path'));
