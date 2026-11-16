@@ -14,6 +14,9 @@ class UpdateShopRequest extends FormRequest
             'price_range' => 'required|string|max:255',
             'morning_route' => 'required|string|max:255',
             'evening_route' => 'required|string|max:255',
+            // Optional: only shops that actually go out on a beverage route
+            // get one, and only those appear in the Beverage shop report.
+            'beverage_route' => 'nullable|string|max:255',
             'order_time' => 'required|string|max:255',
             'type' => 'required|string|max:255',
         ];

@@ -165,8 +165,10 @@ class ShopReport extends Controller
      * the morning/evening reports with time_period = 'Beverage'.
      *
      * Two differences from those two:
-     *  - shops are grouped by their morning_route, since shops have no
-     *    beverage_route column - beverage goes out on the morning run.
+     *  - only beverage routes appear: shops are grouped by their
+     *    beverage_route, and the join is restricted to routes tagged
+     *    time = 'Beverage'. A shop with no beverage route assigned is left
+     *    out of this report entirely.
      *  - the product rows are limited to items available for the Beverage
      *    period (Products::forPeriod), so the report doesn't list every
      *    item in the catalogue. Products tagged 'All' still appear.
@@ -205,7 +207,7 @@ class ShopReport extends Controller
         $currentDate = $request->filled('date') ? $request->input('date') : now()->toDateString();
         $state = $request->filled('state') ? $request->input('state') : 'Processing';
 
-        $shops = $this->shopsByRouteAndType('morning_route');
+        $shops = $this->shopsByRouteAndType('beverage_route', 'Beverage');
         $products = Products::forPeriod('Beverage')
             ->orderBy('item_number', 'asc')
             ->get();
@@ -322,11 +324,19 @@ class ShopReport extends Controller
      * reports; shopsByRouteType() above still backs the normal-only
      * variants (index_normal()/fullScreen_normal()/exportMorningNormal())
      * until they're updated the same way.
+     *
+     * $routeTime restricts the join to routes tagged with that time, for
+     * the beverage report ("only beverage routes"). The morning/evening
+     * reports pass nothing and keep their existing behaviour: their route
+     * columns are populated from time-filtered dropdowns already, and
+     * Special/PBD routes are only ever tagged 'Morning' in this data even
+     * though their shops belong in both of those reports.
      */
-    private function shopsByRouteAndType(string $routeColumn)
+    private function shopsByRouteAndType(string $routeColumn, ?string $routeTime = null)
     {
         return DB::table('shops')
             ->join('routes', 'routes.name', '=', "shops.$routeColumn")
+            ->when($routeTime !== null, fn ($q) => $q->where('routes.time', $routeTime))
             ->whereIn('routes.type', ['Normal', 'Special', 'PBD'])
             ->select('shops.*', 'shops.name as shop_name', 'routes.id as route_id', 'routes.name as route_name', 'routes.type as route_type')
             ->orderBy('routes.id')

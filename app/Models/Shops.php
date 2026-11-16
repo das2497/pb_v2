@@ -26,6 +26,8 @@ class Shops extends Model
         'morning_route_id',
         'evening_route',
         'evening_route_id',
+        'beverage_route',
+        'beverage_route_id',
         'type',
     ];
 
@@ -46,6 +48,11 @@ class Shops extends Model
     public function eveningRoute(): BelongsTo
     {
         return $this->belongsTo(Routes::class, 'evening_route_id');
+    }
+
+    public function beverageRoute(): BelongsTo
+    {
+        return $this->belongsTo(Routes::class, 'beverage_route_id');
     }
 
     public function orders(): HasMany

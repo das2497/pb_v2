@@ -67,6 +67,7 @@
                                                     <th class="border-0">Price Range</th>
                                                     <th class="border-0">Morning Route</th>
                                                     <th class="border-0">Evening Route</th>
+                                                    <th class="border-0">Beverage Route</th>
                                                     <th class="border-0">Order Time</th>
                                                     <th class="border-0">Type</th>
                                                 </tr>
@@ -99,6 +100,7 @@
                                                     <td>{{ $shop->price_range }}</td>
                                                     <td>{{ $shop->morning_route }}</td>
                                                     <td>{{ $shop->evening_route }}</td>
+                                                    <td>{{ $shop->beverage_route }}</td>
                                                     <td>{{ $shop->order_time }}</td>
                                                     <td>{{ $shop->type }}</td>
                                                 </tr>
@@ -189,6 +191,16 @@
                                             </select>
                                         </div>
                                         <div class="form-group">
+                                            <label for="sp_route">Select Beverage Route</label>
+                                            <select class="form-control" id="sp_route" name="beverage_route">
+                                                <option value="">Select Beverage Route</option>
+                                                @foreach ($beverage_routes as $beverage_route)
+                                                <option value="{{$beverage_route->name}}">{{$beverage_route->name}}</option>
+                                                @endforeach
+                                                <option value="none">None</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
                                             <label for="sp_shop_type">Select Shop Type</label>
                                             <select class="form-control" id="sp_shop_type" name="type">
                                                 <option value="">Select Shop Type</option>
@@ -249,6 +261,7 @@
                                                     <th class="border-0">Price Range</th>
                                                     <th class="border-0">Morning Route</th>
                                                     <th class="border-0">Evening Route</th>
+                                                    <th class="border-0">Beverage Route</th>
                                                     <th class="border-0">Order Time</th>
                                                     <th class="border-0">Type</th>
                                                     <th class="border-0">Actions</th>
@@ -282,6 +295,7 @@
                                                     <td>{{ $shop->price_range }}</td>
                                                     <td>{{ $shop->morning_route }}</td>
                                                     <td>{{ $shop->evening_route }}</td>
+                                                    <td>{{ $shop->beverage_route }}</td>
                                                     <td>{{ $shop->order_time }}</td>
                                                     <td>{{ $shop->type }}</td>
                                                     <td class="d-inline-flex">
@@ -343,6 +357,16 @@
                                                                             <option value="{{$evening_route->name}}" @selected($shop->evening_route == $evening_route->name )>{{$evening_route->name}}</option>
                                                                             @endforeach
                                                                             <option value="none" @selected($shop->evening_route == 'none' )>None</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="beverage_route">Beverage Route</label>
+                                                                        <select class="form-control" id="sp_route" name="beverage_route">
+                                                                            <option value="" @selected($shop->beverage_route == '' )>Select Beverage Route</option>
+                                                                            @foreach ($beverage_routes as $beverage_route)
+                                                                            <option value="{{$beverage_route->name}}" @selected($shop->beverage_route == $beverage_route->name )>{{$beverage_route->name}}</option>
+                                                                            @endforeach
+                                                                            <option value="none" @selected($shop->beverage_route == 'none' )>None</option>
                                                                         </select>
                                                                     </div>
                                                                     <div class="form-group">

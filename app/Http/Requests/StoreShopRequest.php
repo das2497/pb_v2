@@ -17,6 +17,9 @@ class StoreShopRequest extends FormRequest
             'price_range' => 'required',
             'morning_route' => 'required',
             'evening_route' => 'required',
+            // Optional: only shops that actually go out on a beverage route
+            // get one, and only those appear in the Beverage shop report.
+            'beverage_route' => 'nullable|string|max:255',
             'type' => 'required',
             'order_time' => 'required',
             'password' => 'required',

@@ -25,6 +25,7 @@ class ShopProcess extends Controller
 
         $morning_routes = Routes::where('time', '=', 'Morning')->get();
         $evening_routes = Routes::where('time', '=', 'Evening')->get();
+        $beverage_routes = Routes::where('time', '=', 'Beverage')->get();
 
         $shops = null;
 
@@ -44,6 +45,7 @@ class ShopProcess extends Controller
         return view('order-admin.add-shop', [
             'morning_routes' => $morning_routes,
             'evening_routes' => $evening_routes,
+            'beverage_routes' => $beverage_routes,
             'shops' => $shops,
             'date' => $date
         ]);
@@ -70,6 +72,7 @@ class ShopProcess extends Controller
             'order_time' => $request->order_time,
             'morning_route' => $request->morning_route,
             'evening_route' => $request->evening_route,
+            'beverage_route' => $request->beverage_route,
             'type' => $request->type,
         ]);
 
@@ -86,6 +89,7 @@ class ShopProcess extends Controller
         $shop->price_range = $request->price_range;
         $shop->morning_route = $request->morning_route;
         $shop->evening_route = $request->evening_route;
+        $shop->beverage_route = $request->beverage_route;
         $shop->order_time = $request->order_time;
         $shop->type = $request->type;
         $shop->save();

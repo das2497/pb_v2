@@ -144,19 +144,32 @@ class ShopReportTest extends TestCase
 
     /**
      * The Beverage shop report: same layout as morning/evening, but over
-     * time_period = 'Beverage', with shops grouped by their morning_route
-     * (shops have no beverage_route column) and the product rows limited
-     * to items available for the Beverage period.
+     * time_period = 'Beverage', showing ONLY beverage routes - shops are
+     * grouped by their beverage_route and the join is restricted to routes
+     * tagged time = 'Beverage', so a shop sitting on a morning/evening
+     * route with no beverage route assigned stays out. Product rows are
+     * limited to items available for the Beverage period.
      */
     public function test_beverage_report_shows_beverage_orders_and_filters_by_date_and_state(): void
     {
         $this->actingAsAdmin();
         OrderTime::create(['name' => 'Beverage']);
-        [, $shops] = $this->makeRouteAndShops('Morning', 'Normal', 1);
-        $beverageItem = Products::factory()->create(['order_time' => 'Beverage', 'name_english' => 'Bottled Water']);
-        $eveningOnlyItem = Products::factory()->create(['order_time' => 'Evening', 'name_english' => 'Evening Only Item']);
 
-        $this->placeOrder($shops[0], $beverageItem, 5129, 'Beverage', 'Complete');
+        $beverageRoute = Routes::factory()->create(['type' => 'Normal', 'time' => 'Beverage']);
+        $beverageShop = Shops::factory()->create(['beverage_route' => $beverageRoute->name]);
+
+        // A shop on a morning route with no beverage route assigned: its
+        // route and branch code must not show up as a column here.
+        $morningRoute = Routes::factory()->create(['type' => 'Normal', 'time' => 'Morning']);
+        $morningOnlyShop = Shops::factory()->create([
+            'morning_route' => $morningRoute->name,
+            'beverage_route' => null,
+        ]);
+
+        $beverageItem = Products::factory()->create(['order_time' => 'Beverage', 'name_english' => 'Bottled Water']);
+        Products::factory()->create(['order_time' => 'Evening', 'name_english' => 'Evening Only Item']);
+
+        $this->placeOrder($beverageShop, $beverageItem, 5129, 'Beverage', 'Complete');
 
         // Default state is Processing, so a Complete order stays hidden
         // until the admin filters for it - same as the other reports.
@@ -165,6 +178,12 @@ class ShopReportTest extends TestCase
         $default->assertSeeText('Bottled Water');
         $default->assertDontSeeText('Evening Only Item');
         $default->assertDontSeeText('5129');
+        // Only beverage routes: the beverage route and its shop are
+        // columns here, the morning-only route and its shop are not.
+        $default->assertSeeText($beverageRoute->name . ' Total');
+        $default->assertSeeText($beverageShop->branch_code);
+        $default->assertDontSeeText($morningRoute->name);
+        $default->assertDontSeeText($morningOnlyShop->branch_code);
 
         $filtered = $this->get('/order-admin/shop-report-beverage?date=' . now()->toDateString() . '&state=Complete');
         $filtered->assertOk();
