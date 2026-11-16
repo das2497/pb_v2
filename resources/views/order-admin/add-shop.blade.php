@@ -337,6 +337,9 @@
                                                                             <option value="Unit Price" @selected($shop->price_range =='Unit Price' )>Unit Price</option>
                                                                             <option value="PB MRP" @selected($shop->price_range =='PB MRP' )>PB MRP</option>
                                                                             <option value="PB Direct Sale Price" @selected($shop->price_range =='PB Direct Sale Price' )>PB Direct Sale Price</option>
+                                                                            @if (!empty($shop->price_range) && !in_array($shop->price_range, ['Unit Price', 'PB MRP', 'PB Direct Sale Price'], true))
+                                                                            <option value="{{ $shop->price_range }}" selected>{{ $shop->price_range }}</option>
+                                                                            @endif
                                                                         </select>
                                                                     </div>
                                                                     <div class="form-group">
@@ -346,6 +349,9 @@
                                                                             @foreach ($morning_routes as $morning_route)
                                                                             <option value="{{$morning_route->name}}" @selected($shop->morning_route == $morning_route->name )>{{$morning_route->name}}</option>
                                                                             @endforeach
+                                                                            @if (!empty($shop->morning_route) && $shop->morning_route !== 'none' && !$morning_routes->contains('name', $shop->morning_route))
+                                                                            <option value="{{ $shop->morning_route }}" selected>{{ $shop->morning_route }}</option>
+                                                                            @endif
                                                                             <option value="none" @selected($shop->morning_route == 'none' )>None</option>
                                                                         </select>
                                                                     </div>
@@ -356,6 +362,9 @@
                                                                             @foreach ($evening_routes as $evening_route)
                                                                             <option value="{{$evening_route->name}}" @selected($shop->evening_route == $evening_route->name )>{{$evening_route->name}}</option>
                                                                             @endforeach
+                                                                            @if (!empty($shop->evening_route) && $shop->evening_route !== 'none' && !$evening_routes->contains('name', $shop->evening_route))
+                                                                            <option value="{{ $shop->evening_route }}" selected>{{ $shop->evening_route }}</option>
+                                                                            @endif
                                                                             <option value="none" @selected($shop->evening_route == 'none' )>None</option>
                                                                         </select>
                                                                     </div>
@@ -366,6 +375,9 @@
                                                                             @foreach ($beverage_routes as $beverage_route)
                                                                             <option value="{{$beverage_route->name}}" @selected($shop->beverage_route == $beverage_route->name )>{{$beverage_route->name}}</option>
                                                                             @endforeach
+                                                                            @if (!empty($shop->beverage_route) && $shop->beverage_route !== 'none' && !$beverage_routes->contains('name', $shop->beverage_route))
+                                                                            <option value="{{ $shop->beverage_route }}" selected>{{ $shop->beverage_route }}</option>
+                                                                            @endif
                                                                             <option value="none" @selected($shop->beverage_route == 'none' )>None</option>
                                                                         </select>
                                                                     </div>
@@ -376,6 +388,9 @@
                                                                             <option value="Morning" @selected($shop->order_time == 'Morning' )>Morning</option>
                                                                             <option value="Evening" @selected($shop->order_time == 'Evening' )>Evening</option>
                                                                             <option value="All" @selected($shop->order_time == 'All' )>All</option>
+                                                                            @if (!empty($shop->order_time) && !in_array($shop->order_time, ['Morning', 'Evening', 'All'], true))
+                                                                            <option value="{{ $shop->order_time }}" selected>{{ $shop->order_time }}</option>
+                                                                            @endif
                                                                         </select>
                                                                     </div>
                                                                     <div class="form-group">
@@ -384,6 +399,9 @@
                                                                             <option value="" @selected($shop->type == '' )>Select Shop Type</option>
                                                                             <option value="Outlet" @selected($shop->type == 'Outlet' )>Outlet</option>
                                                                             <option value="Route Rep" @selected($shop->type == 'Route Rep' )>Route Rep</option>
+                                                                            @if (!empty($shop->type) && !in_array($shop->type, ['Outlet', 'Route Rep'], true))
+                                                                            <option value="{{ $shop->type }}" selected>{{ $shop->type }}</option>
+                                                                            @endif
                                                                         </select>
                                                                     </div>
                                                                 </div>
